@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageTracerNet", "ImageTracerNet\ImageTracerNet.csproj", "{84EE293E-B938-4512-8A39-86FFC00ED267}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageTracerTester", "ImageTracerTester\ImageTracerTester.csproj", "{0D388C1A-EF27-4B1E-8783-2BA7531D2411}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{84EE293E-B938-4512-8A39-86FFC00ED267}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84EE293E-B938-4512-8A39-86FFC00ED267}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84EE293E-B938-4512-8A39-86FFC00ED267}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84EE293E-B938-4512-8A39-86FFC00ED267}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D388C1A-EF27-4B1E-8783-2BA7531D2411}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D388C1A-EF27-4B1E-8783-2BA7531D2411}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D388C1A-EF27-4B1E-8783-2BA7531D2411}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D388C1A-EF27-4B1E-8783-2BA7531D2411}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
