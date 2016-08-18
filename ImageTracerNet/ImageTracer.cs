@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using ImageTracerNet.Extensions;
@@ -16,12 +17,13 @@ namespace ImageTracerNet
     {
         public static string versionnumber = "1.1.1";
 
+        private static readonly Random Rng = new Random();
+
         public ImageTracer() { }
 
         // Loading a file to ImageData, ARGB byte order
         public static ImageData loadImageData(string filename)
         {
-            //BufferedImage image = ImageIO.read(new File(filename));
             var image = new Bitmap(filename);
             return loadImageData(image);
         }
@@ -114,25 +116,25 @@ namespace ImageTracerNet
         {
             if (options == null) { options = new Options(); }
             // Tracing
-            if (!options.containsKey("ltres")) { options.put("ltres", 1f); }
-            if (!options.containsKey("qtres")) { options.put("qtres", 1f); }
-            if (!options.containsKey("pathomit")) { options.put("pathomit", 8f); }
+            if (!options.ContainsKey("ltres")) { options["ltres"] = 1f; }
+            if (!options.ContainsKey("qtres")) { options["qtres"] = 1f; }
+            if (!options.ContainsKey("pathomit")) { options["pathomit"] = 8f; }
             // Color quantization
-            if (!options.contains   Key("colorsampling")) { options.put("colorsampling", 1f); }
-            if (!options.containsKey("numberofcolors")) { options.put("numberofcolors", 16f); }
-            if (!options.containsKey("mincolorratio")) { options.put("mincolorratio", 0.02f); }
-            if (!options.containsKey("colorquantcycles")) { options.put("colorquantcycles", 3f); }
+            if (!options.ContainsKey("colorsampling")) { options["colorsampling"] = 1f; }
+            if (!options.ContainsKey("numberofcolors")) { options["numberofcolors"] = 16f; }
+            if (!options.ContainsKey("mincolorratio")) { options["mincolorratio"] = 0.02f; }
+            if (!options.ContainsKey("colorquantcycles")) { options["colorquantcycles"] = 3f; }
             // SVG rendering
-            if (!options.containsKey("scale")) { options.put("scale", 1f); }
-            if (!options.containsKey("simplifytolerance")) { options.put("simplifytolerance", 0f); }
-            if (!options.containsKey("roundcoords")) { options.put("roundcoords", 1f); }
-            if (!options.containsKey("lcpr")) { options.put("lcpr", 0f); }
-            if (!options.containsKey("qcpr")) { options.put("qcpr", 0f); }
-            if (!options.containsKey("desc")) { options.put("desc", 1f); }
-            if (!options.containsKey("viewbox")) { options.put("viewbox", 0f); }
+            if (!options.ContainsKey("scale")) { options["scale"] = 1f; }
+            if (!options.ContainsKey("simplifytolerance")) { options["simplifytolerance"] = 0f; }
+            if (!options.ContainsKey("roundcoords")) { options["roundcoords"] = 1f; }
+            if (!options.ContainsKey("lcpr")) { options["lcpr"] = 0f; }
+            if (!options.ContainsKey("qcpr")) { options["qcpr"] =0f; }
+            if (!options.ContainsKey("desc")) { options["desc"] = 1f; }
+            if (!options.ContainsKey("viewbox")) { options["viewbox"] = 0f; }
             // Blur
-            if (!options.containsKey("blurradius")) { options.put("blurradius", 0f); }
-            if (!options.containsKey("blurdelta")) { options.put("blurdelta", 20f); }
+            if (!options.ContainsKey("blurradius")) { options["blurradius"] = 0f; }
+            if (!options.ContainsKey("blurdelta")) { options["blurdelta"] = 20f; }
 
             return options;
         }// End of checkoptions()
@@ -146,9 +148,11 @@ namespace ImageTracerNet
 
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
         // https://en.wikipedia.org/wiki/Color_quantization    https://en.wikipedia.org/wiki/K-means_clustering
-        public static IndexedImage colorquantization(ImageData imgd, byte[][] palette, HashMap<String, Float> options)
+        public static IndexedImage colorquantization(ImageData imgd, byte[][] palette, Options options)
         {
-            int numberofcolors = (int)Math.floor(options.get("numberofcolors")); float minratio = options.get("mincolorratio"); int cycles = (int)Math.floor(options.get("colorquantcycles"));
+            int numberofcolors = (int)Math.Floor(options["numberofcolors"]);
+            float minratio = options["mincolorratio"];
+            int cycles = (int)Math.Floor(options["colorquantcycles"]);
             // Creating indexed color array arr which has a boundary filled with -1 in every direction
             int[][] arr = new int[imgd.height + 2][imgd.width + 2];
             for (int j = 0; j < (imgd.height + 2); j++) { arr[j][0] = -1; arr[j][imgd.width + 1] = -1; }
@@ -159,7 +163,7 @@ namespace ImageTracerNet
             // Use custom palette if pal is defined or sample or generate custom length palette
             if (palette == null)
             {
-                if (options.get("colorsampling") != 0)
+                if (options["colorsampling"] != 0)
                 {
                     palette = samplepalette(numberofcolors, imgd);
                 }
@@ -170,9 +174,9 @@ namespace ImageTracerNet
             }
 
             // Selective Gaussian blur preprocessing
-            if (options.get("blurradius") > 0) { imgd = blur(imgd, options.get("blurradius"), options.get("blurdelta")); }
+            if (options["blurradius"] > 0) { imgd = blur(imgd, options["blurradius"], options["blurdelta"]); }
 
-            long[][] paletteacc = new long[palette.length][5];
+            long[][] paletteacc = new long[palette.Length][5];
 
             // Repeat clustering step "cycles" times
             for (int cnt = 0; cnt < cycles; cnt++)
@@ -183,32 +187,32 @@ namespace ImageTracerNet
                 {
                     // averaging paletteacc for palette
                     float ratio;
-                    for (int k = 0; k < palette.length; k++)
+                    for (int k = 0; k < palette.Length; k++)
                     {
                         // averaging
                         if (paletteacc[k][3] > 0)
                         {
-                            palette[k][0] = (byte)(-128 + Math.floor(paletteacc[k][0] / paletteacc[k][4]));
-                            palette[k][1] = (byte)(-128 + Math.floor(paletteacc[k][1] / paletteacc[k][4]));
-                            palette[k][2] = (byte)(-128 + Math.floor(paletteacc[k][2] / paletteacc[k][4]));
-                            palette[k][3] = (byte)(-128 + Math.floor(paletteacc[k][3] / paletteacc[k][4]));
+                            palette[k][0] = (byte)(-128 + Math.Floor(paletteacc[k][0] / paletteacc[k][4]));
+                            palette[k][1] = (byte)(-128 + Math.Floor(paletteacc[k][1] / paletteacc[k][4]));
+                            palette[k][2] = (byte)(-128 + Math.Floor(paletteacc[k][2] / paletteacc[k][4]));
+                            palette[k][3] = (byte)(-128 + Math.Floor(paletteacc[k][3] / paletteacc[k][4]));
                         }
                         ratio = paletteacc[k][4] / (imgd.width * imgd.height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < minratio) && (cnt < (cycles - 1)))
                         {
-                            palette[k][0] = (byte)(-128 + Math.floor(Math.random() * 255));
-                            palette[k][1] = (byte)(-128 + Math.floor(Math.random() * 255));
-                            palette[k][2] = (byte)(-128 + Math.floor(Math.random() * 255));
-                            palette[k][3] = (byte)(-128 + Math.floor(Math.random() * 255));
+                            palette[k][0] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                            palette[k][1] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                            palette[k][2] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                            palette[k][3] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
                         }
 
                     }// End of palette loop
                 }// End of Average colors from the second iteration
 
                 // Reseting palette accumulator for averaging
-                for (int i = 0; i < palette.length; i++)
+                for (int i = 0; i < palette.Length; i++)
                 {
                     paletteacc[i][0] = 0;
                     paletteacc[i][1] = 0;
@@ -227,14 +231,14 @@ namespace ImageTracerNet
 
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
                         cdl = 256 + 256 + 256 + 256; ci = 0;
-                        for (int k = 0; k < palette.length; k++)
+                        for (int k = 0; k < palette.Length; k++)
                         {
 
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            c1 = Math.abs(palette[k][0] - imgd.data[idx]);
-                            c2 = Math.abs(palette[k][1] - imgd.data[idx + 1]);
-                            c3 = Math.abs(palette[k][2] - imgd.data[idx + 2]);
-                            c4 = Math.abs(palette[k][3] - imgd.data[idx + 3]);
+                            c1 = Math.Abs(palette[k][0] - imgd.data[idx]);
+                            c2 = Math.Abs(palette[k][1] - imgd.data[idx + 1]);
+                            c3 = Math.Abs(palette[k][2] - imgd.data[idx + 2]);
+                            c4 = Math.Abs(palette[k][3] - imgd.data[idx + 3]);
                             cd = c1 + c2 + c3 + (c4 * 4); // weighted alpha seems to help images with transparency
 
                             // Remember this color if this is the closest yet
@@ -264,9 +268,8 @@ namespace ImageTracerNet
             byte[][] palette = new byte[numberofcolors][4];
             if (numberofcolors < 8)
             {
-
                 // Grayscale
-                byte graystep = (byte)Math.floor(255 / (numberofcolors - 1));
+                byte graystep = (byte)Math.Floor(255 / (numberofcolors - 1));
                 for (byte ccnt = 0; ccnt < numberofcolors; ccnt++)
                 {
                     palette[ccnt][0] = (byte)(-128 + (ccnt * graystep));
@@ -274,14 +277,12 @@ namespace ImageTracerNet
                     palette[ccnt][2] = (byte)(-128 + (ccnt * graystep));
                     palette[ccnt][3] = (byte)255;
                 }
-
             }
             else
             {
-
                 // RGB color cube
-                int colorqnum = (int)Math.floor(Math.pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-                int colorstep = (int)Math.floor(255 / (colorqnum - 1)); // distance between points
+                int colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
+                int colorstep = (int)Math.Floor(255 / (colorqnum - 1)); // distance between points
                 int ccnt = 0;
                 for (int rcnt = 0; rcnt < colorqnum; rcnt++)
                 {
@@ -301,23 +302,23 @@ namespace ImageTracerNet
                 // Rest is random
                 for (int rcnt = ccnt; rcnt < numberofcolors; rcnt++)
                 {
-                    palette[ccnt][0] = (byte)(-128 + Math.floor(Math.random() * 255));
-                    palette[ccnt][1] = (byte)(-128 + Math.floor(Math.random() * 255));
-                    palette[ccnt][2] = (byte)(-128 + Math.floor(Math.random() * 255));
-                    palette[ccnt][3] = (byte)(-128 + Math.floor(Math.random() * 255));
+                    palette[ccnt][0] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                    palette[ccnt][1] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                    palette[ccnt][2] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                    palette[ccnt][3] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
                 }
 
             }// End of numberofcolors check
 
             return palette;
-        };// End of generatepalette()
+        }// End of generatepalette()
 
         public static byte[][] samplepalette(int numberofcolors, ImageData imgd)
         {
             int idx = 0; byte[][] palette = new byte[numberofcolors][4];
             for (int i = 0; i < numberofcolors; i++)
             {
-                idx = (int)(Math.floor((Math.random() * imgd.data.length) / 4) * 4);
+                idx = (int)(Math.Floor((Rng.NextDouble() * imgd.data.Length) / 4) * 4);
                 palette[i][0] = imgd.data[idx];
                 palette[i][1] = imgd.data[idx + 1];
                 palette[i][2] = imgd.data[idx + 2];

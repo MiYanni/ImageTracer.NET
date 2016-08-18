@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="ImageData.cs" />
     <Compile Include="ImageTracer.cs" />
     <Compile Include="IndexedImage.cs" />
