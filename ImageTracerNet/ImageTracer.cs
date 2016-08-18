@@ -6,6 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ImageTracerNet.Extensions;
+using Options = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
+using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
+using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>; // ArrayList<ArrayList<ArrayList<Double[]>>>
 
 namespace ImageTracerNet
 {
@@ -55,13 +58,13 @@ namespace ImageTracerNet
         ////////////////////////////////////////////////////////////
 
         // Loading an image from a file, tracing when loaded, then returning the SVG String
-        public static String imageToSVG(String filename, HashMap<String, Float> options, byte[][] palette) 
+        public static String imageToSVG(string filename, Options options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(filename);
             return imagedataToSVG(imgd,options,palette);
         }// End of imageToSVG()
-        public static String imageToSVG(BufferedImage image, HashMap<String, Float> options, byte[][] palette) 
+        public static String imageToSVG(Bitmap image, Options options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(image);
@@ -69,7 +72,7 @@ namespace ImageTracerNet
         }// End of imageToSVG()
 
         // Tracing ImageData, then returning the SVG String
-        public static String imagedataToSVG(ImageData imgd, HashMap<String, Float> options, byte[][] palette)
+        public static String imagedataToSVG(ImageData imgd, Options options, byte[][] palette)
         {
             options = checkoptions(options);
             IndexedImage ii = imagedataToTracedata(imgd, options, palette);
@@ -77,13 +80,13 @@ namespace ImageTracerNet
         }// End of imagedataToSVG()
 
         // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
-        public IndexedImage imageToTracedata(String filename, HashMap<String, Float> options, byte[][] palette) 
+        public IndexedImage imageToTracedata(string filename, Options options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(filename);
             return imagedataToTracedata(imgd,options,palette);
         }// End of imageToTracedata()
-        public IndexedImage imageToTracedata(BufferedImage image, HashMap<String, Float> options, byte[][] palette) 
+        public IndexedImage imageToTracedata(Bitmap image, Options options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(image);
@@ -91,25 +94,25 @@ namespace ImageTracerNet
         }// End of imageToTracedata()
 
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
-        public static IndexedImage imagedataToTracedata(ImageData imgd, HashMap<String, Float> options, byte[][] palette)
+        public static IndexedImage imagedataToTracedata(ImageData imgd, Options options, byte[][] palette)
         {
             // 1. Color quantization
             IndexedImage ii = colorquantization(imgd, palette, options);
             // 2. Layer separation and edge detection
             int[][][] rawlayers = layering(ii);
             // 3. Batch pathscan
-            ArrayList<ArrayList<ArrayList<Integer[]>>> bps = batchpathscan(rawlayers, (int)(Math.floor(options.get("pathomit"))));
+            TriListIntArray bps = batchpathscan(rawlayers, (int)(Math.Floor(options["pathomit"])));
             // 4. Batch interpollation
-            ArrayList<ArrayList<ArrayList<Double[]>>> bis = batchinternodes(bps);
+            TriListDoubleArray bis = batchinternodes(bps);
             // 5. Batch tracing
-            ii.layers = batchtracelayers(bis, options.get("ltres"), options.get("qtres"));
+            ii.layers = batchtracelayers(bis, options["ltres"], options["qtres"]);
             return ii;
         }// End of imagedataToTracedata()
 
         // creating options object, setting defaults for missing values
-        public static HashMap<String, Float> checkoptions(HashMap<String, Float> options)
+        public static Options checkoptions(Dictionary<string, float> options)
         {
-            if (options == null) { options = new HashMap<String, Float>(); }
+            if (options == null) { options = new Options(); }
             // Tracing
             if (!options.containsKey("ltres")) { options.put("ltres", 1f); }
             if (!options.containsKey("qtres")) { options.put("qtres", 1f); }

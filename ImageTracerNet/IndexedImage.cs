@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>;
 
 namespace ImageTracerNet
 {
@@ -8,7 +9,7 @@ namespace ImageTracerNet
         public int width, height;
         public int[][] array; // array[x][y] of palette colors
         public byte[][] palette;// array[palettelength][4] RGBA color palette
-        public List<List<List<double[]>>> layers;// tracedata
+        public TriListDoubleArray layers;// tracedata
 
         public IndexedImage(int[][] marray, byte[][] mpalette)
         {
