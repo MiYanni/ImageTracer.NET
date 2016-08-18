@@ -663,31 +663,31 @@ namespace ImageTracerNet
         }
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
-        public static ArrayList<ArrayList<Double[]>> internodes(ArrayList<ArrayList<Integer[]>> paths)
+        public static List<List<double[]>> internodes(List<List<int[]>> paths)
         {
-            ArrayList<ArrayList<Double[]>> ins = new ArrayList<ArrayList<Double[]>>();
-            ArrayList<Double[]> thisinp;
-            Double[] thispoint, nextpoint = new Double[2];
-            Integer[] pp1, pp2, pp3;
+            List<List<double[]>> ins = new List<List<double[]>>();
+            List<double[]> thisinp;
+            double[] thispoint, nextpoint = new double[2];
+            int[] pp1, pp2, pp3;
 
             int palen = 0, nextidx = 0, nextidx2 = 0;
             // paths loop
-            for (int pacnt = 0; pacnt < paths.size(); pacnt++)
+            for (int pacnt = 0; pacnt < paths.Count; pacnt++)
             {
-                ins.add(new ArrayList<Double[]>());
-                thisinp = ins.get(ins.size() - 1);
-                palen = paths.get(pacnt).size();
+                ins.Add(new List<double[]>());
+                thisinp = ins[ins.Count - 1];
+                palen = paths[pacnt].Count;
                 // pathpoints loop
                 for (int pcnt = 0; pcnt < palen; pcnt++)
                 {
 
                     // interpolate between two path points
                     nextidx = (pcnt + 1) % palen; nextidx2 = (pcnt + 2) % palen;
-                    thisinp.add(new Double[3]);
-                    thispoint = thisinp.get(thisinp.size() - 1);
-                    pp1 = paths.get(pacnt).get(pcnt);
-                    pp2 = paths.get(pacnt).get(nextidx);
-                    pp3 = paths.get(pacnt).get(nextidx2);
+                    thisinp.Add(new double[3]);
+                    thispoint = thisinp[thisinp.Count - 1];
+                    pp1 = paths[pacnt][pcnt];
+                    pp2 = paths[pacnt][nextidx];
+                    pp3 = paths[pacnt][nextidx2];
                     thispoint[0] = (pp1[0] + pp2[0]) / 2.0;
                     thispoint[1] = (pp1[1] + pp2[1]) / 2.0;
                     nextpoint[0] = (pp2[0] + pp3[0]) / 2.0;
