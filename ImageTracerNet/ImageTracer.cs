@@ -336,8 +336,8 @@ namespace ImageTracerNet
         public static int[][][] layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            int val = 0, aw = ii.array[0].length, ah = ii.array.length, n1, n2, n3, n4, n5, n6, n7, n8;
-            int[][][] layers = new int[ii.palette.length][ah][aw];
+            int val = 0, aw = ii.array[0].Length, ah = ii.array.Length, n1, n2, n3, n4, n5, n6, n7, n8;
+            int[][][] layers = new int[ii.palette.Length][ah][aw];
 
             // Looping through all pixels and calculating edge node type
             for (int j = 1; j < (ah - 1); j++)
@@ -377,12 +377,12 @@ namespace ImageTracerNet
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         //
-        public static ArrayList<ArrayList<Integer[]>> pathscan(int[][] arr, float pathomit)
+        public static List<List<int[]>> pathscan(int[][] arr, float pathomit)
         {
-            ArrayList<ArrayList<Integer[]>> paths = new ArrayList<ArrayList<Integer[]>>();
-            ArrayList<Integer[]> thispath;
-            int px = 0, py = 0, w = arr[0].length, h = arr.length, dir = 0;
-            boolean pathfinished = true, holepath = false;
+            List<List<int[]>> paths = new List<List<int[]>>();
+            List<int[]> thispath;
+            int px = 0, py = 0, w = arr[0].Length, h = arr.Length, dir = 0;
+            bool pathfinished = true, holepath = false;
 
             for (int j = 0; j < h; j++)
             {
@@ -392,8 +392,8 @@ namespace ImageTracerNet
                     {
                         // Init
                         px = i; py = j;
-                        paths.add(new ArrayList<Integer[]>());
-                        thispath = paths.get(paths.size() - 1);
+                        paths.Add(new List<int[]>());
+                        thispath = paths[paths.Count - 1];
                         pathfinished = false;
                         // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
                         if (arr[py][px] == 1) { dir = 0; }
@@ -415,10 +415,10 @@ namespace ImageTracerNet
                         {
 
                             // New path point
-                            thispath.add(new Integer[3]);
-                            thispath.get(thispath.size() - 1)[0] = px - 1;
-                            thispath.get(thispath.size() - 1)[1] = py - 1;
-                            thispath.get(thispath.size() - 1)[2] = arr[py][px];
+                            thispath.Add(new int[3]);
+                            thispath[thispath.Count - 1][0] = px - 1;
+                            thispath[thispath.Count - 1][1] = py - 1;
+                            thispath[thispath.Count - 1][2] = arr[py][px];
 
                             // Node types
                             if (arr[py][px] == 1)
@@ -432,7 +432,7 @@ namespace ImageTracerNet
                                 {
                                     px--; dir = 2;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 2)
@@ -446,7 +446,7 @@ namespace ImageTracerNet
                                 {
                                     py--; dir = 1;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 3)
@@ -460,7 +460,7 @@ namespace ImageTracerNet
                                 {
                                     px--;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 4)
@@ -474,7 +474,7 @@ namespace ImageTracerNet
                                 {
                                     py++; dir = 3;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 5)
@@ -508,7 +508,7 @@ namespace ImageTracerNet
                                 {
                                     py++;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 7)
@@ -522,7 +522,7 @@ namespace ImageTracerNet
                                 {
                                     px--; dir = 2;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 8)
@@ -536,7 +536,7 @@ namespace ImageTracerNet
                                 {
                                     px--; dir = 2;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 9)
@@ -550,7 +550,7 @@ namespace ImageTracerNet
                                 {
                                     py++;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 10)
@@ -584,7 +584,7 @@ namespace ImageTracerNet
                                 {
                                     py++; dir = 3;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 12)
@@ -598,7 +598,7 @@ namespace ImageTracerNet
                                 {
                                     px--;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 13)
@@ -612,7 +612,7 @@ namespace ImageTracerNet
                                 {
                                     px++; dir = 0;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             else if (arr[py][px] == 14)
@@ -626,17 +626,17 @@ namespace ImageTracerNet
                                 {
                                     px--; dir = 2;
                                 }
-                                else { pathfinished = true; paths.remove(thispath); }
+                                else { pathfinished = true; paths.Remove(thispath); }
                             }
 
                             // Close path
-                            if (((px - 1) == thispath.get(0)[0]) && ((py - 1) == thispath.get(0)[1]))
+                            if (((px - 1) == thispath[0][0]) && ((py - 1) == thispath[0][1]))
                             {
                                 pathfinished = true;
                                 // Discarding 'hole' type paths and paths shorter than pathomit
-                                if ((holepath) || (thispath.size() < pathomit))
+                                if ((holepath) || (thispath.Count < pathomit))
                                 {
-                                    paths.remove(thispath);
+                                    paths.Remove(thispath);
                                 }
                             }
 
@@ -652,12 +652,12 @@ namespace ImageTracerNet
 
 
         // 3. Batch pathscan
-        public static ArrayList<ArrayList<ArrayList<Integer[]>>> batchpathscan(int[][][] layers, float pathomit)
+        public static TriListIntArray batchpathscan(int[][][] layers, float pathomit)
         {
-            ArrayList<ArrayList<ArrayList<Integer[]>>> bpaths = new ArrayList<ArrayList<ArrayList<Integer[]>>>();
-            for (int[][] layer : layers)
+            TriListIntArray bpaths = new TriListIntArray();
+            foreach (int[][] layer in layers)
             {
-                bpaths.add(pathscan(layer, pathomit));
+                bpaths.Add(pathscan(layer, pathomit));
             }
             return bpaths;
         }
