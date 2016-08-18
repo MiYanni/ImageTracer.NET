@@ -73,5 +73,29 @@
         //    }
         //    catch (Exception e) { e.printStackTrace(); }
         //}// End of main()
+
+        //// Saving a String as a file
+        //public static void saveString(String filename, String str) throws Exception
+        //{
+        //    File file = new File(filename);
+        //    // if file doesnt exists, then create it
+        //    if(!file.exists()){ file.createNewFile(); }
+        //    FileWriter fw = new FileWriter(file.getAbsoluteFile());
+        //    BufferedWriter bw = new BufferedWriter(fw);
+        //    bw.write(str);
+        //    bw.close();
+        //}
+
+        //public static int arraycontains(String[] arr, String str)
+        //{
+        //    for (int j = 0; j < arr.length; j++) { if (arr[j].toLowerCase().equals(str)) { return j; } }
+        //    return -1;
+        //}
+
+        //public static float parsenext(String[] arr, int i)
+        //{
+        //    if (i < (arr.length - 1)) { try { return Float.parseFloat(arr[i + 1]); } catch (Exception e) { } }
+        //    return -1;
+        //}
     }
 }

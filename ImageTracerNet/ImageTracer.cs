@@ -1,84 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ImageTracerNet.Extensions;
 
 namespace ImageTracerNet
 {
     public class ImageTracer
     {
-        public static String versionnumber = "1.1.1";
+        public static string versionnumber = "1.1.1";
 
         public ImageTracer() { }
 
-        public static int arraycontains(String[] arr, String str)
-        {
-            for (int j = 0; j < arr.length; j++) { if (arr[j].toLowerCase().equals(str)) { return j; } }
-            return -1;
-        }
-
-        public static float parsenext(String[] arr, int i)
-        {
-            if (i < (arr.length - 1)) { try { return Float.parseFloat(arr[i + 1]); } catch (Exception e) { } }
-            return -1;
-        }
-
-        // Container for the color-indexed image before and tracedata after vectorizing
-        public static class IndexedImage
-        {
-            public int width, height;
-            public int[][] array; // array[x][y] of palette colors
-            public byte[][] palette;// array[palettelength][4] RGBA color palette
-            public ArrayList<ArrayList<ArrayList<Double[]>>> layers;// tracedata
-
-            public IndexedImage(int[][] marray, byte[][] mpalette)
-            {
-                array = marray; palette = mpalette;
-                width = marray[0].length - 2; height = marray.length - 2;// Color quantization adds +2 to the original width and height
-            }
-        }
-
-        // https://developer.mozilla.org/en-US/docs/Web/API/ImageData
-        public static class ImageData
-        {
-            public int width, height;
-            public byte[] data; // raw byte data: R G B A R G B A ...
-            public ImageData(int mwidth, int mheight, byte[] mdata)
-            {
-                width = mwidth; height = mheight; data = mdata;
-            }
-        }
-
-        // Saving a String as a file
-        public static void saveString(String filename, String str) throws Exception
-        {
-            File file = new File(filename);
-            // if file doesnt exists, then create it
-            if(!file.exists()){ file.createNewFile(); }
-            FileWriter fw = new FileWriter(file.getAbsoluteFile());
-            BufferedWriter bw = new BufferedWriter(fw);
-            bw.write(str);
-            bw.close();
-        }
-
         // Loading a file to ImageData, ARGB byte order
-        public static ImageData loadImageData(String filename) throws Exception
+        public static ImageData loadImageData(string filename)
         {
-            BufferedImage image = ImageIO.read(new File(filename));
+            //BufferedImage image = ImageIO.read(new File(filename));
+            var image = new Bitmap(filename);
             return loadImageData(image);
         }
             
-        public static ImageData loadImageData(BufferedImage image) throws Exception
+        public static ImageData loadImageData(Bitmap image)
         {
-            int width = image.getWidth(); int height = image.getHeight();
-            int[] rawdata = image.getRGB(0, 0, width, height, null, 0, width);
-            byte[] data = new byte[rawdata.length * 4];
-            for(int i = 0; i<rawdata.length; i++)
+            int width = image.Width; int height = image.Height;
+            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppRgb);
+            int[] rawdata = rbgImage.ToIntArray();
+            byte[] data = new byte[rawdata.Length * 4];
+            for(int i = 0; i<rawdata.Length; i++)
             {
-                data[(i * 4) + 3] = bytetrans((byte)(rawdata[i] >>> 24));
-                data[i * 4] = bytetrans((byte)(rawdata[i] >>> 16));
-                data[(i * 4) + 1] = bytetrans((byte)(rawdata[i] >>> 8));
+                data[(i * 4) + 3] = bytetrans((byte)(rawdata[i] >> 24));
+                data[i * 4] = bytetrans((byte)(rawdata[i] >> 16));
+                data[(i * 4) + 1] = bytetrans((byte)(rawdata[i] >> 8));
                 data[(i * 4) + 2] = bytetrans((byte)(rawdata[i]));
             }
             return new ImageData(width, height, data);
@@ -89,6 +44,7 @@ namespace ImageTracerNet
         // 127 (representing 255 unsigned) and tosvgcolorstr will add +128 to create RGB values 0..255
         public static byte bytetrans(byte b)
         {
+            //MJY: This might be an issue.
             if (b < 0) { return (byte)(b + 128); } else { return (byte)(b - 128); }
         }
 
@@ -99,13 +55,13 @@ namespace ImageTracerNet
         ////////////////////////////////////////////////////////////
 
         // Loading an image from a file, tracing when loaded, then returning the SVG String
-        public static String imageToSVG(String filename, HashMap<String, Float> options, byte[][] palette) throws Exception
+        public static String imageToSVG(String filename, HashMap<String, Float> options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(filename);
             return imagedataToSVG(imgd,options,palette);
         }// End of imageToSVG()
-        public static String imageToSVG(BufferedImage image, HashMap<String, Float> options, byte[][] palette) throws Exception
+        public static String imageToSVG(BufferedImage image, HashMap<String, Float> options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(image);
@@ -121,13 +77,13 @@ namespace ImageTracerNet
         }// End of imagedataToSVG()
 
         // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
-        public IndexedImage imageToTracedata(String filename, HashMap<String, Float> options, byte[][] palette) throws Exception
+        public IndexedImage imageToTracedata(String filename, HashMap<String, Float> options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(filename);
             return imagedataToTracedata(imgd,options,palette);
         }// End of imageToTracedata()
-        public IndexedImage imageToTracedata(BufferedImage image, HashMap<String, Float> options, byte[][] palette) throws Exception
+        public IndexedImage imageToTracedata(BufferedImage image, HashMap<String, Float> options, byte[][] palette) 
         {
             options = checkoptions(options);
             ImageData imgd = loadImageData(image);
