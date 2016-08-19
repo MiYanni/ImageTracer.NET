@@ -969,34 +969,32 @@ namespace ImageTracerNet
 
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
-        public static String getsvgstring(IndexedImage ii, HashMap<String, Float> options)
+        public static String getsvgstring(IndexedImage ii, Options options)
         {
             options = checkoptions(options);
             // SVG start
-            int w = (int)(ii.width * options.get("scale")), h = (int)(ii.height * options.get("scale"));
-            String viewboxorviewport = options.get("viewbox") != 0 ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
+            int w = (int)(ii.width * options["scale"]), h = (int)(ii.height * options["scale"]);
+            String viewboxorviewport = options["viewbox"] != 0 ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
             StringBuilder svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options.get("desc") != 0) { svgstr.Append("desc=\"Created with ImageTracer.java version " + ImageTracer.versionnumber + "\" "); }
+            if (options["desc"] != 0) { svgstr.Append("desc=\"Created with ImageTracer.java version " + ImageTracer.versionnumber + "\" "); }
             svgstr.Append(">");
 
             // creating Z-index
-            TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
+            Dictionary<double, int[]> zindex = new Dictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
             double label;
             // Layer loop
-            for (int k = 0; k < ii.layers.size(); k++)
+            for (int k = 0; k < ii.layers.Count; k++)
             {
-
                 // Path loop
-                for (int pcnt = 0; pcnt < ii.layers.get(k).size(); pcnt++)
+                for (int pcnt = 0; pcnt < ii.layers[k].Count; pcnt++)
                 {
-
                     // Label (Z-index key) is the startpoint of the path, linearized
-                    label = (ii.layers.get(k).get(pcnt).get(0)[2] * w) + ii.layers.get(k).get(pcnt).get(0)[1];
+                    label = (ii.layers[k][pcnt][0][2] * w) + ii.layers[k][pcnt][0][1];
                     // Creating new list if required
-                    if (!zindex.containsKey(label)) { zindex.put(label, new Integer[2]); }
+                    if (!zindex.ContainsKey(label)) { zindex[label] = new int[2]; }
                     // Adding layer and path number to list
-                    zindex.get(label)[0] = new Integer(k);
-                    zindex.get(label)[1] = new Integer(pcnt);
+                    zindex[label][0] = k;
+                    zindex[label][1] = pcnt;
                 }// End of path loop
 
             }// End of layer loop
@@ -1006,20 +1004,20 @@ namespace ImageTracerNet
             // Drawing
             // Z-index loop
             String thisdesc = "";
-            for (Entry<Double, Integer[]> entry : zindex.entrySet())
+            foreach(KeyValuePair<double, int[]> entry in zindex)
             {
-                if (options.get("desc") != 0) { thisdesc = "desc=\"l " + entry.getValue()[0] + " p " + entry.getValue()[1] + "\" "; } else { thisdesc = ""; }
+                if (options["desc"] != 0) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
                 svgpathstring(svgstr,
                         thisdesc,
-                        ii.layers.get(entry.getValue()[0]).get(entry.getValue()[1]),
-                        tosvgcolorstr(ii.palette[entry.getValue()[0]]),
+                        ii.layers[entry.Value[0]][entry.Value[1]],
+                        tosvgcolorstr(ii.palette[entry.Value[0]]),
                         options);
             }
 
             // SVG End
             svgstr.Append("</svg>");
 
-            return svgstr.toString();
+            return svgstr.ToString();
 
         }// End of getsvgstring()
 
@@ -1029,8 +1027,8 @@ namespace ImageTracerNet
         }
 
         // Gaussian kernels for blur
-        static double[][] gks = { {0.27901,0.44198,0.27901}, {0.135336,0.228569,0.272192,0.228569,0.135336}, {0.086776,0.136394,0.178908,0.195843,0.178908,0.136394,0.086776},
-                    {0.063327,0.093095,0.122589,0.144599,0.152781,0.144599,0.122589,0.093095,0.063327}, {0.049692,0.069304,0.089767,0.107988,0.120651,0.125194,0.120651,0.107988,0.089767,0.069304,0.049692} };
+        static double[][] gks = { new []{0.27901, 0.44198, 0.27901}, new []{0.135336,0.228569,0.272192,0.228569,0.135336}, new []{0.086776,0.136394,0.178908,0.195843,0.178908,0.136394,0.086776},
+                    new []{0.063327,0.093095,0.122589,0.144599,0.152781,0.144599,0.122589,0.093095,0.063327}, new []{0.049692,0.069304,0.089767,0.107988,0.120651,0.125194,0.120651,0.107988,0.089767,0.069304,0.049692} };
 
         // Selective Gaussian blur for preprocessing
         static ImageData blur(ImageData imgd, float rad, float del)
@@ -1040,9 +1038,9 @@ namespace ImageTracerNet
             ImageData imgd2 = new ImageData(imgd.width, imgd.height, new byte[imgd.width * imgd.height * 4]);
 
             // radius and delta limits, this kernel
-            int radius = (int)Math.floor(rad); if (radius < 1) { return imgd; }
+            int radius = (int)Math.Floor(rad); if (radius < 1) { return imgd; }
             if (radius > 5) { radius = 5; }
-            int delta = (int)Math.abs(del); if (delta > 1024) { delta = 1024; }
+            int delta = (int)Math.Abs(del); if (delta > 1024) { delta = 1024; }
             double[] thisgk = gks[radius - 1];
 
             // loop through all pixels, horizontal blur
@@ -1068,23 +1066,22 @@ namespace ImageTracerNet
                     }
                     // The new pixel
                     idx = ((j * imgd.width) + i) * 4;
-                    imgd2.data[idx] = (byte)Math.floor(racc / wacc);
-                    imgd2.data[idx + 1] = (byte)Math.floor(gacc / wacc);
-                    imgd2.data[idx + 2] = (byte)Math.floor(bacc / wacc);
-                    imgd2.data[idx + 3] = (byte)Math.floor(aacc / wacc);
+                    imgd2.data[idx] = (byte)Math.Floor(racc / wacc);
+                    imgd2.data[idx + 1] = (byte)Math.Floor(gacc / wacc);
+                    imgd2.data[idx + 2] = (byte)Math.Floor(bacc / wacc);
+                    imgd2.data[idx + 3] = (byte)Math.Floor(aacc / wacc);
 
                 }// End of width loop
             }// End of horizontal blur
 
             // copying the half blurred imgd2
-            byte[] himgd = imgd2.data.clone();
+            byte[] himgd = imgd2.data.Clone() as byte[];
 
             // loop through all pixels, vertical blur
             for (j = 0; j < imgd.height; j++)
             {
                 for (i = 0; i < imgd.width; i++)
                 {
-
                     racc = 0; gacc = 0; bacc = 0; aacc = 0; wacc = 0;
                     // gauss kernel loop
                     for (k = -radius; k < (radius + 1); k++)
@@ -1102,11 +1099,10 @@ namespace ImageTracerNet
                     }
                     // The new pixel
                     idx = ((j * imgd.width) + i) * 4;
-                    imgd2.data[idx] = (byte)Math.floor(racc / wacc);
-                    imgd2.data[idx + 1] = (byte)Math.floor(gacc / wacc);
-                    imgd2.data[idx + 2] = (byte)Math.floor(bacc / wacc);
-                    imgd2.data[idx + 3] = (byte)Math.floor(aacc / wacc);
-
+                    imgd2.data[idx] = (byte)Math.Floor(racc / wacc);
+                    imgd2.data[idx + 1] = (byte)Math.Floor(gacc / wacc);
+                    imgd2.data[idx + 2] = (byte)Math.Floor(bacc / wacc);
+                    imgd2.data[idx + 3] = (byte)Math.Floor(aacc / wacc);
                 }// End of width loop
             }// End of vertical blur
 
@@ -1115,11 +1111,10 @@ namespace ImageTracerNet
             {
                 for (i = 0; i < imgd.width; i++)
                 {
-
                     idx = ((j * imgd.width) + i) * 4;
                     // d is the difference between the blurred and the original pixel
-                    d = Math.abs(imgd2.data[idx] - imgd.data[idx]) + Math.abs(imgd2.data[idx + 1] - imgd.data[idx + 1]) +
-                            Math.abs(imgd2.data[idx + 2] - imgd.data[idx + 2]) + Math.abs(imgd2.data[idx + 3] - imgd.data[idx + 3]);
+                    d = Math.Abs(imgd2.data[idx] - imgd.data[idx]) + Math.Abs(imgd2.data[idx + 1] - imgd.data[idx + 1]) +
+                            Math.Abs(imgd2.data[idx + 2] - imgd.data[idx + 2]) + Math.Abs(imgd2.data[idx + 3] - imgd.data[idx + 3]);
                     // selective blur: if d>delta, put the original pixel back
                     if (d > delta)
                     {
