@@ -722,12 +722,12 @@ namespace ImageTracerNet
         }// End of internodes()
 
         // 4. Batch interpollation
-        static ArrayList<ArrayList<ArrayList<Double[]>>> batchinternodes(ArrayList<ArrayList<ArrayList<Integer[]>>> bpaths)
+        private static TriListDoubleArray batchinternodes(TriListIntArray bpaths)
         {
-            ArrayList<ArrayList<ArrayList<Double[]>>> binternodes = new ArrayList<ArrayList<ArrayList<Double[]>>>();
-            for (int k = 0; k < bpaths.size(); k++)
+            TriListDoubleArray binternodes = new TriListDoubleArray();
+            for (int k = 0; k < bpaths.Count; k++)
             {
-                binternodes.add(internodes(bpaths.get(k)));
+                binternodes.Add(internodes(bpaths[k]));
             }
             return binternodes;
         }
@@ -750,56 +750,52 @@ namespace ImageTracerNet
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        public static ArrayList<Double[]> tracepath(ArrayList<Double[]> path, float ltreshold, float qtreshold)
+        public static List<double[]> tracepath(List<double[]> path, float ltreshold, float qtreshold)
         {
             int pcnt = 0, seqend = 0; double segtype1, segtype2;
-            ArrayList<Double[]> smp = new ArrayList<Double[]>();
+            List<double[]> smp = new List<double[]>();
             //Double [] thissegment;
-            int pathlength = path.size();
+            int pathlength = path.Count;
 
             while (pcnt < pathlength)
             {
                 // 5.1. Find sequences of points with only 2 segment types
-                segtype1 = path.get(pcnt)[2]; segtype2 = -1; seqend = pcnt + 1;
-                while (
-                        ((path.get(seqend)[2] == segtype1) || (path.get(seqend)[2] == segtype2) || (segtype2 == -1))
-                        && (seqend < (pathlength - 1)))
+                segtype1 = path[pcnt][2]; segtype2 = -1; seqend = pcnt + 1;
+                while (((path[seqend][2] == segtype1) || (path[seqend][2] == segtype2) || (segtype2 == -1)) && (seqend < (pathlength - 1)))
                 {
-                    if ((path.get(seqend)[2] != segtype1) && (segtype2 == -1)) { segtype2 = path.get(seqend)[2]; }
+                    if ((path[seqend][2] != segtype1) && (segtype2 == -1)) { segtype2 = path[seqend][2]; }
                     seqend++;
                 }
                 if (seqend == (pathlength - 1)) { seqend = 0; }
 
                 // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-                smp.addAll(fitseq(path, ltreshold, qtreshold, pcnt, seqend));
+                smp.AddRange(fitseq(path, ltreshold, qtreshold, pcnt, seqend));
                 // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
 
                 // forward pcnt;
                 if (seqend > 0) { pcnt = seqend; } else { pcnt = pathlength; }
 
             }// End of pcnt loop
-
             return smp;
-
         }// End of tracepath()
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
-        public static ArrayList<Double[]> fitseq(ArrayList<Double[]> path, float ltreshold, float qtreshold, int seqstart, int seqend)
+        public static List<double[]> fitseq(List<double[]> path, float ltreshold, float qtreshold, int seqstart, int seqend)
         {
-            ArrayList<Double[]> segment = new ArrayList<Double[]>();
-            Double[] thissegment;
-            int pathlength = path.size();
+            List<double[]> segment = new List<double[]>();
+            double[] thissegment;
+            int pathlength = path.Count;
 
             // return if invalid seqend
             if ((seqend > pathlength) || (seqend < 0)) { return segment; }
 
             int errorpoint = seqstart;
-            boolean curvepass = true;
+            bool curvepass = true;
             double px, py, dist2, errorval = 0;
             double tl = (seqend - seqstart); if (tl < 0) { tl += pathlength; }
-            double vx = (path.get(seqend)[0] - path.get(seqstart)[0]) / tl,
-                    vy = (path.get(seqend)[1] - path.get(seqstart)[1]) / tl;
+            double vx = (path[seqend][0] - path[seqstart][0]) / tl,
+                    vy = (path[seqend][1] - path[seqstart][1]) / tl;
 
             // 5.2. Fit a straight line on the sequence
             int pcnt = (seqstart + 1) % pathlength;
@@ -807,8 +803,8 @@ namespace ImageTracerNet
             while (pcnt != seqend)
             {
                 pl = pcnt - seqstart; if (pl < 0) { pl += pathlength; }
-                px = path.get(seqstart)[0] + (vx * pl); py = path.get(seqstart)[1] + (vy * pl);
-                dist2 = ((path.get(pcnt)[0] - px) * (path.get(pcnt)[0] - px)) + ((path.get(pcnt)[1] - py) * (path.get(pcnt)[1] - py));
+                px = path[seqstart][0] + (vx * pl); py = path[seqstart][1] + (vy * pl);
+                dist2 = ((path[pcnt][0] - px) * (path[pcnt][0] - px)) + ((path[pcnt][1] - py) * (path[pcnt][1] - py));
                 if (dist2 > ltreshold) { curvepass = false; }
                 if (dist2 > errorval) { errorpoint = pcnt; errorval = dist2; }
                 pcnt = (pcnt + 1) % pathlength;
@@ -817,13 +813,13 @@ namespace ImageTracerNet
             // return straight line if fits
             if (curvepass)
             {
-                segment.add(new Double[7]);
-                thissegment = segment.get(segment.size() - 1);
+                segment.Add(new double[7]);
+                thissegment = segment[segment.Count - 1];
                 thissegment[0] = 1.0;
-                thissegment[1] = path.get(seqstart)[0];
-                thissegment[2] = path.get(seqstart)[1];
-                thissegment[3] = path.get(seqend)[0];
-                thissegment[4] = path.get(seqend)[1];
+                thissegment[1] = path[seqstart][0];
+                thissegment[2] = path[seqstart][1];
+                thissegment[3] = path[seqend][0];
+                thissegment[4] = path[seqend][1];
                 thissegment[5] = 0.0;
                 thissegment[6] = 0.0;
                 return segment;
@@ -835,8 +831,8 @@ namespace ImageTracerNet
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
             // helpers and projecting to get control point
             double t = (fitpoint - seqstart) / tl, t1 = (1.0 - t) * (1.0 - t), t2 = 2.0 * (1.0 - t) * t, t3 = t * t;
-            double cpx = (((t1 * path.get(seqstart)[0]) + (t3 * path.get(seqend)[0])) - path.get(fitpoint)[0]) / -t2,
-                    cpy = (((t1 * path.get(seqstart)[1]) + (t3 * path.get(seqend)[1])) - path.get(fitpoint)[1]) / -t2;
+            double cpx = (((t1 * path[seqstart][0]) + (t3 * path[seqend][0])) - path[fitpoint][0]) / -t2,
+                    cpy = (((t1 * path[seqstart][1]) + (t3 * path[seqend][1])) - path[fitpoint][1]) / -t2;
 
             // Check every point
             pcnt = seqstart + 1;
@@ -844,10 +840,10 @@ namespace ImageTracerNet
             {
 
                 t = (pcnt - seqstart) / tl; t1 = (1.0 - t) * (1.0 - t); t2 = 2.0 * (1.0 - t) * t; t3 = t * t;
-                px = (t1 * path.get(seqstart)[0]) + (t2 * cpx) + (t3 * path.get(seqend)[0]);
-                py = (t1 * path.get(seqstart)[1]) + (t2 * cpy) + (t3 * path.get(seqend)[1]);
+                px = (t1 * path[seqstart][0]) + (t2 * cpx) + (t3 * path[seqend][0]);
+                py = (t1 * path[seqstart][1]) + (t2 * cpy) + (t3 * path[seqend][1]);
 
-                dist2 = ((path.get(pcnt)[0] - px) * (path.get(pcnt)[0] - px)) + ((path.get(pcnt)[1] - py) * (path.get(pcnt)[1] - py));
+                dist2 = ((path[pcnt][0] - px) * (path[pcnt][0] - px)) + ((path[pcnt][1] - py) * (path[pcnt][1] - py));
 
                 if (dist2 > qtreshold) { curvepass = false; }
                 if (dist2 > errorval) { errorpoint = pcnt; errorval = dist2; }
@@ -857,15 +853,15 @@ namespace ImageTracerNet
             // return spline if fits
             if (curvepass)
             {
-                segment.add(new Double[7]);
-                thissegment = segment.get(segment.size() - 1);
+                segment.Add(new double[7]);
+                thissegment = segment[segment.Count - 1];
                 thissegment[0] = 2.0;
-                thissegment[1] = path.get(seqstart)[0];
-                thissegment[2] = path.get(seqstart)[1];
+                thissegment[1] = path[seqstart][0];
+                thissegment[2] = path[seqstart][1];
                 thissegment[3] = cpx;
                 thissegment[4] = cpy;
-                thissegment[5] = path.get(seqend)[0];
-                thissegment[6] = path.get(seqend)[1];
+                thissegment[5] = path[seqend][0];
+                thissegment[6] = path[seqend][1];
                 return segment;
             }
 
@@ -875,29 +871,28 @@ namespace ImageTracerNet
 
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
             segment = fitseq(path, ltreshold, qtreshold, seqstart, splitpoint);
-            segment.addAll(fitseq(path, ltreshold, qtreshold, splitpoint, seqend));
+            segment.AddRange(fitseq(path, ltreshold, qtreshold, splitpoint, seqend));
             return segment;
-
         }// End of fitseq()
 
         // 5. Batch tracing paths
-        public static ArrayList<ArrayList<Double[]>> batchtracepaths(ArrayList<ArrayList<Double[]>> internodepaths, float ltres, float qtres)
+        public static List<List<double[]>> batchtracepaths(List<List<double[]>> internodepaths, float ltres, float qtres)
         {
-            ArrayList<ArrayList<Double[]>> btracedpaths = new ArrayList<ArrayList<Double[]>>();
-            for (int k = 0; k < internodepaths.size(); k++)
+            List<List<double[]>> btracedpaths = new List<List<double[]>>();
+            for (int k = 0; k < internodepaths.Count; k++)
             {
-                btracedpaths.add(tracepath(internodepaths.get(k), ltres, qtres));
+                btracedpaths.Add(tracepath(internodepaths[k], ltres, qtres));
             }
             return btracedpaths;
         }
 
         // 5. Batch tracing layers
-        public static ArrayList<ArrayList<ArrayList<Double[]>>> batchtracelayers(ArrayList<ArrayList<ArrayList<Double[]>>> binternodes, float ltres, float qtres)
+        public static TriListDoubleArray batchtracelayers(TriListDoubleArray binternodes, float ltres, float qtres)
         {
-            ArrayList<ArrayList<ArrayList<Double[]>>> btbis = new ArrayList<ArrayList<ArrayList<Double[]>>>();
-            for (int k = 0; k < binternodes.size(); k++)
+            TriListDoubleArray btbis = new TriListDoubleArray();
+            for (int k = 0; k < binternodes.Count; k++)
             {
-                btbis.add(batchtracepaths(binternodes.get(k), ltres, qtres));
+                btbis.Add(batchtracepaths(binternodes[k], ltres, qtres));
             }
             return btbis;
         }
@@ -910,69 +905,67 @@ namespace ImageTracerNet
 
         public static float roundtodec(float val, float places)
         {
-            return (float)(Math.round(val * Math.pow(10, places)) / Math.pow(10, places));
+            return (float)(Math.Round(val * Math.Pow(10, places)) / Math.Pow(10, places));
         }
 
         // Getting SVG path element string from a traced path
-        public static void svgpathstring(StringBuilder sb, String desc, ArrayList<Double[]> segments, String colorstr, HashMap<String, Float> options)
+        public static void svgpathstring(StringBuilder sb, string desc, List<double[]> segments, string colorstr, Options options)
         {
-            float scale = options.get("scale"), lcpr = options.get("lcpr"), qcpr = options.get("qcpr"), roundcoords = (float)Math.floor(options.get("roundcoords"));
+            float scale = options["scale"], lcpr = options["lcpr"], qcpr = options["qcpr"], roundcoords = (float)Math.Floor(options["roundcoords"]);
             // Path
-            sb.append("<path ").append(desc).append(colorstr).append("d=\"").append("M ").append(segments.get(0)[1] * scale).append(" ").append(segments.get(0)[2] * scale).append(" ");
+            sb.Append("<path ").Append(desc).Append(colorstr).Append("d=\"").Append("M ").Append(segments[0][1] * scale).Append(" ").Append(segments[0][2] * scale).Append(" ");
 
             if (roundcoords == -1)
             {
-                for (int pcnt = 0; pcnt < segments.size(); pcnt++)
+                for (int pcnt = 0; pcnt < segments.Count; pcnt++)
                 {
-                    if (segments.get(pcnt)[0] == 1.0)
+                    if (segments[pcnt][0] == 1.0)
                     {
-                        sb.append("L ").append(segments.get(pcnt)[3] * scale).append(" ").append(segments.get(pcnt)[4] * scale).append(" ");
+                        sb.Append("L ").Append(segments[pcnt][3] * scale).Append(" ").Append(segments[pcnt][4] * scale).Append(" ");
                     }
                     else
                     {
-                        sb.append("Q ").append(segments.get(pcnt)[3] * scale).append(" ").append(segments.get(pcnt)[4] * scale).append(" ").append(segments.get(pcnt)[5] * scale).append(" ").append(segments.get(pcnt)[6] * scale).append(" ");
+                        sb.Append("Q ").Append(segments[pcnt][3] * scale).Append(" ").Append(segments[pcnt][4] * scale).Append(" ").Append(segments[pcnt][5] * scale).Append(" ").Append(segments[pcnt][6] * scale).Append(" ");
                     }
                 }
             }
             else
             {
-                for (int pcnt = 0; pcnt < segments.size(); pcnt++)
+                for (int pcnt = 0; pcnt < segments.Count; pcnt++)
                 {
-                    if (segments.get(pcnt)[0] == 1.0)
+                    if (segments[pcnt][0] == 1.0)
                     {
-                        sb.append("L ").append(roundtodec((float)(segments.get(pcnt)[3] * scale), roundcoords)).append(" ")
-                        .append(roundtodec((float)(segments.get(pcnt)[4] * scale), roundcoords)).append(" ");
+                        sb.Append("L ").Append(roundtodec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
+                        .Append(roundtodec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ");
                     }
                     else
                     {
-                        sb.append("Q ").append(roundtodec((float)(segments.get(pcnt)[3] * scale), roundcoords)).append(" ")
-                        .append(roundtodec((float)(segments.get(pcnt)[4] * scale), roundcoords)).append(" ")
-                        .append(roundtodec((float)(segments.get(pcnt)[5] * scale), roundcoords)).append(" ")
-                        .append(roundtodec((float)(segments.get(pcnt)[6] * scale), roundcoords)).append(" ");
+                        sb.Append("Q ").Append(roundtodec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
+                        .Append(roundtodec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ")
+                        .Append(roundtodec((float)(segments[pcnt][5] * scale), roundcoords)).Append(" ")
+                        .Append(roundtodec((float)(segments[pcnt][6] * scale), roundcoords)).Append(" ");
                     }
                 }
             }// End of roundcoords check
 
-            sb.append("Z\" />");
+            sb.Append("Z\" />");
 
             // Rendering control points
-            for (int pcnt = 0; pcnt < segments.size(); pcnt++)
+            for (int pcnt = 0; pcnt < segments.Count; pcnt++)
             {
-                if ((lcpr > 0) && (segments.get(pcnt)[0] == 1.0))
+                if ((lcpr > 0) && (segments[pcnt][0] == 1.0))
                 {
-                    sb.append("<circle cx=\"").append(segments.get(pcnt)[3] * scale).append("\" cy=\"").append(segments.get(pcnt)[4] * scale).append("\" r=\"").append(lcpr).append("\" fill=\"white\" stroke-width=\"").append(lcpr * 0.2).append("\" stroke=\"black\" />");
+                    sb.Append("<circle cx=\"").Append(segments[pcnt][3] * scale).Append("\" cy=\"").Append(segments[pcnt][4] * scale).Append("\" r=\"").Append(lcpr).Append("\" fill=\"white\" stroke-width=\"").Append(lcpr * 0.2).Append("\" stroke=\"black\" />");
                 }
-                if ((qcpr > 0) && (segments.get(pcnt)[0] == 2.0))
+                if ((qcpr > 0) && (segments[pcnt][0] == 2.0))
                 {
-                    sb.append("<circle cx=\"").append(segments.get(pcnt)[3] * scale).append("\" cy=\"").append(segments.get(pcnt)[4] * scale).append("\" r=\"").append(qcpr).append("\" fill=\"cyan\" stroke-width=\"").append(qcpr * 0.2).append("\" stroke=\"black\" />");
-                    sb.append("<circle cx=\"").append(segments.get(pcnt)[5] * scale).append("\" cy=\"").append(segments.get(pcnt)[6] * scale).append("\" r=\"").append(qcpr).append("\" fill=\"white\" stroke-width=\"").append(qcpr * 0.2).append("\" stroke=\"black\" />");
-                    sb.append("<line x1=\"").append(segments.get(pcnt)[1] * scale).append("\" y1=\"").append(segments.get(pcnt)[2] * scale).append("\" x2=\"").append(segments.get(pcnt)[3] * scale).append("\" y2=\"").append(segments.get(pcnt)[4] * scale).append("\" stroke-width=\"").append(qcpr * 0.2).append("\" stroke=\"cyan\" />");
-                    sb.append("<line x1=\"").append(segments.get(pcnt)[3] * scale).append("\" y1=\"").append(segments.get(pcnt)[4] * scale).append("\" x2=\"").append(segments.get(pcnt)[5] * scale).append("\" y2=\"").append(segments.get(pcnt)[6] * scale).append("\" stroke-width=\"").append(qcpr * 0.2).append("\" stroke=\"cyan\" />");
+                    sb.Append("<circle cx=\"").Append(segments[pcnt][3] * scale).Append("\" cy=\"").Append(segments[pcnt][4] * scale).Append("\" r=\"").Append(qcpr).Append("\" fill=\"cyan\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"black\" />");
+                    sb.Append("<circle cx=\"").Append(segments[pcnt][5] * scale).Append("\" cy=\"").Append(segments[pcnt][6] * scale).Append("\" r=\"").Append(qcpr).Append("\" fill=\"white\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"black\" />");
+                    sb.Append("<line x1=\"").Append(segments[pcnt][1] * scale).Append("\" y1=\"").Append(segments[pcnt][2] * scale).Append("\" x2=\"").Append(segments[pcnt][3] * scale).Append("\" y2=\"").Append(segments[pcnt][4] * scale).Append("\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"cyan\" />");
+                    sb.Append("<line x1=\"").Append(segments[pcnt][3] * scale).Append("\" y1=\"").Append(segments[pcnt][4] * scale).Append("\" x2=\"").Append(segments[pcnt][5] * scale).Append("\" y2=\"").Append(segments[pcnt][6] * scale).Append("\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"cyan\" />");
                 }// End of quadratic control points
             }
-
         }// End of svgpathstring()
-
 
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
@@ -983,8 +976,8 @@ namespace ImageTracerNet
             int w = (int)(ii.width * options.get("scale")), h = (int)(ii.height * options.get("scale"));
             String viewboxorviewport = options.get("viewbox") != 0 ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
             StringBuilder svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options.get("desc") != 0) { svgstr.append("desc=\"Created with ImageTracer.java version " + ImageTracer.versionnumber + "\" "); }
-            svgstr.append(">");
+            if (options.get("desc") != 0) { svgstr.Append("desc=\"Created with ImageTracer.java version " + ImageTracer.versionnumber + "\" "); }
+            svgstr.Append(">");
 
             // creating Z-index
             TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
@@ -1024,7 +1017,7 @@ namespace ImageTracerNet
             }
 
             // SVG End
-            svgstr.append("</svg>");
+            svgstr.Append("</svg>");
 
             return svgstr.toString();
 
