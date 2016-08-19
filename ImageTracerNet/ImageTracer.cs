@@ -154,7 +154,7 @@ namespace ImageTracerNet
             float minratio = options["mincolorratio"];
             int cycles = (int)Math.Floor(options["colorquantcycles"]);
             // Creating indexed color array arr which has a boundary filled with -1 in every direction
-            int[][] arr = new int[imgd.height + 2][imgd.width + 2];
+            int[][] arr = new int[imgd.height + 2][].InitInner(imgd.width + 2);
             for (int j = 0; j < (imgd.height + 2); j++) { arr[j][0] = -1; arr[j][imgd.width + 1] = -1; }
             for (int i = 0; i < (imgd.width + 2); i++) { arr[0][i] = -1; arr[imgd.height + 1][i] = -1; }
 
@@ -176,7 +176,7 @@ namespace ImageTracerNet
             // Selective Gaussian blur preprocessing
             if (options["blurradius"] > 0) { imgd = blur(imgd, options["blurradius"], options["blurdelta"]); }
 
-            long[][] paletteacc = new long[palette.Length][5];
+            long[][] paletteacc = new long[palette.Length][].InitInner(5);
 
             // Repeat clustering step "cycles" times
             for (int cnt = 0; cnt < cycles; cnt++)
@@ -192,10 +192,10 @@ namespace ImageTracerNet
                         // averaging
                         if (paletteacc[k][3] > 0)
                         {
-                            palette[k][0] = (byte)(-128 + Math.Floor(paletteacc[k][0] / paletteacc[k][4]));
-                            palette[k][1] = (byte)(-128 + Math.Floor(paletteacc[k][1] / paletteacc[k][4]));
-                            palette[k][2] = (byte)(-128 + Math.Floor(paletteacc[k][2] / paletteacc[k][4]));
-                            palette[k][3] = (byte)(-128 + Math.Floor(paletteacc[k][3] / paletteacc[k][4]));
+                            palette[k][0] = (byte)(-128 + Math.Floor((double)(paletteacc[k][0] / paletteacc[k][4])));
+                            palette[k][1] = (byte)(-128 + Math.Floor((double)(paletteacc[k][1] / paletteacc[k][4])));
+                            palette[k][2] = (byte)(-128 + Math.Floor((double)(paletteacc[k][2] / paletteacc[k][4])));
+                            palette[k][3] = (byte)(-128 + Math.Floor((double)(paletteacc[k][3] / paletteacc[k][4])));
                         }
                         ratio = paletteacc[k][4] / (imgd.width * imgd.height);
 
@@ -265,11 +265,11 @@ namespace ImageTracerNet
         // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
         public static byte[][] generatepalette(int numberofcolors)
         {
-            byte[][] palette = new byte[numberofcolors][4];
+            byte[][] palette = new byte[numberofcolors][].InitInner(4);
             if (numberofcolors < 8)
             {
                 // Grayscale
-                byte graystep = (byte)Math.Floor(255 / (numberofcolors - 1));
+                byte graystep = (byte)Math.Floor((double)(255 / (numberofcolors - 1)));
                 for (byte ccnt = 0; ccnt < numberofcolors; ccnt++)
                 {
                     palette[ccnt][0] = (byte)(-128 + (ccnt * graystep));
@@ -282,7 +282,7 @@ namespace ImageTracerNet
             {
                 // RGB color cube
                 int colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-                int colorstep = (int)Math.Floor(255 / (colorqnum - 1)); // distance between points
+                int colorstep = (int)Math.Floor((double)(255 / (colorqnum - 1))); // distance between points
                 int ccnt = 0;
                 for (int rcnt = 0; rcnt < colorqnum; rcnt++)
                 {
@@ -315,7 +315,7 @@ namespace ImageTracerNet
 
         public static byte[][] samplepalette(int numberofcolors, ImageData imgd)
         {
-            int idx = 0; byte[][] palette = new byte[numberofcolors][4];
+            int idx = 0; byte[][] palette = new byte[numberofcolors][].InitInner(4);
             for (int i = 0; i < numberofcolors; i++)
             {
                 idx = (int)(Math.Floor((Rng.NextDouble() * imgd.data.Length) / 4) * 4);
@@ -337,7 +337,7 @@ namespace ImageTracerNet
         {
             // Creating layers for each indexed color in arr
             int val = 0, aw = ii.array[0].Length, ah = ii.array.Length, n1, n2, n3, n4, n5, n6, n7, n8;
-            int[][][] layers = new int[ii.palette.Length][ah][aw];
+            int[][][] layers = new int[ii.palette.Length][][].InitInner(ah, aw);
 
             // Looping through all pixels and calculating edge node type
             for (int j = 1; j < (ah - 1); j++)
