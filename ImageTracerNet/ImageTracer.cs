@@ -1129,6 +1129,5 @@ namespace ImageTracerNet
             return imgd2;
 
         }// End of blur()
-
     }// End of ImageTracer class
 }
