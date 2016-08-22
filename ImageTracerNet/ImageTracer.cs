@@ -208,12 +208,12 @@ namespace ImageTracerNet
                         // averaging
                         if (paletteacc[k][3] > 0)
                         {
-                            palette[k][0] = (byte)(shift + Math.Floor((double)(paletteacc[k][0] / paletteacc[k][4])));
-                            palette[k][1] = (byte)(shift + Math.Floor((double)(paletteacc[k][1] / paletteacc[k][4])));
-                            palette[k][2] = (byte)(shift + Math.Floor((double)(paletteacc[k][2] / paletteacc[k][4])));
-                            palette[k][3] = (byte)(shift + Math.Floor((double)(paletteacc[k][3] / paletteacc[k][4])));
+                            palette[k][0] = (byte)(shift + Math.Floor((double)(paletteacc[k][0] / (double)paletteacc[k][4])));
+                            palette[k][1] = (byte)(shift + Math.Floor((double)(paletteacc[k][1] / (double)paletteacc[k][4])));
+                            palette[k][2] = (byte)(shift + Math.Floor((double)(paletteacc[k][2] / (double)paletteacc[k][4])));
+                            palette[k][3] = (byte)(shift + Math.Floor((double)(paletteacc[k][3] / (double)paletteacc[k][4])));
                         }
-                        ratio = paletteacc[k][4] / (imgd.width * imgd.height);
+                        ratio = paletteacc[k][4] / (float)(imgd.width * imgd.height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < minratio) && (cnt < (cycles - 1)))
@@ -288,7 +288,7 @@ namespace ImageTracerNet
             {
                 const int shift = 0; // MJY: From -128
                 // Grayscale
-                byte graystep = (byte)Math.Floor((double)(255 / (numberofcolors - 1)));
+                byte graystep = (byte)Math.Floor((double)(255 / (double)(numberofcolors - 1)));
                 for (byte ccnt = 0; ccnt < numberofcolors; ccnt++)
                 {
                     palette[ccnt][0] = (byte)(shift + (ccnt * graystep));
@@ -302,7 +302,7 @@ namespace ImageTracerNet
                 const int shift = 0; // MJY: From -128
                 // RGB color cube
                 int colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-                int colorstep = (int)Math.Floor((double)(255 / (colorqnum - 1))); // distance between points
+                int colorstep = (int)Math.Floor((double)(255 / (double)(colorqnum - 1))); // distance between points
                 int ccnt = 0;
                 for (int rcnt = 0; rcnt < colorqnum; rcnt++)
                 {
