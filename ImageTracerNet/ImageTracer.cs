@@ -204,23 +204,24 @@ namespace ImageTracerNet
                     float ratio;
                     for (int k = 0; k < palette.Length; k++)
                     {
+                        const int shift = 0; // MJY: From -128
                         // averaging
                         if (paletteacc[k][3] > 0)
                         {
-                            palette[k][0] = (byte)(-128 + Math.Floor((double)(paletteacc[k][0] / paletteacc[k][4])));
-                            palette[k][1] = (byte)(-128 + Math.Floor((double)(paletteacc[k][1] / paletteacc[k][4])));
-                            palette[k][2] = (byte)(-128 + Math.Floor((double)(paletteacc[k][2] / paletteacc[k][4])));
-                            palette[k][3] = (byte)(-128 + Math.Floor((double)(paletteacc[k][3] / paletteacc[k][4])));
+                            palette[k][0] = (byte)(shift + Math.Floor((double)(paletteacc[k][0] / paletteacc[k][4])));
+                            palette[k][1] = (byte)(shift + Math.Floor((double)(paletteacc[k][1] / paletteacc[k][4])));
+                            palette[k][2] = (byte)(shift + Math.Floor((double)(paletteacc[k][2] / paletteacc[k][4])));
+                            palette[k][3] = (byte)(shift + Math.Floor((double)(paletteacc[k][3] / paletteacc[k][4])));
                         }
                         ratio = paletteacc[k][4] / (imgd.width * imgd.height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < minratio) && (cnt < (cycles - 1)))
                         {
-                            palette[k][0] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
-                            palette[k][1] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
-                            palette[k][2] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
-                            palette[k][3] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                            palette[k][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                            palette[k][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                            palette[k][2] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                            palette[k][3] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
                         }
 
                     }// End of palette loop
@@ -261,11 +262,13 @@ namespace ImageTracerNet
 
                         }// End of palette loop
 
+                        const int shift = 0; // MJY: From 128
+
                         // add to palettacc
-                        paletteacc[ci][0] += 128 + imgd.data[idx];
-                        paletteacc[ci][1] += 128 + imgd.data[idx + 1];
-                        paletteacc[ci][2] += 128 + imgd.data[idx + 2];
-                        paletteacc[ci][3] += 128 + imgd.data[idx + 3];
+                        paletteacc[ci][0] += shift + imgd.data[idx];
+                        paletteacc[ci][1] += shift + imgd.data[idx + 1];
+                        paletteacc[ci][2] += shift + imgd.data[idx + 2];
+                        paletteacc[ci][3] += shift + imgd.data[idx + 3];
                         paletteacc[ci][4]++;
 
                         arr[j + 1][i + 1] = ci;
@@ -283,18 +286,20 @@ namespace ImageTracerNet
             byte[][] palette = new byte[numberofcolors][].InitInner(4);
             if (numberofcolors < 8)
             {
+                const int shift = 0; // MJY: From -128
                 // Grayscale
                 byte graystep = (byte)Math.Floor((double)(255 / (numberofcolors - 1)));
                 for (byte ccnt = 0; ccnt < numberofcolors; ccnt++)
                 {
-                    palette[ccnt][0] = (byte)(-128 + (ccnt * graystep));
-                    palette[ccnt][1] = (byte)(-128 + (ccnt * graystep));
-                    palette[ccnt][2] = (byte)(-128 + (ccnt * graystep));
+                    palette[ccnt][0] = (byte)(shift + (ccnt * graystep));
+                    palette[ccnt][1] = (byte)(shift + (ccnt * graystep));
+                    palette[ccnt][2] = (byte)(shift + (ccnt * graystep));
                     palette[ccnt][3] = (byte)255;
                 }
             }
             else
             {
+                const int shift = 0; // MJY: From -128
                 // RGB color cube
                 int colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
                 int colorstep = (int)Math.Floor((double)(255 / (colorqnum - 1))); // distance between points
@@ -305,9 +310,9 @@ namespace ImageTracerNet
                     {
                         for (int bcnt = 0; bcnt < colorqnum; bcnt++)
                         {
-                            palette[ccnt][0] = (byte)(-128 + (rcnt * colorstep));
-                            palette[ccnt][1] = (byte)(-128 + (gcnt * colorstep));
-                            palette[ccnt][2] = (byte)(-128 + (bcnt * colorstep));
+                            palette[ccnt][0] = (byte)(shift + (rcnt * colorstep));
+                            palette[ccnt][1] = (byte)(shift + (gcnt * colorstep));
+                            palette[ccnt][2] = (byte)(shift + (bcnt * colorstep));
                             palette[ccnt][3] = (byte)127;
                             ccnt++;
                         }// End of blue loop
@@ -317,10 +322,10 @@ namespace ImageTracerNet
                 // Rest is random
                 for (int rcnt = ccnt; rcnt < numberofcolors; rcnt++)
                 {
-                    palette[ccnt][0] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
-                    palette[ccnt][1] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
-                    palette[ccnt][2] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
-                    palette[ccnt][3] = (byte)(-128 + Math.Floor(Rng.NextDouble() * 255));
+                    palette[ccnt][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                    palette[ccnt][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                    palette[ccnt][2] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                    palette[ccnt][3] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
                 }
 
             }// End of numberofcolors check
@@ -664,7 +669,6 @@ namespace ImageTracerNet
 
             return paths;
         }// End of pathscan()
-
 
         // 3. Batch pathscan
         public static TriListIntArray batchpathscan(int[][][] layers, float pathomit)
@@ -1043,8 +1047,14 @@ namespace ImageTracerNet
         }
 
         // Gaussian kernels for blur
-        static double[][] gks = { new []{0.27901, 0.44198, 0.27901}, new []{0.135336,0.228569,0.272192,0.228569,0.135336}, new []{0.086776,0.136394,0.178908,0.195843,0.178908,0.136394,0.086776},
-                    new []{0.063327,0.093095,0.122589,0.144599,0.152781,0.144599,0.122589,0.093095,0.063327}, new []{0.049692,0.069304,0.089767,0.107988,0.120651,0.125194,0.120651,0.107988,0.089767,0.069304,0.049692} };
+        static double[][] gks = 
+        {
+            new []{0.27901, 0.44198, 0.27901},
+            new []{0.135336,0.228569,0.272192,0.228569,0.135336},
+            new []{0.086776,0.136394,0.178908,0.195843,0.178908,0.136394,0.086776},
+            new []{0.063327,0.093095,0.122589,0.144599,0.152781,0.144599,0.122589,0.093095,0.063327},
+            new []{0.049692,0.069304,0.089767,0.107988,0.120651,0.125194,0.120651,0.107988,0.089767,0.069304,0.049692}
+        };
 
         // Selective Gaussian blur for preprocessing
         static ImageData blur(ImageData imgd, float rad, float del)
