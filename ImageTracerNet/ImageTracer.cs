@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -31,16 +32,29 @@ namespace ImageTracerNet
         public static ImageData loadImageData(Bitmap image)
         {
             int width = image.Width; int height = image.Height;
-            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppRgb);
-            int[] rawdata = rbgImage.ToIntArray();
-            byte[] data = new byte[rawdata.Length * 4];
-            for(int i = 0; i<rawdata.Length; i++)
-            {
-                data[(i * 4) + 3] = bytetrans((byte)(rawdata[i] >> 24));
-                data[i * 4] = bytetrans((byte)(rawdata[i] >> 16));
-                data[(i * 4) + 1] = bytetrans((byte)(rawdata[i] >> 8));
-                data[(i * 4) + 2] = bytetrans((byte)(rawdata[i]));
-            }
+            //var data1 = image.ToByteArray();
+            //var colors = image.ToColorArray();
+            //var sdata = image.ToSByteArray();
+            //Color ARGB = Color.FromArgb(A, R, G, B)
+            //var myArray = (byte[])new ImageConverter().ConvertTo(image, typeof(byte[]));
+            //byte[] myArray;
+            //using (var ms = new MemoryStream())
+            //{
+            //    image.Save(ms, image.RawFormat);
+            //    myArray = ms.ToArray();
+            //}
+            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
+            var data = rbgImage.ToRgbaByteArray();
+            //int[] rawdata = rbgImage.ToIntArray();
+            //byte[] data = new byte[rawdata.Length * 4];
+            //for(int i = 0; i<rawdata.Length; i++)
+            //{
+            //    data[(i * 4) + 3] = bytetrans((byte)(rawdata[i] >> 24));
+            //    data[i * 4] = bytetrans((byte)(rawdata[i] >> 16));
+            //    data[(i * 4) + 1] = bytetrans((byte)(rawdata[i] >> 8));
+            //    data[(i * 4) + 2] = bytetrans((byte)(rawdata[i]));
+            //}
+            //return new ImageData(width, height, data);
             return new ImageData(width, height, data);
         }
 
@@ -1023,7 +1037,8 @@ namespace ImageTracerNet
 
         static String tosvgcolorstr(byte[] c)
         {
-            return "fill=\"rgb(" + (c[0] + 128) + "," + (c[1] + 128) + "," + (c[2] + 128) + ")\" stroke=\"rgb(" + (c[0] + 128) + "," + (c[1] + 128) + "," + (c[2] + 128) + ")\" stroke-width=\"1\" opacity=\"" + ((c[3] + 128) / 255.0) + "\" ";
+            const int value = 0; // MJY: Try removing all the + 128 on the values. Might fix issues.
+            return "fill=\"rgb(" + (c[0] + value) + "," + (c[1] + value) + "," + (c[2] + value) + ")\" stroke=\"rgb(" + (c[0] + value) + "," + (c[1] + value) + "," + (c[2] + value) + ")\" stroke-width=\"1\" opacity=\"" + ((c[3] + value) / 255.0) + "\" ";
         }
 
         // Gaussian kernels for blur

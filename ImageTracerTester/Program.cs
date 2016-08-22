@@ -10,13 +10,13 @@ namespace ImageTracerTester
         private static void Main(string[] args)
         {
             //SaveTracedImage(args);
-            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"Chrono Trigger2-traced.svg" });
+            SaveTracedImage(new [] { @"..\..\Images\1.png", "outfilename", @"smiley-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "10" });
         }
 
         private static void SaveTracedImage(string[] args)
         {
-            try
-            {
+            //try
+            //{
                 if (args.Length < 1)
                 {
                     Console.WriteLine("ERROR: there's no input filename. Basic usage: \r\n\r\njava -jar ImageTracer.jar <filename>" +
@@ -61,8 +61,8 @@ namespace ImageTracerTester
 
                 }// End of parameter parsing and processing
 
-            }
-            catch (Exception e) { Console.WriteLine(e.StackTrace); }
+            //}
+            //catch (Exception e) { Console.WriteLine(e.StackTrace); }
         }
 
         public static int arraycontains(String[] arr, String str)

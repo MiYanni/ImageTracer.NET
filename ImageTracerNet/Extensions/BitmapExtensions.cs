@@ -1,5 +1,7 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace ImageTracerNet.Extensions
@@ -40,6 +42,63 @@ namespace ImageTracerNet.Extensions
             image.UnlockBits(bitmapData);
 
             return values;
+        }
+
+        //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
+        public static byte[] ToByteArray(this Bitmap image)
+        {
+            // Lock the bitmap's bits.
+            var rectangle = new Rectangle(0, 0, image.Width, image.Height);
+            var bitmapData = image.LockBits(rectangle, ImageLockMode.ReadWrite, image.PixelFormat);
+            // Get the address of the first line.
+            var bitmapPointer = bitmapData.Scan0;
+            //http://stackoverflow.com/a/13273799/294804
+            if (bitmapData.Stride < 0)
+            {
+                bitmapPointer += bitmapData.Stride * (image.Height - 1);
+            }
+            //http://stackoverflow.com/a/1917036/294804
+            // Declare an array to hold the bytes of the bitmap. 
+            var byteCount = bitmapData.Stride * image.Height;
+            var values = new byte[byteCount];
+            // Copy the RGB values into the array.
+            Marshal.Copy(bitmapPointer, values, 0, byteCount);
+            // Unlock the bits.
+            image.UnlockBits(bitmapData);
+
+            return values;
+        }
+
+        //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
+        public static sbyte[] ToSByteArray(this Bitmap image)
+        {
+            return Array.ConvertAll(image.ToByteArray(), b => unchecked((sbyte)b));
+        }
+
+        //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
+        //http://stackoverflow.com/questions/23530575/pixel-output-incorrect
+        public static Color[] ToColorArray(this Bitmap image)
+        {
+            var bytes = image.ToByteArray();
+            var colors = new Color[bytes.Length/4];
+            for(var i = 0; i < bytes.Length/4; ++i)
+            {
+                byte B = bytes[i * 4];
+                byte G = bytes[i * 4 + 1];
+                byte R = bytes[i * 4 + 2];
+                byte A = bytes[i * 4 + 3];
+                colors[i] = Color.FromArgb(A, R, G, B);
+            }
+
+            return colors;
+        }
+
+        //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
+        //http://stackoverflow.com/questions/23530575/pixel-output-incorrect
+        public static byte[] ToRgbaByteArray(this Bitmap image)
+        {
+            var colors = image.ToColorArray();
+            return colors.Select(c => new[] {c.R, c.G, c.B, c.A}).SelectMany(b => b).ToArray();
         }
 
         public static Bitmap ToBitmap(this int[] bitmapData, int width, int height, PixelFormat format)
