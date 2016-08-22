@@ -63,8 +63,9 @@ namespace ImageTracerNet
         // 127 (representing 255 unsigned) and tosvgcolorstr will add +128 to create RGB values 0..255
         public static byte bytetrans(byte b)
         {
-            //MJY: This might be an issue.
-            if (b < 0) { return (byte)(b + 128); } else { return (byte)(b - 128); }
+            // MJY: This might be an issue.
+            //if (b < 0) { return (byte)(b + 128); } else { return (byte)(b - 128); }
+            return b;
         }
 
         ////////////////////////////////////////////////////////////
@@ -1037,8 +1038,8 @@ namespace ImageTracerNet
 
         static String tosvgcolorstr(byte[] c)
         {
-            const int value = 0; // MJY: Try removing all the + 128 on the values. Might fix issues.
-            return "fill=\"rgb(" + (c[0] + value) + "," + (c[1] + value) + "," + (c[2] + value) + ")\" stroke=\"rgb(" + (c[0] + value) + "," + (c[1] + value) + "," + (c[2] + value) + ")\" stroke-width=\"1\" opacity=\"" + ((c[3] + value) / 255.0) + "\" ";
+            const int shift = 0; // MJY: Try removing all the + 128 on the values. Might fix issues.
+            return "fill=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke-width=\"1\" opacity=\"" + ((c[3] + shift) / 255.0) + "\" ";
         }
 
         // Gaussian kernels for blur

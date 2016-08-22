@@ -70,9 +70,9 @@ namespace ImageTracerNet.Extensions
         }
 
         //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
-        public static sbyte[] ToSByteArray(this Bitmap image)
+        public static sbyte[] ToSByteArray(this byte[] values)
         {
-            return Array.ConvertAll(image.ToByteArray(), b => unchecked((sbyte)b));
+            return Array.ConvertAll(values, b => unchecked((sbyte)b));
         }
 
         //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
