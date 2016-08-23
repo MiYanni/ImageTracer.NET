@@ -999,7 +999,7 @@ namespace ImageTracerNet
             svgstr.Append(">");
 
             // creating Z-index
-            Dictionary<double, int[]> zindex = new Dictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
+            SortedDictionary<double, int[]> zindex = new SortedDictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
             double label;
             // Layer loop
             for (int k = 0; k < ii.layers.Count; k++)
