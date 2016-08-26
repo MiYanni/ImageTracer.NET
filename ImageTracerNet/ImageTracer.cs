@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using ImageTracerNet.Extensions;
 using Options = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
@@ -249,7 +245,6 @@ namespace ImageTracerNet
                         cdl = 256 + 256 + 256 + 256; ci = 0;
                         for (int k = 0; k < palette.Length; k++)
                         {
-
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
                             c1 = Math.Abs(palette[k][0] - imgd.data[idx]);
                             c2 = Math.Abs(palette[k][1] - imgd.data[idx + 1]);
@@ -327,9 +322,7 @@ namespace ImageTracerNet
                     palette[ccnt][2] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
                     palette[ccnt][3] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
                 }
-
             }// End of numberofcolors check
-
             return palette;
         }// End of generatepalette()
 
@@ -699,7 +692,6 @@ namespace ImageTracerNet
                 // pathpoints loop
                 for (int pcnt = 0; pcnt < palen; pcnt++)
                 {
-
                     // interpolate between two path points
                     nextidx = (pcnt + 1) % palen; nextidx2 = (pcnt + 2) % palen;
                     thisinp.Add(new double[3]);
@@ -711,7 +703,6 @@ namespace ImageTracerNet
                     thispoint[1] = (pp1[1] + pp2[1]) / 2.0;
                     nextpoint[0] = (pp2[0] + pp3[0]) / 2.0;
                     nextpoint[1] = (pp2[1] + pp3[1]) / 2.0;
-
 
                     // line segment direction to the next point
                     if (thispoint[0] < nextpoint[0])
@@ -1015,7 +1006,6 @@ namespace ImageTracerNet
                     zindex[label][0] = k;
                     zindex[label][1] = pcnt;
                 }// End of path loop
-
             }// End of layer loop
 
             // Sorting Z-index is not required, TreeMap is sorted automatically
@@ -1050,10 +1040,10 @@ namespace ImageTracerNet
         static double[][] gks = 
         {
             new []{0.27901, 0.44198, 0.27901},
-            new []{0.135336,0.228569,0.272192,0.228569,0.135336},
-            new []{0.086776,0.136394,0.178908,0.195843,0.178908,0.136394,0.086776},
-            new []{0.063327,0.093095,0.122589,0.144599,0.152781,0.144599,0.122589,0.093095,0.063327},
-            new []{0.049692,0.069304,0.089767,0.107988,0.120651,0.125194,0.120651,0.107988,0.089767,0.069304,0.049692}
+            new []{0.135336, 0.228569, 0.272192, 0.228569, 0.135336},
+            new []{0.086776, 0.136394, 0.178908, 0.195843, 0.178908, 0.136394, 0.086776},
+            new []{0.063327, 0.093095, 0.122589, 0.144599, 0.152781, 0.144599, 0.122589, 0.093095, 0.063327},
+            new []{0.049692, 0.069304, 0.089767, 0.107988, 0.120651, 0.125194, 0.120651, 0.107988, 0.089767, 0.069304, 0.049692}
         };
 
         // Selective Gaussian blur for preprocessing
@@ -1074,7 +1064,6 @@ namespace ImageTracerNet
             {
                 for (i = 0; i < imgd.width; i++)
                 {
-
                     racc = 0; gacc = 0; bacc = 0; aacc = 0; wacc = 0;
                     // gauss kernel loop
                     for (k = -radius; k < (radius + 1); k++)
@@ -1151,9 +1140,7 @@ namespace ImageTracerNet
                     }
                 }
             }// End of Selective blur
-
             return imgd2;
-
         }// End of blur()
     }// End of ImageTracer class
 }

@@ -10,7 +10,7 @@ namespace ImageTracerTester
         private static void Main(string[] args)
         {
             //SaveTracedImage(args);
-            SaveTracedImage(new [] { @"..\..\Images\1.png", "outfilename", @"smiley-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "10" });
+            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "50" });
         }
 
         private static void SaveTracedImage(string[] args)
