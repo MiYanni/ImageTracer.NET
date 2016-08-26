@@ -15,13 +15,6 @@ namespace ImageTracerNet
 
         private static readonly Random Rng = new Random();
 
-        private static ImageData LoadImageData(Bitmap image)
-        {
-            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
-            var data = rbgImage.ToRgbaByteArray();
-            return new ImageData(image.Width, image.Height, data);
-        }
-
         ////////////////////////////////////////////////////////////
         //
         //  User friendly functions
@@ -39,12 +32,6 @@ namespace ImageTracerNet
             return ImageDataToSvg(LoadImageData(image), options, palette);
         }
 
-        // Tracing ImageData, then returning the SVG String
-        private static string ImageDataToSvg(ImageData imgd, Options options, byte[][] palette)
-        {
-            return GetSvgString(ImageDataToTraceData(imgd, options, palette), options);
-        }
-
         // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
         public static IndexedImage ImageToTraceData(string filename, Options options, byte[][] palette) 
         {
@@ -54,6 +41,21 @@ namespace ImageTracerNet
         public static IndexedImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
         {
             return ImageDataToTraceData(LoadImageData(image), options, palette);
+        }
+
+        ////////////////////////////////////////////////////////////
+
+        private static ImageData LoadImageData(Bitmap image)
+        {
+            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
+            var data = rbgImage.ToRgbaByteArray();
+            return new ImageData(image.Width, image.Height, data);
+        }
+
+        // Tracing ImageData, then returning the SVG String
+        private static string ImageDataToSvg(ImageData imgd, Options options, byte[][] palette)
+        {
+            return GetSvgString(ImageDataToTraceData(imgd, options, palette), options);
         }
 
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
