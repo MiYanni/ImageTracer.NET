@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using ImageTracerNet;
-using Options = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
+//using Options = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
 
 namespace ImageTracerTester
 {
@@ -10,7 +10,7 @@ namespace ImageTracerTester
         private static void Main(string[] args)
         {
             //SaveTracedImage(args);
-            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "50" });
+            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "70" });
         }
 
         private static void SaveTracedImage(string[] args)
@@ -50,7 +50,12 @@ namespace ImageTracerTester
                             }
                             else
                             {
-                                f = parsenext(args, j); if (f > -1) { options[parametername] = f; }
+                                f = parsenext(args, j);
+                                if (f > -1)
+                                {
+                                    //options[parametername] = f;
+                                    options.SetOptionByName(parametername, f);
+                                }
                             }
                         }
                     }// End of parameternames loop

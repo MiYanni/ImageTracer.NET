@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text;
 using ImageTracerNet.Extensions;
-using Options = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
+//using OptionsDictionary = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
 using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>; // ArrayList<ArrayList<ArrayList<Double[]>>>
 
@@ -73,13 +73,13 @@ namespace ImageTracerNet
         // Loading an image from a file, tracing when loaded, then returning the SVG String
         public static String imageToSVG(string filename, Options options, byte[][] palette) 
         {
-            options = checkoptions(options);
+            //options = checkoptions(options);
             ImageData imgd = loadImageData(filename);
             return imagedataToSVG(imgd,options,palette);
         }// End of imageToSVG()
         public static String imageToSVG(Bitmap image, Options options, byte[][] palette) 
         {
-            options = checkoptions(options);
+            //options = checkoptions(options);
             ImageData imgd = loadImageData(image);
             return imagedataToSVG(imgd,options,palette);
         }// End of imageToSVG()
@@ -87,7 +87,7 @@ namespace ImageTracerNet
         // Tracing ImageData, then returning the SVG String
         public static String imagedataToSVG(ImageData imgd, Options options, byte[][] palette)
         {
-            options = checkoptions(options);
+            //options = checkoptions(options);
             IndexedImage ii = imagedataToTracedata(imgd, options, palette);
             return getsvgstring(ii, options);
         }// End of imagedataToSVG()
@@ -95,13 +95,13 @@ namespace ImageTracerNet
         // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
         public IndexedImage imageToTracedata(string filename, Options options, byte[][] palette) 
         {
-            options = checkoptions(options);
+            //options = checkoptions(options);
             ImageData imgd = loadImageData(filename);
             return imagedataToTracedata(imgd,options,palette);
         }// End of imageToTracedata()
         public IndexedImage imageToTracedata(Bitmap image, Options options, byte[][] palette) 
         {
-            options = checkoptions(options);
+            //options = checkoptions(options);
             ImageData imgd = loadImageData(image);
             return imagedataToTracedata(imgd,options,palette);
         }// End of imageToTracedata()
@@ -114,41 +114,41 @@ namespace ImageTracerNet
             // 2. Layer separation and edge detection
             int[][][] rawlayers = layering(ii);
             // 3. Batch pathscan
-            TriListIntArray bps = batchpathscan(rawlayers, (int)(Math.Floor(options["pathomit"])));
+            TriListIntArray bps = batchpathscan(rawlayers, (int)Math.Floor(options.Tracing.PathOmit));
             // 4. Batch interpollation
             TriListDoubleArray bis = batchinternodes(bps);
             // 5. Batch tracing
-            ii.layers = batchtracelayers(bis, options["ltres"], options["qtres"]);
+            ii.layers = batchtracelayers(bis, (float)options.Tracing.LTres, (float)options.Tracing.QTres);
             return ii;
         }// End of imagedataToTracedata()
 
-        // creating options object, setting defaults for missing values
-        public static Options checkoptions(Dictionary<string, float> options)
-        {
-            if (options == null) { options = new Options(); }
-            // Tracing
-            if (!options.ContainsKey("ltres")) { options["ltres"] = 1f; }
-            if (!options.ContainsKey("qtres")) { options["qtres"] = 1f; }
-            if (!options.ContainsKey("pathomit")) { options["pathomit"] = 8f; }
-            // Color quantization
-            if (!options.ContainsKey("colorsampling")) { options["colorsampling"] = 1f; }
-            if (!options.ContainsKey("numberofcolors")) { options["numberofcolors"] = 16f; }
-            if (!options.ContainsKey("mincolorratio")) { options["mincolorratio"] = 0.02f; }
-            if (!options.ContainsKey("colorquantcycles")) { options["colorquantcycles"] = 3f; }
-            // SVG rendering
-            if (!options.ContainsKey("scale")) { options["scale"] = 1f; }
-            if (!options.ContainsKey("simplifytolerance")) { options["simplifytolerance"] = 0f; }
-            if (!options.ContainsKey("roundcoords")) { options["roundcoords"] = 1f; }
-            if (!options.ContainsKey("lcpr")) { options["lcpr"] = 0f; }
-            if (!options.ContainsKey("qcpr")) { options["qcpr"] =0f; }
-            if (!options.ContainsKey("desc")) { options["desc"] = 1f; }
-            if (!options.ContainsKey("viewbox")) { options["viewbox"] = 0f; }
-            // Blur
-            if (!options.ContainsKey("blurradius")) { options["blurradius"] = 0f; }
-            if (!options.ContainsKey("blurdelta")) { options["blurdelta"] = 20f; }
+        //// creating options object, setting defaults for missing values
+        //public static Options checkoptions(Dictionary<string, float> options)
+        //{
+        //    if (options == null) { options = new Options(); }
+        //    // Tracing
+        //    if (!options.ContainsKey("ltres")) { options["ltres"] = 1f; }
+        //    if (!options.ContainsKey("qtres")) { options["qtres"] = 1f; }
+        //    if (!options.ContainsKey("pathomit")) { options["pathomit"] = 8f; }
+        //    // Color quantization
+        //    if (!options.ContainsKey("colorsampling")) { options["colorsampling"] = 1f; }
+        //    if (!options.ContainsKey("numberofcolors")) { options["numberofcolors"] = 16f; }
+        //    if (!options.ContainsKey("mincolorratio")) { options["mincolorratio"] = 0.02f; }
+        //    if (!options.ContainsKey("colorquantcycles")) { options["colorquantcycles"] = 3f; }
+        //    // SVG rendering
+        //    if (!options.ContainsKey("scale")) { options["scale"] = 1f; }
+        //    if (!options.ContainsKey("simplifytolerance")) { options["simplifytolerance"] = 0f; }
+        //    if (!options.ContainsKey("roundcoords")) { options["roundcoords"] = 1f; }
+        //    if (!options.ContainsKey("lcpr")) { options["lcpr"] = 0f; }
+        //    if (!options.ContainsKey("qcpr")) { options["qcpr"] =0f; }
+        //    if (!options.ContainsKey("desc")) { options["desc"] = 1f; }
+        //    if (!options.ContainsKey("viewbox")) { options["viewbox"] = 0f; }
+        //    // Blur
+        //    if (!options.ContainsKey("blurradius")) { options["blurradius"] = 0f; }
+        //    if (!options.ContainsKey("blurdelta")) { options["blurdelta"] = 20f; }
 
-            return options;
-        }// End of checkoptions()
+        //    return options;
+        //}// End of checkoptions()
 
 
         ////////////////////////////////////////////////////////////
@@ -161,9 +161,9 @@ namespace ImageTracerNet
         // https://en.wikipedia.org/wiki/Color_quantization    https://en.wikipedia.org/wiki/K-means_clustering
         public static IndexedImage colorquantization(ImageData imgd, byte[][] palette, Options options)
         {
-            int numberofcolors = (int)Math.Floor(options["numberofcolors"]);
-            float minratio = options["mincolorratio"];
-            int cycles = (int)Math.Floor(options["colorquantcycles"]);
+            int numberofcolors = (int)Math.Floor(options.ColorQuantization.NumberOfColors);
+            float minratio = (float)options.ColorQuantization.MinColorRatio;
+            int cycles = (int)Math.Floor(options.ColorQuantization.ColorQuantCycles);
             // Creating indexed color array arr which has a boundary filled with -1 in every direction
             int[][] arr = new int[imgd.height + 2][].InitInner(imgd.width + 2);
             for (int j = 0; j < (imgd.height + 2); j++) { arr[j][0] = -1; arr[j][imgd.width + 1] = -1; }
@@ -174,7 +174,7 @@ namespace ImageTracerNet
             // Use custom palette if pal is defined or sample or generate custom length palette
             if (palette == null)
             {
-                if (options["colorsampling"] != 0)
+                if (options.ColorQuantization.ColorSampling.IsNotZero())
                 {
                     palette = samplepalette(numberofcolors, imgd);
                 }
@@ -185,7 +185,7 @@ namespace ImageTracerNet
             }
 
             // Selective Gaussian blur preprocessing
-            if (options["blurradius"] > 0) { imgd = blur(imgd, options["blurradius"], options["blurdelta"]); }
+            if (options.Blur.BlurRadius > 0) { imgd = blur(imgd, (float)options.Blur.BlurRadius, (float)options.Blur.BlurDelta); }
 
             long[][] paletteacc = new long[palette.Length][].InitInner(5);
 
@@ -921,7 +921,7 @@ namespace ImageTracerNet
         // Getting SVG path element string from a traced path
         public static void svgpathstring(StringBuilder sb, string desc, List<double[]> segments, string colorstr, Options options)
         {
-            float scale = options["scale"], lcpr = options["lcpr"], qcpr = options["qcpr"], roundcoords = (float)Math.Floor(options["roundcoords"]);
+            float scale = (float)options.SvgRendering.Scale, lcpr = (float)options.SvgRendering.LCpr, qcpr = (float)options.SvgRendering.LCpr, roundcoords = (float)Math.Floor(options.SvgRendering.RoundCoords);
             // Path
             sb.Append("<path ").Append(desc).Append(colorstr).Append("d=\"").Append("M ").Append(segments[0][1] * scale).Append(" ").Append(segments[0][2] * scale).Append(" ");
 
@@ -981,12 +981,12 @@ namespace ImageTracerNet
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
         public static String getsvgstring(IndexedImage ii, Options options)
         {
-            options = checkoptions(options);
+            //options = checkoptions(options);
             // SVG start
-            int w = (int)(ii.width * options["scale"]), h = (int)(ii.height * options["scale"]);
-            String viewboxorviewport = options["viewbox"] != 0 ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
+            int w = (int)(ii.width * options.SvgRendering.Scale), h = (int)(ii.height * options.SvgRendering.Scale);
+            String viewboxorviewport = options.SvgRendering.Viewbox.IsNotZero() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
             StringBuilder svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options["desc"] != 0) { svgstr.Append("desc=\"Created with ImageTracer.java version " + ImageTracer.versionnumber + "\" "); }
+            if (options.SvgRendering.Desc.IsNotZero()) { svgstr.Append("desc=\"Created with ImageTracer.java version " + versionnumber + "\" "); }
             svgstr.Append(">");
 
             // creating Z-index
@@ -1015,7 +1015,7 @@ namespace ImageTracerNet
             String thisdesc = "";
             foreach(KeyValuePair<double, int[]> entry in zindex)
             {
-                if (options["desc"] != 0) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
+                if (options.SvgRendering.Desc.IsNotZero()) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
                 svgpathstring(svgstr,
                         thisdesc,
                         ii.layers[entry.Value[0]][entry.Value[1]],
