@@ -46,6 +46,11 @@
     <Compile Include="ImageData.cs" />
     <Compile Include="ImageTracer.cs" />
     <Compile Include="IndexedImage.cs" />
+    <Compile Include="OptionTypes\Blur.cs" />
+    <Compile Include="OptionTypes\ColorQuantization.cs" />
+    <Compile Include="OptionTypes\OptionsFile.cs" />
+    <Compile Include="OptionTypes\SvgRendering.cs" />
+    <Compile Include="OptionTypes\Tracing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
