@@ -64,11 +64,11 @@ namespace ImageTracerNet
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
             // 3. Batch pathscan
-            var bps = BatchPathScan(rawlayers, (float)Math.Floor(options.Tracing.PathOmit));
+            var bps = BatchPathScan(rawlayers, Math.Floor(options.Tracing.PathOmit));
             // 4. Batch interpollation
             var bis = BatchInterNodes(bps);
             // 5. Batch tracing
-            ii.Layers = BatchTraceLayers(bis, (float)options.Tracing.LTres, (float)options.Tracing.QTres);
+            ii.Layers = BatchTraceLayers(bis, options.Tracing.LTres, options.Tracing.QTres);
             return ii;
         }
 
@@ -83,12 +83,12 @@ namespace ImageTracerNet
         private static IndexedImage ColorQuantization(ImageData imgd, byte[][] palette, Options options)
         {
             int numberofcolors = (int)Math.Floor(options.ColorQuantization.NumberOfColors);
-            float minratio = (float)options.ColorQuantization.MinColorRatio;
+            double minratio = options.ColorQuantization.MinColorRatio;
             int cycles = (int)Math.Floor(options.ColorQuantization.ColorQuantCycles);
             // Creating indexed color array arr which has a boundary filled with -1 in every direction
             int[][] arr = new int[imgd.Height + 2][].InitInner(imgd.Width + 2);
-            for (int j = 0; j < (imgd.Height + 2); j++) { arr[j][0] = -1; arr[j][imgd.Width + 1] = -1; }
-            for (int i = 0; i < (imgd.Width + 2); i++) { arr[0][i] = -1; arr[imgd.Height + 1][i] = -1; }
+            for (int j = 0; j < imgd.Height + 2; j++) { arr[j][0] = -1; arr[j][imgd.Width + 1] = -1; }
+            for (int i = 0; i < imgd.Width + 2; i++) { arr[0][i] = -1; arr[imgd.Height + 1][i] = -1; }
 
             int idx = 0, cd, cdl, ci, c1, c2, c3, c4;
 
@@ -106,7 +106,7 @@ namespace ImageTracerNet
             }
 
             // Selective Gaussian blur preprocessing
-            if (options.Blur.BlurRadius > 0) { imgd = Blur(imgd, (float)options.Blur.BlurRadius, (float)options.Blur.BlurDelta); }
+            if (options.Blur.BlurRadius > 0) { imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta); }
 
             long[][] paletteacc = new long[palette.Length][].InitInner(5);
 
@@ -118,22 +118,22 @@ namespace ImageTracerNet
                 if (cnt > 0)
                 {
                     // averaging paletteacc for palette
-                    float ratio;
+                    double ratio;
                     for (int k = 0; k < palette.Length; k++)
                     {
                         const int shift = 0; // MJY: From -128
                         // averaging
                         if (paletteacc[k][3] > 0)
                         {
-                            palette[k][0] = (byte)(shift + Math.Floor((double)(paletteacc[k][0] / (double)paletteacc[k][4])));
-                            palette[k][1] = (byte)(shift + Math.Floor((double)(paletteacc[k][1] / (double)paletteacc[k][4])));
-                            palette[k][2] = (byte)(shift + Math.Floor((double)(paletteacc[k][2] / (double)paletteacc[k][4])));
-                            palette[k][3] = (byte)(shift + Math.Floor((double)(paletteacc[k][3] / (double)paletteacc[k][4])));
+                            palette[k][0] = (byte)(shift + Math.Floor(paletteacc[k][0] / (double)paletteacc[k][4]));
+                            palette[k][1] = (byte)(shift + Math.Floor(paletteacc[k][1] / (double)paletteacc[k][4]));
+                            palette[k][2] = (byte)(shift + Math.Floor(paletteacc[k][2] / (double)paletteacc[k][4]));
+                            palette[k][3] = (byte)(shift + Math.Floor(paletteacc[k][3] / (double)paletteacc[k][4]));
                         }
-                        ratio = paletteacc[k][4] / (float)(imgd.Width * imgd.Height);
+                        ratio = paletteacc[k][4] / (double)(imgd.Width * imgd.Height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
-                        if ((ratio < minratio) && (cnt < (cycles - 1)))
+                        if ((ratio < minratio) && (cnt < cycles - 1))
                         {
                             palette[k][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
                             palette[k][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
@@ -160,7 +160,7 @@ namespace ImageTracerNet
                     for (int i = 0; i < imgd.Width; i++)
                     {
 
-                        idx = ((j * imgd.Width) + i) * 4;
+                        idx = (j * imgd.Width + i) * 4;
 
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
                         cdl = 256 + 256 + 256 + 256; ci = 0;
@@ -171,7 +171,7 @@ namespace ImageTracerNet
                             c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
                             c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
                             c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
-                            cd = c1 + c2 + c3 + (c4 * 4); // weighted alpha seems to help images with transparency
+                            cd = c1 + c2 + c3 + c4 * 4; // weighted alpha seems to help images with transparency
 
                             // Remember this color if this is the closest yet
                             if (cd < cdl) { cdl = cd; ci = k; }
@@ -204,13 +204,13 @@ namespace ImageTracerNet
             {
                 const int shift = 0; // MJY: From -128
                 // Grayscale
-                byte graystep = (byte)Math.Floor((double)(255 / (double)(numberofcolors - 1)));
+                byte graystep = (byte)Math.Floor(255 / (double)(numberofcolors - 1));
                 for (byte ccnt = 0; ccnt < numberofcolors; ccnt++)
                 {
-                    palette[ccnt][0] = (byte)(shift + (ccnt * graystep));
-                    palette[ccnt][1] = (byte)(shift + (ccnt * graystep));
-                    palette[ccnt][2] = (byte)(shift + (ccnt * graystep));
-                    palette[ccnt][3] = (byte)255;
+                    palette[ccnt][0] = (byte)(shift + ccnt * graystep);
+                    palette[ccnt][1] = (byte)(shift + ccnt * graystep);
+                    palette[ccnt][2] = (byte)(shift + ccnt * graystep);
+                    palette[ccnt][3] = 255;
                 }
             }
             else
@@ -218,7 +218,7 @@ namespace ImageTracerNet
                 const int shift = 0; // MJY: From -128
                 // RGB color cube
                 int colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-                int colorstep = (int)Math.Floor((double)(255 / (double)(colorqnum - 1))); // distance between points
+                int colorstep = (int)Math.Floor(255 / (double)(colorqnum - 1)); // distance between points
                 int ccnt = 0;
                 for (int rcnt = 0; rcnt < colorqnum; rcnt++)
                 {
@@ -226,10 +226,10 @@ namespace ImageTracerNet
                     {
                         for (int bcnt = 0; bcnt < colorqnum; bcnt++)
                         {
-                            palette[ccnt][0] = (byte)(shift + (rcnt * colorstep));
-                            palette[ccnt][1] = (byte)(shift + (gcnt * colorstep));
-                            palette[ccnt][2] = (byte)(shift + (bcnt * colorstep));
-                            palette[ccnt][3] = (byte)127;
+                            palette[ccnt][0] = (byte)(shift + rcnt * colorstep);
+                            palette[ccnt][1] = (byte)(shift + gcnt * colorstep);
+                            palette[ccnt][2] = (byte)(shift + bcnt * colorstep);
+                            palette[ccnt][3] = 127;
                             ccnt++;
                         }// End of blue loop
                     }// End of green loop
@@ -252,7 +252,7 @@ namespace ImageTracerNet
             int idx = 0; byte[][] palette = new byte[numberofcolors][].InitInner(4);
             for (int i = 0; i < numberofcolors; i++)
             {
-                idx = (int)(Math.Floor((Rng.NextDouble() * imgd.Data.Length) / 4) * 4);
+                idx = (int)(Math.Floor(Rng.NextDouble() * imgd.Data.Length / 4) * 4);
                 palette[i][0] = imgd.Data[idx];
                 palette[i][1] = imgd.Data[idx + 1];
                 palette[i][2] = imgd.Data[idx + 2];
@@ -274,9 +274,9 @@ namespace ImageTracerNet
             int[][][] layers = new int[ii.Palette.Length][][].InitInner(ah, aw);
 
             // Looping through all pixels and calculating edge node type
-            for (int j = 1; j < (ah - 1); j++)
+            for (int j = 1; j < ah - 1; j++)
             {
-                for (int i = 1; i < (aw - 1); i++)
+                for (int i = 1; i < aw - 1; i++)
                 {
 
                     // This pixel's indexed color
@@ -285,18 +285,18 @@ namespace ImageTracerNet
                     // Are neighbor pixel colors the same?
                     if ((j > 0) && (i > 0)) { n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0; } else { n1 = 0; }
                     if (j > 0) { n2 = ii.Array[j - 1][i] == val ? 1 : 0; } else { n2 = 0; }
-                    if ((j > 0) && (i < (aw - 1))) { n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0; } else { n3 = 0; }
+                    if ((j > 0) && (i < aw - 1)) { n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0; } else { n3 = 0; }
                     if (i > 0) { n4 = ii.Array[j][i - 1] == val ? 1 : 0; } else { n4 = 0; }
-                    if (i < (aw - 1)) { n5 = ii.Array[j][i + 1] == val ? 1 : 0; } else { n5 = 0; }
-                    if ((j < (ah - 1)) && (i > 0)) { n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0; } else { n6 = 0; }
-                    if (j < (ah - 1)) { n7 = ii.Array[j + 1][i] == val ? 1 : 0; } else { n7 = 0; }
-                    if ((j < (ah - 1)) && (i < (aw - 1))) { n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0; } else { n8 = 0; }
+                    if (i < aw - 1) { n5 = ii.Array[j][i + 1] == val ? 1 : 0; } else { n5 = 0; }
+                    if ((j < ah - 1) && (i > 0)) { n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0; } else { n6 = 0; }
+                    if (j < ah - 1) { n7 = ii.Array[j + 1][i] == val ? 1 : 0; } else { n7 = 0; }
+                    if ((j < ah - 1) && (i < aw - 1)) { n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0; } else { n8 = 0; }
 
                     // this pixel"s type and looking back on previous pixels
-                    layers[val][j + 1][i + 1] = 1 + (n5 * 2) + (n8 * 4) + (n7 * 8);
-                    if (n4 == 0) { layers[val][j + 1][i] = 0 + 2 + (n7 * 4) + (n6 * 8); }
-                    if (n2 == 0) { layers[val][j][i + 1] = 0 + (n3 * 2) + (n5 * 4) + 8; }
-                    if (n1 == 0) { layers[val][j][i] = 0 + (n2 * 2) + 4 + (n4 * 8); }
+                    layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
+                    if (n4 == 0) { layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8; }
+                    if (n2 == 0) { layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8; }
+                    if (n1 == 0) { layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8; }
 
                 }// End of i loop
             }// End of j loop
@@ -311,7 +311,7 @@ namespace ImageTracerNet
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         //
-        private static List<List<int[]>> PathScan(int[][] arr, float pathomit)
+        private static List<List<int[]>> PathScan(int[][] arr, double pathomit)
         {
             List<List<int[]>> paths = new List<List<int[]>>();
             List<int[]> thispath;
@@ -564,11 +564,11 @@ namespace ImageTracerNet
                             }
 
                             // Close path
-                            if (((px - 1) == thispath[0][0]) && ((py - 1) == thispath[0][1]))
+                            if ((px - 1 == thispath[0][0]) && (py - 1 == thispath[0][1]))
                             {
                                 pathfinished = true;
                                 // Discarding 'hole' type paths and paths shorter than pathomit
-                                if ((holepath) || (thispath.Count < pathomit))
+                                if (holepath || (thispath.Count < pathomit))
                                 {
                                     paths.Remove(thispath);
                                 }
@@ -585,7 +585,7 @@ namespace ImageTracerNet
         }
 
         // 3. Batch pathscan
-        private static TriListIntArray BatchPathScan(int[][][] layers, float pathomit)
+        private static TriListIntArray BatchPathScan(int[][][] layers, double pathomit)
         {
             TriListIntArray bpaths = new TriListIntArray();
             foreach (int[][] layer in layers)
@@ -681,7 +681,7 @@ namespace ImageTracerNet
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        private static List<double[]> TracePath(List<double[]> path, float ltreshold, float qtreshold)
+        private static List<double[]> TracePath(List<double[]> path, double ltreshold, double qtreshold)
         {
             int pcnt = 0, seqend = 0; double segtype1, segtype2;
             List<double[]> smp = new List<double[]>();
@@ -692,12 +692,12 @@ namespace ImageTracerNet
             {
                 // 5.1. Find sequences of points with only 2 segment types
                 segtype1 = path[pcnt][2]; segtype2 = -1; seqend = pcnt + 1;
-                while (((path[seqend][2] == segtype1) || (path[seqend][2] == segtype2) || (segtype2 == -1)) && (seqend < (pathlength - 1)))
+                while ((path[seqend][2].AreEqual(segtype1) || path[seqend][2].AreEqual(segtype2) || segtype2.AreEqual(-1)) && (seqend < pathlength - 1))
                 {
-                    if ((path[seqend][2] != segtype1) && (segtype2 == -1)) { segtype2 = path[seqend][2]; }
+                    if (path[seqend][2].AreNotEqual(segtype1) && segtype2.AreEqual(-1)) { segtype2 = path[seqend][2]; }
                     seqend++;
                 }
-                if (seqend == (pathlength - 1)) { seqend = 0; }
+                if (seqend == pathlength - 1) { seqend = 0; }
 
                 // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
                 smp.AddRange(FitSeq(path, ltreshold, qtreshold, pcnt, seqend));
@@ -712,7 +712,7 @@ namespace ImageTracerNet
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
-        private static List<double[]> FitSeq(List<double[]> path, float ltreshold, float qtreshold, int seqstart, int seqend)
+        private static List<double[]> FitSeq(List<double[]> path, double ltreshold, double qtreshold, int seqstart, int seqend)
         {
             List<double[]> segment = new List<double[]>();
             double[] thissegment;
@@ -724,7 +724,7 @@ namespace ImageTracerNet
             int errorpoint = seqstart;
             bool curvepass = true;
             double px, py, dist2, errorval = 0;
-            double tl = (seqend - seqstart); if (tl < 0) { tl += pathlength; }
+            double tl = seqend - seqstart; if (tl < 0) { tl += pathlength; }
             double vx = (path[seqend][0] - path[seqstart][0]) / tl,
                     vy = (path[seqend][1] - path[seqstart][1]) / tl;
 
@@ -734,8 +734,8 @@ namespace ImageTracerNet
             while (pcnt != seqend)
             {
                 pl = pcnt - seqstart; if (pl < 0) { pl += pathlength; }
-                px = path[seqstart][0] + (vx * pl); py = path[seqstart][1] + (vy * pl);
-                dist2 = ((path[pcnt][0] - px) * (path[pcnt][0] - px)) + ((path[pcnt][1] - py) * (path[pcnt][1] - py));
+                px = path[seqstart][0] + vx * pl; py = path[seqstart][1] + vy * pl;
+                dist2 = (path[pcnt][0] - px) * (path[pcnt][0] - px) + (path[pcnt][1] - py) * (path[pcnt][1] - py);
                 if (dist2 > ltreshold) { curvepass = false; }
                 if (dist2 > errorval) { errorpoint = pcnt; errorval = dist2; }
                 pcnt = (pcnt + 1) % pathlength;
@@ -762,8 +762,8 @@ namespace ImageTracerNet
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
             // helpers and projecting to get control point
             double t = (fitpoint - seqstart) / tl, t1 = (1.0 - t) * (1.0 - t), t2 = 2.0 * (1.0 - t) * t, t3 = t * t;
-            double cpx = (((t1 * path[seqstart][0]) + (t3 * path[seqend][0])) - path[fitpoint][0]) / -t2,
-                    cpy = (((t1 * path[seqstart][1]) + (t3 * path[seqend][1])) - path[fitpoint][1]) / -t2;
+            double cpx = (t1 * path[seqstart][0] + t3 * path[seqend][0] - path[fitpoint][0]) / -t2,
+                    cpy = (t1 * path[seqstart][1] + t3 * path[seqend][1] - path[fitpoint][1]) / -t2;
 
             // Check every point
             pcnt = seqstart + 1;
@@ -771,10 +771,10 @@ namespace ImageTracerNet
             {
 
                 t = (pcnt - seqstart) / tl; t1 = (1.0 - t) * (1.0 - t); t2 = 2.0 * (1.0 - t) * t; t3 = t * t;
-                px = (t1 * path[seqstart][0]) + (t2 * cpx) + (t3 * path[seqend][0]);
-                py = (t1 * path[seqstart][1]) + (t2 * cpy) + (t3 * path[seqend][1]);
+                px = t1 * path[seqstart][0] + t2 * cpx + t3 * path[seqend][0];
+                py = t1 * path[seqstart][1] + t2 * cpy + t3 * path[seqend][1];
 
-                dist2 = ((path[pcnt][0] - px) * (path[pcnt][0] - px)) + ((path[pcnt][1] - py) * (path[pcnt][1] - py));
+                dist2 = (path[pcnt][0] - px) * (path[pcnt][0] - px) + (path[pcnt][1] - py) * (path[pcnt][1] - py);
 
                 if (dist2 > qtreshold) { curvepass = false; }
                 if (dist2 > errorval) { errorpoint = pcnt; errorval = dist2; }
@@ -807,7 +807,7 @@ namespace ImageTracerNet
         }
 
         // 5. Batch tracing paths
-        private static List<List<double[]>> BatchTracePaths(List<List<double[]>> internodepaths, float ltres, float qtres)
+        private static List<List<double[]>> BatchTracePaths(List<List<double[]>> internodepaths, double ltres, double qtres)
         {
             List<List<double[]>> btracedpaths = new List<List<double[]>>();
             for (int k = 0; k < internodepaths.Count; k++)
@@ -818,7 +818,7 @@ namespace ImageTracerNet
         }
 
         // 5. Batch tracing layers
-        private static TriListDoubleArray BatchTraceLayers(TriListDoubleArray binternodes, float ltres, float qtres)
+        private static TriListDoubleArray BatchTraceLayers(TriListDoubleArray binternodes, double ltres, double qtres)
         {
             TriListDoubleArray btbis = new TriListDoubleArray();
             for (int k = 0; k < binternodes.Count; k++)
@@ -834,23 +834,23 @@ namespace ImageTracerNet
         //
         ////////////////////////////////////////////////////////////
 
-        private static float RoundToDec(float val, float places)
+        private static double RoundToDec(double val, double places)
         {
-            return (float)(Math.Round(val * Math.Pow(10, places)) / Math.Pow(10, places));
+            return Math.Round(val * Math.Pow(10, places)) / Math.Pow(10, places);
         }
 
         // Getting SVG path element string from a traced path
         private static void SvgPathString(StringBuilder sb, string desc, List<double[]> segments, string colorstr, Options options)
         {
-            float scale = (float)options.SvgRendering.Scale, lcpr = (float)options.SvgRendering.LCpr, qcpr = (float)options.SvgRendering.LCpr, roundcoords = (float)Math.Floor(options.SvgRendering.RoundCoords);
+            double scale = options.SvgRendering.Scale, lcpr = options.SvgRendering.LCpr, qcpr = options.SvgRendering.LCpr, roundcoords = Math.Floor(options.SvgRendering.RoundCoords);
             // Path
             sb.Append("<path ").Append(desc).Append(colorstr).Append("d=\"").Append("M ").Append(segments[0][1] * scale).Append(" ").Append(segments[0][2] * scale).Append(" ");
 
-            if (roundcoords == -1)
+            if (roundcoords.AreEqual(-1))
             {
                 for (int pcnt = 0; pcnt < segments.Count; pcnt++)
                 {
-                    if (segments[pcnt][0] == 1.0)
+                    if (segments[pcnt][0].AreEqual(1.0))
                     {
                         sb.Append("L ").Append(segments[pcnt][3] * scale).Append(" ").Append(segments[pcnt][4] * scale).Append(" ");
                     }
@@ -864,17 +864,17 @@ namespace ImageTracerNet
             {
                 for (int pcnt = 0; pcnt < segments.Count; pcnt++)
                 {
-                    if (segments[pcnt][0] == 1.0)
+                    if (segments[pcnt][0].AreEqual(1.0))
                     {
-                        sb.Append("L ").Append(RoundToDec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
-                        .Append(RoundToDec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ");
+                        sb.Append("L ").Append(RoundToDec(segments[pcnt][3] * scale, roundcoords)).Append(" ")
+                        .Append(RoundToDec(segments[pcnt][4] * scale, roundcoords)).Append(" ");
                     }
                     else
                     {
-                        sb.Append("Q ").Append(RoundToDec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
-                        .Append(RoundToDec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ")
-                        .Append(RoundToDec((float)(segments[pcnt][5] * scale), roundcoords)).Append(" ")
-                        .Append(RoundToDec((float)(segments[pcnt][6] * scale), roundcoords)).Append(" ");
+                        sb.Append("Q ").Append(RoundToDec(segments[pcnt][3] * scale, roundcoords)).Append(" ")
+                        .Append(RoundToDec(segments[pcnt][4] * scale, roundcoords)).Append(" ")
+                        .Append(RoundToDec(segments[pcnt][5] * scale, roundcoords)).Append(" ")
+                        .Append(RoundToDec(segments[pcnt][6] * scale, roundcoords)).Append(" ");
                     }
                 }
             }// End of roundcoords check
@@ -884,11 +884,11 @@ namespace ImageTracerNet
             // Rendering control points
             for (int pcnt = 0; pcnt < segments.Count; pcnt++)
             {
-                if ((lcpr > 0) && (segments[pcnt][0] == 1.0))
+                if ((lcpr > 0) && segments[pcnt][0].AreEqual(1.0))
                 {
                     sb.Append("<circle cx=\"").Append(segments[pcnt][3] * scale).Append("\" cy=\"").Append(segments[pcnt][4] * scale).Append("\" r=\"").Append(lcpr).Append("\" fill=\"white\" stroke-width=\"").Append(lcpr * 0.2).Append("\" stroke=\"black\" />");
                 }
-                if ((qcpr > 0) && (segments[pcnt][0] == 2.0))
+                if ((qcpr > 0) && segments[pcnt][0].AreEqual(2.0))
                 {
                     sb.Append("<circle cx=\"").Append(segments[pcnt][3] * scale).Append("\" cy=\"").Append(segments[pcnt][4] * scale).Append("\" r=\"").Append(qcpr).Append("\" fill=\"cyan\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"black\" />");
                     sb.Append("<circle cx=\"").Append(segments[pcnt][5] * scale).Append("\" cy=\"").Append(segments[pcnt][6] * scale).Append("\" r=\"").Append(qcpr).Append("\" fill=\"white\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"black\" />");
@@ -920,7 +920,7 @@ namespace ImageTracerNet
                 for (int pcnt = 0; pcnt < ii.Layers[k].Count; pcnt++)
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
-                    label = (ii.Layers[k][pcnt][0][2] * w) + ii.Layers[k][pcnt][0][1];
+                    label = ii.Layers[k][pcnt][0][2] * w + ii.Layers[k][pcnt][0][1];
                     // Creating new list if required
                     if (!zindex.ContainsKey(label)) { zindex[label] = new int[2]; }
                     // Adding layer and path number to list
@@ -954,7 +954,7 @@ namespace ImageTracerNet
         private static string ToSvgColorString(byte[] c)
         {
             const int shift = 0; // MJY: Try removing all the + 128 on the values. Might fix issues.
-            return "fill=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke-width=\"1\" opacity=\"" + ((c[3] + shift) / 255.0) + "\" ";
+            return "fill=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke-width=\"1\" opacity=\"" + (c[3] + shift) / 255.0 + "\" ";
         }
 
         // Gaussian kernels for blur
@@ -968,7 +968,7 @@ namespace ImageTracerNet
         };
 
         // Selective Gaussian blur for preprocessing
-        private static ImageData Blur(ImageData imgd, float rad, float del)
+        private static ImageData Blur(ImageData imgd, double rad, double del)
         {
             int i, j, k, d, idx;
             double racc, gacc, bacc, aacc, wacc;
@@ -987,12 +987,12 @@ namespace ImageTracerNet
                 {
                     racc = 0; gacc = 0; bacc = 0; aacc = 0; wacc = 0;
                     // gauss kernel loop
-                    for (k = -radius; k < (radius + 1); k++)
+                    for (k = -radius; k < radius + 1; k++)
                     {
                         // add weighted color values
-                        if (((i + k) > 0) && ((i + k) < imgd.Width))
+                        if ((i + k > 0) && (i + k < imgd.Width))
                         {
-                            idx = ((j * imgd.Width) + i + k) * 4;
+                            idx = (j * imgd.Width + i + k) * 4;
                             racc += imgd.Data[idx] * thisgk[k + radius];
                             gacc += imgd.Data[idx + 1] * thisgk[k + radius];
                             bacc += imgd.Data[idx + 2] * thisgk[k + radius];
@@ -1001,7 +1001,7 @@ namespace ImageTracerNet
                         }
                     }
                     // The new pixel
-                    idx = ((j * imgd.Width) + i) * 4;
+                    idx = (j * imgd.Width + i) * 4;
                     imgd2.Data[idx] = (byte)Math.Floor(racc / wacc);
                     imgd2.Data[idx + 1] = (byte)Math.Floor(gacc / wacc);
                     imgd2.Data[idx + 2] = (byte)Math.Floor(bacc / wacc);
@@ -1020,12 +1020,12 @@ namespace ImageTracerNet
                 {
                     racc = 0; gacc = 0; bacc = 0; aacc = 0; wacc = 0;
                     // gauss kernel loop
-                    for (k = -radius; k < (radius + 1); k++)
+                    for (k = -radius; k < radius + 1; k++)
                     {
                         // add weighted color values
-                        if (((j + k) > 0) && ((j + k) < imgd.Height))
+                        if ((j + k > 0) && (j + k < imgd.Height))
                         {
-                            idx = (((j + k) * imgd.Width) + i) * 4;
+                            idx = ((j + k) * imgd.Width + i) * 4;
                             racc += himgd[idx] * thisgk[k + radius];
                             gacc += himgd[idx + 1] * thisgk[k + radius];
                             bacc += himgd[idx + 2] * thisgk[k + radius];
@@ -1034,7 +1034,7 @@ namespace ImageTracerNet
                         }
                     }
                     // The new pixel
-                    idx = ((j * imgd.Width) + i) * 4;
+                    idx = (j * imgd.Width + i) * 4;
                     imgd2.Data[idx] = (byte)Math.Floor(racc / wacc);
                     imgd2.Data[idx + 1] = (byte)Math.Floor(gacc / wacc);
                     imgd2.Data[idx + 2] = (byte)Math.Floor(bacc / wacc);
@@ -1047,7 +1047,7 @@ namespace ImageTracerNet
             {
                 for (i = 0; i < imgd.Width; i++)
                 {
-                    idx = ((j * imgd.Width) + i) * 4;
+                    idx = (j * imgd.Width + i) * 4;
                     // d is the difference between the blurred and the original pixel
                     d = Math.Abs(imgd2.Data[idx] - imgd.Data[idx]) + Math.Abs(imgd2.Data[idx + 1] - imgd.Data[idx + 1]) +
                             Math.Abs(imgd2.Data[idx + 2] - imgd.Data[idx + 2]) + Math.Abs(imgd2.Data[idx + 3] - imgd.Data[idx + 3]);
