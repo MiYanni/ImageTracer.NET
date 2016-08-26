@@ -1,20 +1,25 @@
-﻿using System.Collections.Generic;
-using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>;
+﻿using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>;
 
 namespace ImageTracerNet
 {
     // Container for the color-indexed image before and tracedata after vectorizing
     public class IndexedImage
     {
-        public int width, height;
-        public int[][] array; // array[x][y] of palette colors
-        public byte[][] palette;// array[palettelength][4] RGBA color palette
-        public TriListDoubleArray layers;// tracedata
+        public int Width { get; }
+        public int Height { get; }
+        // array[x][y] of palette colors
+        public int[][] Array { get; }
+        // array[palettelength][4] RGBA color palette
+        public byte[][] Palette { get;  }
+        // tracedata
+        public TriListDoubleArray Layers { set; get; }
 
-        public IndexedImage(int[][] marray, byte[][] mpalette)
+        public IndexedImage(int[][] array, byte[][] palette)
         {
-            array = marray; palette = mpalette;
-            width = marray[0].Length - 2; height = marray.Length - 2;// Color quantization adds +2 to the original width and height
+            Array = array; Palette = palette;
+            // Color quantization adds +2 to the original width and height
+            Width = array[0].Length - 2;
+            Height = array.Length - 2;
         }
     }
 }

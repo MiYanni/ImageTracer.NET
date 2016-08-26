@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text;
 using ImageTracerNet.Extensions;
-//using OptionsDictionary = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
 using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>; // ArrayList<ArrayList<ArrayList<Double[]>>>
 
@@ -12,56 +11,15 @@ namespace ImageTracerNet
 {
     public class ImageTracer
     {
-        public static string versionnumber = "1.1.1";
+        public static string VersionNumber = "1.1.1";
 
         private static readonly Random Rng = new Random();
 
-        public ImageTracer() { }
-
-        // Loading a file to ImageData, ARGB byte order
-        public static ImageData loadImageData(string filename)
+        private static ImageData LoadImageData(Bitmap image)
         {
-            var image = new Bitmap(filename);
-            return loadImageData(image);
-        }
-            
-        public static ImageData loadImageData(Bitmap image)
-        {
-            int width = image.Width; int height = image.Height;
-            //var data1 = image.ToByteArray();
-            //var colors = image.ToColorArray();
-            //var sdata = image.ToSByteArray();
-            //Color ARGB = Color.FromArgb(A, R, G, B)
-            //var myArray = (byte[])new ImageConverter().ConvertTo(image, typeof(byte[]));
-            //byte[] myArray;
-            //using (var ms = new MemoryStream())
-            //{
-            //    image.Save(ms, image.RawFormat);
-            //    myArray = ms.ToArray();
-            //}
             var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
             var data = rbgImage.ToRgbaByteArray();
-            //int[] rawdata = rbgImage.ToIntArray();
-            //byte[] data = new byte[rawdata.Length * 4];
-            //for(int i = 0; i<rawdata.Length; i++)
-            //{
-            //    data[(i * 4) + 3] = bytetrans((byte)(rawdata[i] >> 24));
-            //    data[i * 4] = bytetrans((byte)(rawdata[i] >> 16));
-            //    data[(i * 4) + 1] = bytetrans((byte)(rawdata[i] >> 8));
-            //    data[(i * 4) + 2] = bytetrans((byte)(rawdata[i]));
-            //}
-            //return new ImageData(width, height, data);
-            return new ImageData(width, height, data);
-        }
-
-        // The bitshift method in loadImageData creates signed bytes where -1 -> 255 unsigned ; -128 -> 128 unsigned ;
-        // 127 -> 127 unsigned ; 0 -> 0 unsigned ; These will be converted to -128 (representing 0 unsigned) ...
-        // 127 (representing 255 unsigned) and tosvgcolorstr will add +128 to create RGB values 0..255
-        public static byte bytetrans(byte b)
-        {
-            // MJY: This might be an issue.
-            //if (b < 0) { return (byte)(b + 128); } else { return (byte)(b - 128); }
-            return b;
+            return new ImageData(image.Width, image.Height, data);
         }
 
         ////////////////////////////////////////////////////////////
@@ -71,85 +29,47 @@ namespace ImageTracerNet
         ////////////////////////////////////////////////////////////
 
         // Loading an image from a file, tracing when loaded, then returning the SVG String
-        public static String imageToSVG(string filename, Options options, byte[][] palette) 
+        public static string ImageToSvg(string filename, Options options, byte[][] palette) 
         {
-            //options = checkoptions(options);
-            ImageData imgd = loadImageData(filename);
-            return imagedataToSVG(imgd,options,palette);
-        }// End of imageToSVG()
-        public static String imageToSVG(Bitmap image, Options options, byte[][] palette) 
+            return ImageToSvg(new Bitmap(filename), options, palette);
+        }
+
+        public static string ImageToSvg(Bitmap image, Options options, byte[][] palette) 
         {
-            //options = checkoptions(options);
-            ImageData imgd = loadImageData(image);
-            return imagedataToSVG(imgd,options,palette);
-        }// End of imageToSVG()
+            return ImageDataToSvg(LoadImageData(image), options, palette);
+        }
 
         // Tracing ImageData, then returning the SVG String
-        public static String imagedataToSVG(ImageData imgd, Options options, byte[][] palette)
+        private static string ImageDataToSvg(ImageData imgd, Options options, byte[][] palette)
         {
-            //options = checkoptions(options);
-            IndexedImage ii = imagedataToTracedata(imgd, options, palette);
-            return getsvgstring(ii, options);
-        }// End of imagedataToSVG()
+            return getsvgstring(ImageDataToTraceData(imgd, options, palette), options);
+        }
 
         // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
-        public IndexedImage imageToTracedata(string filename, Options options, byte[][] palette) 
+        public IndexedImage ImageToTraceData(string filename, Options options, byte[][] palette) 
         {
-            //options = checkoptions(options);
-            ImageData imgd = loadImageData(filename);
-            return imagedataToTracedata(imgd,options,palette);
-        }// End of imageToTracedata()
-        public IndexedImage imageToTracedata(Bitmap image, Options options, byte[][] palette) 
+            return ImageToTraceData(new Bitmap(filename), options, palette);
+        }
+        public IndexedImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
         {
-            //options = checkoptions(options);
-            ImageData imgd = loadImageData(image);
-            return imagedataToTracedata(imgd,options,palette);
-        }// End of imageToTracedata()
+            return ImageDataToTraceData(LoadImageData(image), options, palette);
+        }
 
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
-        public static IndexedImage imagedataToTracedata(ImageData imgd, Options options, byte[][] palette)
+        public static IndexedImage ImageDataToTraceData(ImageData imgd, Options options, byte[][] palette)
         {
             // 1. Color quantization
-            IndexedImage ii = colorquantization(imgd, palette, options);
+            var ii = colorquantization(imgd, palette, options);
             // 2. Layer separation and edge detection
-            int[][][] rawlayers = layering(ii);
+            var rawlayers = layering(ii);
             // 3. Batch pathscan
-            TriListIntArray bps = batchpathscan(rawlayers, (int)Math.Floor(options.Tracing.PathOmit));
+            var bps = batchpathscan(rawlayers, (float)Math.Floor(options.Tracing.PathOmit));
             // 4. Batch interpollation
-            TriListDoubleArray bis = batchinternodes(bps);
+            var bis = batchinternodes(bps);
             // 5. Batch tracing
-            ii.layers = batchtracelayers(bis, (float)options.Tracing.LTres, (float)options.Tracing.QTres);
+            ii.Layers = batchtracelayers(bis, (float)options.Tracing.LTres, (float)options.Tracing.QTres);
             return ii;
-        }// End of imagedataToTracedata()
-
-        //// creating options object, setting defaults for missing values
-        //public static Options checkoptions(Dictionary<string, float> options)
-        //{
-        //    if (options == null) { options = new Options(); }
-        //    // Tracing
-        //    if (!options.ContainsKey("ltres")) { options["ltres"] = 1f; }
-        //    if (!options.ContainsKey("qtres")) { options["qtres"] = 1f; }
-        //    if (!options.ContainsKey("pathomit")) { options["pathomit"] = 8f; }
-        //    // Color quantization
-        //    if (!options.ContainsKey("colorsampling")) { options["colorsampling"] = 1f; }
-        //    if (!options.ContainsKey("numberofcolors")) { options["numberofcolors"] = 16f; }
-        //    if (!options.ContainsKey("mincolorratio")) { options["mincolorratio"] = 0.02f; }
-        //    if (!options.ContainsKey("colorquantcycles")) { options["colorquantcycles"] = 3f; }
-        //    // SVG rendering
-        //    if (!options.ContainsKey("scale")) { options["scale"] = 1f; }
-        //    if (!options.ContainsKey("simplifytolerance")) { options["simplifytolerance"] = 0f; }
-        //    if (!options.ContainsKey("roundcoords")) { options["roundcoords"] = 1f; }
-        //    if (!options.ContainsKey("lcpr")) { options["lcpr"] = 0f; }
-        //    if (!options.ContainsKey("qcpr")) { options["qcpr"] =0f; }
-        //    if (!options.ContainsKey("desc")) { options["desc"] = 1f; }
-        //    if (!options.ContainsKey("viewbox")) { options["viewbox"] = 0f; }
-        //    // Blur
-        //    if (!options.ContainsKey("blurradius")) { options["blurradius"] = 0f; }
-        //    if (!options.ContainsKey("blurdelta")) { options["blurdelta"] = 20f; }
-
-        //    return options;
-        //}// End of checkoptions()
-
+        }
 
         ////////////////////////////////////////////////////////////
         //
@@ -165,9 +85,9 @@ namespace ImageTracerNet
             float minratio = (float)options.ColorQuantization.MinColorRatio;
             int cycles = (int)Math.Floor(options.ColorQuantization.ColorQuantCycles);
             // Creating indexed color array arr which has a boundary filled with -1 in every direction
-            int[][] arr = new int[imgd.height + 2][].InitInner(imgd.width + 2);
-            for (int j = 0; j < (imgd.height + 2); j++) { arr[j][0] = -1; arr[j][imgd.width + 1] = -1; }
-            for (int i = 0; i < (imgd.width + 2); i++) { arr[0][i] = -1; arr[imgd.height + 1][i] = -1; }
+            int[][] arr = new int[imgd.Height + 2][].InitInner(imgd.Width + 2);
+            for (int j = 0; j < (imgd.Height + 2); j++) { arr[j][0] = -1; arr[j][imgd.Width + 1] = -1; }
+            for (int i = 0; i < (imgd.Width + 2); i++) { arr[0][i] = -1; arr[imgd.Height + 1][i] = -1; }
 
             int idx = 0, cd, cdl, ci, c1, c2, c3, c4;
 
@@ -209,7 +129,7 @@ namespace ImageTracerNet
                             palette[k][2] = (byte)(shift + Math.Floor((double)(paletteacc[k][2] / (double)paletteacc[k][4])));
                             palette[k][3] = (byte)(shift + Math.Floor((double)(paletteacc[k][3] / (double)paletteacc[k][4])));
                         }
-                        ratio = paletteacc[k][4] / (float)(imgd.width * imgd.height);
+                        ratio = paletteacc[k][4] / (float)(imgd.Width * imgd.Height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < minratio) && (cnt < (cycles - 1)))
@@ -234,22 +154,22 @@ namespace ImageTracerNet
                 }
 
                 // loop through all pixels
-                for (int j = 0; j < imgd.height; j++)
+                for (int j = 0; j < imgd.Height; j++)
                 {
-                    for (int i = 0; i < imgd.width; i++)
+                    for (int i = 0; i < imgd.Width; i++)
                     {
 
-                        idx = ((j * imgd.width) + i) * 4;
+                        idx = ((j * imgd.Width) + i) * 4;
 
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
                         cdl = 256 + 256 + 256 + 256; ci = 0;
                         for (int k = 0; k < palette.Length; k++)
                         {
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            c1 = Math.Abs(palette[k][0] - imgd.data[idx]);
-                            c2 = Math.Abs(palette[k][1] - imgd.data[idx + 1]);
-                            c3 = Math.Abs(palette[k][2] - imgd.data[idx + 2]);
-                            c4 = Math.Abs(palette[k][3] - imgd.data[idx + 3]);
+                            c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
+                            c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
+                            c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
+                            c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
                             cd = c1 + c2 + c3 + (c4 * 4); // weighted alpha seems to help images with transparency
 
                             // Remember this color if this is the closest yet
@@ -260,10 +180,10 @@ namespace ImageTracerNet
                         const int shift = 0; // MJY: From 128
 
                         // add to palettacc
-                        paletteacc[ci][0] += shift + imgd.data[idx];
-                        paletteacc[ci][1] += shift + imgd.data[idx + 1];
-                        paletteacc[ci][2] += shift + imgd.data[idx + 2];
-                        paletteacc[ci][3] += shift + imgd.data[idx + 3];
+                        paletteacc[ci][0] += shift + imgd.Data[idx];
+                        paletteacc[ci][1] += shift + imgd.Data[idx + 1];
+                        paletteacc[ci][2] += shift + imgd.Data[idx + 2];
+                        paletteacc[ci][3] += shift + imgd.Data[idx + 3];
                         paletteacc[ci][4]++;
 
                         arr[j + 1][i + 1] = ci;
@@ -331,11 +251,11 @@ namespace ImageTracerNet
             int idx = 0; byte[][] palette = new byte[numberofcolors][].InitInner(4);
             for (int i = 0; i < numberofcolors; i++)
             {
-                idx = (int)(Math.Floor((Rng.NextDouble() * imgd.data.Length) / 4) * 4);
-                palette[i][0] = imgd.data[idx];
-                palette[i][1] = imgd.data[idx + 1];
-                palette[i][2] = imgd.data[idx + 2];
-                palette[i][3] = imgd.data[idx + 3];
+                idx = (int)(Math.Floor((Rng.NextDouble() * imgd.Data.Length) / 4) * 4);
+                palette[i][0] = imgd.Data[idx];
+                palette[i][1] = imgd.Data[idx + 1];
+                palette[i][2] = imgd.Data[idx + 2];
+                palette[i][3] = imgd.Data[idx + 3];
             }
             return palette;
         }// End of samplepalette()
@@ -349,8 +269,8 @@ namespace ImageTracerNet
         public static int[][][] layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            int val = 0, aw = ii.array[0].Length, ah = ii.array.Length, n1, n2, n3, n4, n5, n6, n7, n8;
-            int[][][] layers = new int[ii.palette.Length][][].InitInner(ah, aw);
+            int val = 0, aw = ii.Array[0].Length, ah = ii.Array.Length, n1, n2, n3, n4, n5, n6, n7, n8;
+            int[][][] layers = new int[ii.Palette.Length][][].InitInner(ah, aw);
 
             // Looping through all pixels and calculating edge node type
             for (int j = 1; j < (ah - 1); j++)
@@ -359,17 +279,17 @@ namespace ImageTracerNet
                 {
 
                     // This pixel's indexed color
-                    val = ii.array[j][i];
+                    val = ii.Array[j][i];
 
                     // Are neighbor pixel colors the same?
-                    if ((j > 0) && (i > 0)) { n1 = ii.array[j - 1][i - 1] == val ? 1 : 0; } else { n1 = 0; }
-                    if (j > 0) { n2 = ii.array[j - 1][i] == val ? 1 : 0; } else { n2 = 0; }
-                    if ((j > 0) && (i < (aw - 1))) { n3 = ii.array[j - 1][i + 1] == val ? 1 : 0; } else { n3 = 0; }
-                    if (i > 0) { n4 = ii.array[j][i - 1] == val ? 1 : 0; } else { n4 = 0; }
-                    if (i < (aw - 1)) { n5 = ii.array[j][i + 1] == val ? 1 : 0; } else { n5 = 0; }
-                    if ((j < (ah - 1)) && (i > 0)) { n6 = ii.array[j + 1][i - 1] == val ? 1 : 0; } else { n6 = 0; }
-                    if (j < (ah - 1)) { n7 = ii.array[j + 1][i] == val ? 1 : 0; } else { n7 = 0; }
-                    if ((j < (ah - 1)) && (i < (aw - 1))) { n8 = ii.array[j + 1][i + 1] == val ? 1 : 0; } else { n8 = 0; }
+                    if ((j > 0) && (i > 0)) { n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0; } else { n1 = 0; }
+                    if (j > 0) { n2 = ii.Array[j - 1][i] == val ? 1 : 0; } else { n2 = 0; }
+                    if ((j > 0) && (i < (aw - 1))) { n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0; } else { n3 = 0; }
+                    if (i > 0) { n4 = ii.Array[j][i - 1] == val ? 1 : 0; } else { n4 = 0; }
+                    if (i < (aw - 1)) { n5 = ii.Array[j][i + 1] == val ? 1 : 0; } else { n5 = 0; }
+                    if ((j < (ah - 1)) && (i > 0)) { n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0; } else { n6 = 0; }
+                    if (j < (ah - 1)) { n7 = ii.Array[j + 1][i] == val ? 1 : 0; } else { n7 = 0; }
+                    if ((j < (ah - 1)) && (i < (aw - 1))) { n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0; } else { n8 = 0; }
 
                     // this pixel"s type and looking back on previous pixels
                     layers[val][j + 1][i + 1] = 1 + (n5 * 2) + (n8 * 4) + (n7 * 8);
@@ -983,23 +903,23 @@ namespace ImageTracerNet
         {
             //options = checkoptions(options);
             // SVG start
-            int w = (int)(ii.width * options.SvgRendering.Scale), h = (int)(ii.height * options.SvgRendering.Scale);
+            int w = (int)(ii.Width * options.SvgRendering.Scale), h = (int)(ii.Height * options.SvgRendering.Scale);
             String viewboxorviewport = options.SvgRendering.Viewbox.IsNotZero() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
             StringBuilder svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options.SvgRendering.Desc.IsNotZero()) { svgstr.Append("desc=\"Created with ImageTracer.java version " + versionnumber + "\" "); }
+            if (options.SvgRendering.Desc.IsNotZero()) { svgstr.Append("desc=\"Created with ImageTracer.java version " + VersionNumber + "\" "); }
             svgstr.Append(">");
 
             // creating Z-index
             SortedDictionary<double, int[]> zindex = new SortedDictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
             double label;
             // Layer loop
-            for (int k = 0; k < ii.layers.Count; k++)
+            for (int k = 0; k < ii.Layers.Count; k++)
             {
                 // Path loop
-                for (int pcnt = 0; pcnt < ii.layers[k].Count; pcnt++)
+                for (int pcnt = 0; pcnt < ii.Layers[k].Count; pcnt++)
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
-                    label = (ii.layers[k][pcnt][0][2] * w) + ii.layers[k][pcnt][0][1];
+                    label = (ii.Layers[k][pcnt][0][2] * w) + ii.Layers[k][pcnt][0][1];
                     // Creating new list if required
                     if (!zindex.ContainsKey(label)) { zindex[label] = new int[2]; }
                     // Adding layer and path number to list
@@ -1018,8 +938,8 @@ namespace ImageTracerNet
                 if (options.SvgRendering.Desc.IsNotZero()) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
                 svgpathstring(svgstr,
                         thisdesc,
-                        ii.layers[entry.Value[0]][entry.Value[1]],
-                        tosvgcolorstr(ii.palette[entry.Value[0]]),
+                        ii.Layers[entry.Value[0]][entry.Value[1]],
+                        tosvgcolorstr(ii.Palette[entry.Value[0]]),
                         options);
             }
 
@@ -1051,7 +971,7 @@ namespace ImageTracerNet
         {
             int i, j, k, d, idx;
             double racc, gacc, bacc, aacc, wacc;
-            ImageData imgd2 = new ImageData(imgd.width, imgd.height, new byte[imgd.width * imgd.height * 4]);
+            ImageData imgd2 = new ImageData(imgd.Width, imgd.Height, new byte[imgd.Width * imgd.Height * 4]);
 
             // radius and delta limits, this kernel
             int radius = (int)Math.Floor(rad); if (radius < 1) { return imgd; }
@@ -1060,51 +980,51 @@ namespace ImageTracerNet
             double[] thisgk = gks[radius - 1];
 
             // loop through all pixels, horizontal blur
-            for (j = 0; j < imgd.height; j++)
+            for (j = 0; j < imgd.Height; j++)
             {
-                for (i = 0; i < imgd.width; i++)
+                for (i = 0; i < imgd.Width; i++)
                 {
                     racc = 0; gacc = 0; bacc = 0; aacc = 0; wacc = 0;
                     // gauss kernel loop
                     for (k = -radius; k < (radius + 1); k++)
                     {
                         // add weighted color values
-                        if (((i + k) > 0) && ((i + k) < imgd.width))
+                        if (((i + k) > 0) && ((i + k) < imgd.Width))
                         {
-                            idx = ((j * imgd.width) + i + k) * 4;
-                            racc += imgd.data[idx] * thisgk[k + radius];
-                            gacc += imgd.data[idx + 1] * thisgk[k + radius];
-                            bacc += imgd.data[idx + 2] * thisgk[k + radius];
-                            aacc += imgd.data[idx + 3] * thisgk[k + radius];
+                            idx = ((j * imgd.Width) + i + k) * 4;
+                            racc += imgd.Data[idx] * thisgk[k + radius];
+                            gacc += imgd.Data[idx + 1] * thisgk[k + radius];
+                            bacc += imgd.Data[idx + 2] * thisgk[k + radius];
+                            aacc += imgd.Data[idx + 3] * thisgk[k + radius];
                             wacc += thisgk[k + radius];
                         }
                     }
                     // The new pixel
-                    idx = ((j * imgd.width) + i) * 4;
-                    imgd2.data[idx] = (byte)Math.Floor(racc / wacc);
-                    imgd2.data[idx + 1] = (byte)Math.Floor(gacc / wacc);
-                    imgd2.data[idx + 2] = (byte)Math.Floor(bacc / wacc);
-                    imgd2.data[idx + 3] = (byte)Math.Floor(aacc / wacc);
+                    idx = ((j * imgd.Width) + i) * 4;
+                    imgd2.Data[idx] = (byte)Math.Floor(racc / wacc);
+                    imgd2.Data[idx + 1] = (byte)Math.Floor(gacc / wacc);
+                    imgd2.Data[idx + 2] = (byte)Math.Floor(bacc / wacc);
+                    imgd2.Data[idx + 3] = (byte)Math.Floor(aacc / wacc);
 
                 }// End of width loop
             }// End of horizontal blur
 
             // copying the half blurred imgd2
-            byte[] himgd = imgd2.data.Clone() as byte[];
+            byte[] himgd = imgd2.Data.Clone() as byte[];
 
             // loop through all pixels, vertical blur
-            for (j = 0; j < imgd.height; j++)
+            for (j = 0; j < imgd.Height; j++)
             {
-                for (i = 0; i < imgd.width; i++)
+                for (i = 0; i < imgd.Width; i++)
                 {
                     racc = 0; gacc = 0; bacc = 0; aacc = 0; wacc = 0;
                     // gauss kernel loop
                     for (k = -radius; k < (radius + 1); k++)
                     {
                         // add weighted color values
-                        if (((j + k) > 0) && ((j + k) < imgd.height))
+                        if (((j + k) > 0) && ((j + k) < imgd.Height))
                         {
-                            idx = (((j + k) * imgd.width) + i) * 4;
+                            idx = (((j + k) * imgd.Width) + i) * 4;
                             racc += himgd[idx] * thisgk[k + radius];
                             gacc += himgd[idx + 1] * thisgk[k + radius];
                             bacc += himgd[idx + 2] * thisgk[k + radius];
@@ -1113,30 +1033,30 @@ namespace ImageTracerNet
                         }
                     }
                     // The new pixel
-                    idx = ((j * imgd.width) + i) * 4;
-                    imgd2.data[idx] = (byte)Math.Floor(racc / wacc);
-                    imgd2.data[idx + 1] = (byte)Math.Floor(gacc / wacc);
-                    imgd2.data[idx + 2] = (byte)Math.Floor(bacc / wacc);
-                    imgd2.data[idx + 3] = (byte)Math.Floor(aacc / wacc);
+                    idx = ((j * imgd.Width) + i) * 4;
+                    imgd2.Data[idx] = (byte)Math.Floor(racc / wacc);
+                    imgd2.Data[idx + 1] = (byte)Math.Floor(gacc / wacc);
+                    imgd2.Data[idx + 2] = (byte)Math.Floor(bacc / wacc);
+                    imgd2.Data[idx + 3] = (byte)Math.Floor(aacc / wacc);
                 }// End of width loop
             }// End of vertical blur
 
             // Selective blur: loop through all pixels
-            for (j = 0; j < imgd.height; j++)
+            for (j = 0; j < imgd.Height; j++)
             {
-                for (i = 0; i < imgd.width; i++)
+                for (i = 0; i < imgd.Width; i++)
                 {
-                    idx = ((j * imgd.width) + i) * 4;
+                    idx = ((j * imgd.Width) + i) * 4;
                     // d is the difference between the blurred and the original pixel
-                    d = Math.Abs(imgd2.data[idx] - imgd.data[idx]) + Math.Abs(imgd2.data[idx + 1] - imgd.data[idx + 1]) +
-                            Math.Abs(imgd2.data[idx + 2] - imgd.data[idx + 2]) + Math.Abs(imgd2.data[idx + 3] - imgd.data[idx + 3]);
+                    d = Math.Abs(imgd2.Data[idx] - imgd.Data[idx]) + Math.Abs(imgd2.Data[idx + 1] - imgd.Data[idx + 1]) +
+                            Math.Abs(imgd2.Data[idx + 2] - imgd.Data[idx + 2]) + Math.Abs(imgd2.Data[idx + 3] - imgd.Data[idx + 3]);
                     // selective blur: if d>delta, put the original pixel back
                     if (d > delta)
                     {
-                        imgd2.data[idx] = imgd.data[idx];
-                        imgd2.data[idx + 1] = imgd.data[idx + 1];
-                        imgd2.data[idx + 2] = imgd.data[idx + 2];
-                        imgd2.data[idx + 3] = imgd.data[idx + 3];
+                        imgd2.Data[idx] = imgd.Data[idx];
+                        imgd2.Data[idx + 1] = imgd.Data[idx + 1];
+                        imgd2.Data[idx + 2] = imgd.Data[idx + 2];
+                        imgd2.Data[idx + 3] = imgd.Data[idx + 3];
                     }
                 }
             }// End of Selective blur

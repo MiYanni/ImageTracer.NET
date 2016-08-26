@@ -29,7 +29,7 @@ namespace ImageTracerTester
                             "scale 1 simplifytolerance 0 roundcoords 1 lcpr 0 qcpr 0 desc 1 viewbox 0 blurradius 0 blurdelta 20 \r\n" +
                             "\r\nOnly <filename> is mandatory, if some of the other optional parameters are missing, they will be set to these defaults. " +
                             "\r\nWarning: if outfilename is not specified, then <filename>.svg will be overwritten." +
-                            "\r\nSee https://github.com/jankovicsandras/imagetracerjava for details. \r\nThis is version " + ImageTracer.versionnumber);
+                            "\r\nSee https://github.com/jankovicsandras/imagetracerjava for details. \r\nThis is version " + ImageTracer.VersionNumber);
                 }
                 else
                 {
@@ -62,7 +62,7 @@ namespace ImageTracerTester
 
                     var imageTracer = new ImageTracer();
                     // Loading image, tracing, rendering SVG, saving SVG file
-                    File.WriteAllText(outfilename, ImageTracer.imageToSVG(args[0], options, null));
+                    File.WriteAllText(outfilename, ImageTracer.ImageToSvg(args[0], options, null));
 
                 }// End of parameter parsing and processing
 
