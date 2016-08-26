@@ -16,13 +16,13 @@ namespace ImageTracerNet
         public void SetOptionByName(string optionName, double value)
         {
             var optionType = GetOptionTypeFromName(optionName);
-            optionType.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Single(i => i.Name.ToLower() == optionName).SetValue(optionType, value);
+            optionType.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Single(i => String.Equals(i.Name, optionName, StringComparison.CurrentCultureIgnoreCase)).SetValue(optionType, value);
         }
 
         private object GetOptionTypeFromName(string optionName)
         {
             object[] options = {Tracing, ColorQuantization, SvgRendering, Blur};
-            return options.Single(o => o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(i => i.Name.ToLower() == optionName));
+            return options.Single(o => o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(i => String.Equals(i.Name, optionName, StringComparison.CurrentCultureIgnoreCase)));
         }
     }
 }
