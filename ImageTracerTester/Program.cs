@@ -60,7 +60,6 @@ namespace ImageTracerTester
                         }
                     }// End of parameternames loop
 
-                    var imageTracer = new ImageTracer();
                     // Loading image, tracing, rendering SVG, saving SVG file
                     File.WriteAllText(outfilename, ImageTracer.ImageToSvg(args[0], options, null));
 

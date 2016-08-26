@@ -9,7 +9,7 @@ using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Ge
 
 namespace ImageTracerNet
 {
-    public class ImageTracer
+    public static class ImageTracer
     {
         public static string VersionNumber = "1.1.1";
 
@@ -42,32 +42,33 @@ namespace ImageTracerNet
         // Tracing ImageData, then returning the SVG String
         private static string ImageDataToSvg(ImageData imgd, Options options, byte[][] palette)
         {
-            return getsvgstring(ImageDataToTraceData(imgd, options, palette), options);
+            return GetSvgString(ImageDataToTraceData(imgd, options, palette), options);
         }
 
         // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
-        public IndexedImage ImageToTraceData(string filename, Options options, byte[][] palette) 
+        public static IndexedImage ImageToTraceData(string filename, Options options, byte[][] palette) 
         {
             return ImageToTraceData(new Bitmap(filename), options, palette);
         }
-        public IndexedImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
+
+        public static IndexedImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
         {
             return ImageDataToTraceData(LoadImageData(image), options, palette);
         }
 
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
-        public static IndexedImage ImageDataToTraceData(ImageData imgd, Options options, byte[][] palette)
+        private static IndexedImage ImageDataToTraceData(ImageData imgd, Options options, byte[][] palette)
         {
             // 1. Color quantization
-            var ii = colorquantization(imgd, palette, options);
+            var ii = ColorQuantization(imgd, palette, options);
             // 2. Layer separation and edge detection
-            var rawlayers = layering(ii);
+            var rawlayers = Layering(ii);
             // 3. Batch pathscan
-            var bps = batchpathscan(rawlayers, (float)Math.Floor(options.Tracing.PathOmit));
+            var bps = BatchPathScan(rawlayers, (float)Math.Floor(options.Tracing.PathOmit));
             // 4. Batch interpollation
-            var bis = batchinternodes(bps);
+            var bis = BatchInterNodes(bps);
             // 5. Batch tracing
-            ii.Layers = batchtracelayers(bis, (float)options.Tracing.LTres, (float)options.Tracing.QTres);
+            ii.Layers = BatchTraceLayers(bis, (float)options.Tracing.LTres, (float)options.Tracing.QTres);
             return ii;
         }
 
@@ -79,7 +80,7 @@ namespace ImageTracerNet
 
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
         // https://en.wikipedia.org/wiki/Color_quantization    https://en.wikipedia.org/wiki/K-means_clustering
-        public static IndexedImage colorquantization(ImageData imgd, byte[][] palette, Options options)
+        private static IndexedImage ColorQuantization(ImageData imgd, byte[][] palette, Options options)
         {
             int numberofcolors = (int)Math.Floor(options.ColorQuantization.NumberOfColors);
             float minratio = (float)options.ColorQuantization.MinColorRatio;
@@ -96,16 +97,16 @@ namespace ImageTracerNet
             {
                 if (options.ColorQuantization.ColorSampling.IsNotZero())
                 {
-                    palette = samplepalette(numberofcolors, imgd);
+                    palette = SamplePalette(numberofcolors, imgd);
                 }
                 else
                 {
-                    palette = generatepalette(numberofcolors);
+                    palette = GeneratePalette(numberofcolors);
                 }
             }
 
             // Selective Gaussian blur preprocessing
-            if (options.Blur.BlurRadius > 0) { imgd = blur(imgd, (float)options.Blur.BlurRadius, (float)options.Blur.BlurDelta); }
+            if (options.Blur.BlurRadius > 0) { imgd = Blur(imgd, (float)options.Blur.BlurRadius, (float)options.Blur.BlurDelta); }
 
             long[][] paletteacc = new long[palette.Length][].InitInner(5);
 
@@ -193,10 +194,10 @@ namespace ImageTracerNet
             }// End of Repeat clustering step "cycles" times
 
             return new IndexedImage(arr, palette);
-        }// End of colorquantization
+        }
 
         // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
-        public static byte[][] generatepalette(int numberofcolors)
+        private static byte[][] GeneratePalette(int numberofcolors)
         {
             byte[][] palette = new byte[numberofcolors][].InitInner(4);
             if (numberofcolors < 8)
@@ -244,9 +245,9 @@ namespace ImageTracerNet
                 }
             }// End of numberofcolors check
             return palette;
-        }// End of generatepalette()
+        }
 
-        public static byte[][] samplepalette(int numberofcolors, ImageData imgd)
+        private static byte[][] SamplePalette(int numberofcolors, ImageData imgd)
         {
             int idx = 0; byte[][] palette = new byte[numberofcolors][].InitInner(4);
             for (int i = 0; i < numberofcolors; i++)
@@ -258,7 +259,7 @@ namespace ImageTracerNet
                 palette[i][3] = imgd.Data[idx + 3];
             }
             return palette;
-        }// End of samplepalette()
+        }
 
         // 2. Layer separation and edge detection
         // Edge node types ( ▓:light or 1; ░:dark or 0 )
@@ -266,7 +267,7 @@ namespace ImageTracerNet
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         //
-        public static int[][][] layering(IndexedImage ii)
+        private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
             int val = 0, aw = ii.Array[0].Length, ah = ii.Array.Length, n1, n2, n3, n4, n5, n6, n7, n8;
@@ -301,7 +302,7 @@ namespace ImageTracerNet
             }// End of j loop
 
             return layers;
-        }// End of layering()
+        }
 
         // 3. Walking through an edge node array, discarding edge node types 0 and 15 and creating paths from the rest.
         // Walk directions (dir): 0 > ; 1 ^ ; 2 < ; 3 v
@@ -310,7 +311,7 @@ namespace ImageTracerNet
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         //
-        public static List<List<int[]>> pathscan(int[][] arr, float pathomit)
+        private static List<List<int[]>> PathScan(int[][] arr, float pathomit)
         {
             List<List<int[]>> paths = new List<List<int[]>>();
             List<int[]> thispath;
@@ -581,21 +582,21 @@ namespace ImageTracerNet
             }// End of j loop
 
             return paths;
-        }// End of pathscan()
+        }
 
         // 3. Batch pathscan
-        public static TriListIntArray batchpathscan(int[][][] layers, float pathomit)
+        private static TriListIntArray BatchPathScan(int[][][] layers, float pathomit)
         {
             TriListIntArray bpaths = new TriListIntArray();
             foreach (int[][] layer in layers)
             {
-                bpaths.Add(pathscan(layer, pathomit));
+                bpaths.Add(PathScan(layer, pathomit));
             }
             return bpaths;
         }
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
-        public static List<List<double[]>> internodes(List<List<int[]>> paths)
+        private static List<List<double[]>> InterNodes(List<List<int[]>> paths)
         {
             List<List<double[]>> ins = new List<List<double[]>>();
             List<double[]> thisinp;
@@ -649,15 +650,15 @@ namespace ImageTracerNet
             }// End of paths loop
 
             return ins;
-        }// End of internodes()
+        }
 
         // 4. Batch interpollation
-        private static TriListDoubleArray batchinternodes(TriListIntArray bpaths)
+        private static TriListDoubleArray BatchInterNodes(TriListIntArray bpaths)
         {
             TriListDoubleArray binternodes = new TriListDoubleArray();
             for (int k = 0; k < bpaths.Count; k++)
             {
-                binternodes.Add(internodes(bpaths[k]));
+                binternodes.Add(InterNodes(bpaths[k]));
             }
             return binternodes;
         }
@@ -680,7 +681,7 @@ namespace ImageTracerNet
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        public static List<double[]> tracepath(List<double[]> path, float ltreshold, float qtreshold)
+        private static List<double[]> TracePath(List<double[]> path, float ltreshold, float qtreshold)
         {
             int pcnt = 0, seqend = 0; double segtype1, segtype2;
             List<double[]> smp = new List<double[]>();
@@ -699,7 +700,7 @@ namespace ImageTracerNet
                 if (seqend == (pathlength - 1)) { seqend = 0; }
 
                 // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-                smp.AddRange(fitseq(path, ltreshold, qtreshold, pcnt, seqend));
+                smp.AddRange(FitSeq(path, ltreshold, qtreshold, pcnt, seqend));
                 // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
 
                 // forward pcnt;
@@ -707,11 +708,11 @@ namespace ImageTracerNet
 
             }// End of pcnt loop
             return smp;
-        }// End of tracepath()
+        }
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
-        public static List<double[]> fitseq(List<double[]> path, float ltreshold, float qtreshold, int seqstart, int seqend)
+        private static List<double[]> FitSeq(List<double[]> path, float ltreshold, float qtreshold, int seqstart, int seqend)
         {
             List<double[]> segment = new List<double[]>();
             double[] thissegment;
@@ -800,29 +801,29 @@ namespace ImageTracerNet
             int splitpoint = (fitpoint + errorpoint) / 2;
 
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-            segment = fitseq(path, ltreshold, qtreshold, seqstart, splitpoint);
-            segment.AddRange(fitseq(path, ltreshold, qtreshold, splitpoint, seqend));
+            segment = FitSeq(path, ltreshold, qtreshold, seqstart, splitpoint);
+            segment.AddRange(FitSeq(path, ltreshold, qtreshold, splitpoint, seqend));
             return segment;
-        }// End of fitseq()
+        }
 
         // 5. Batch tracing paths
-        public static List<List<double[]>> batchtracepaths(List<List<double[]>> internodepaths, float ltres, float qtres)
+        private static List<List<double[]>> BatchTracePaths(List<List<double[]>> internodepaths, float ltres, float qtres)
         {
             List<List<double[]>> btracedpaths = new List<List<double[]>>();
             for (int k = 0; k < internodepaths.Count; k++)
             {
-                btracedpaths.Add(tracepath(internodepaths[k], ltres, qtres));
+                btracedpaths.Add(TracePath(internodepaths[k], ltres, qtres));
             }
             return btracedpaths;
         }
 
         // 5. Batch tracing layers
-        public static TriListDoubleArray batchtracelayers(TriListDoubleArray binternodes, float ltres, float qtres)
+        private static TriListDoubleArray BatchTraceLayers(TriListDoubleArray binternodes, float ltres, float qtres)
         {
             TriListDoubleArray btbis = new TriListDoubleArray();
             for (int k = 0; k < binternodes.Count; k++)
             {
-                btbis.Add(batchtracepaths(binternodes[k], ltres, qtres));
+                btbis.Add(BatchTracePaths(binternodes[k], ltres, qtres));
             }
             return btbis;
         }
@@ -833,13 +834,13 @@ namespace ImageTracerNet
         //
         ////////////////////////////////////////////////////////////
 
-        public static float roundtodec(float val, float places)
+        private static float RoundToDec(float val, float places)
         {
             return (float)(Math.Round(val * Math.Pow(10, places)) / Math.Pow(10, places));
         }
 
         // Getting SVG path element string from a traced path
-        public static void svgpathstring(StringBuilder sb, string desc, List<double[]> segments, string colorstr, Options options)
+        private static void SvgPathString(StringBuilder sb, string desc, List<double[]> segments, string colorstr, Options options)
         {
             float scale = (float)options.SvgRendering.Scale, lcpr = (float)options.SvgRendering.LCpr, qcpr = (float)options.SvgRendering.LCpr, roundcoords = (float)Math.Floor(options.SvgRendering.RoundCoords);
             // Path
@@ -865,15 +866,15 @@ namespace ImageTracerNet
                 {
                     if (segments[pcnt][0] == 1.0)
                     {
-                        sb.Append("L ").Append(roundtodec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
-                        .Append(roundtodec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ");
+                        sb.Append("L ").Append(RoundToDec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
+                        .Append(RoundToDec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ");
                     }
                     else
                     {
-                        sb.Append("Q ").Append(roundtodec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
-                        .Append(roundtodec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ")
-                        .Append(roundtodec((float)(segments[pcnt][5] * scale), roundcoords)).Append(" ")
-                        .Append(roundtodec((float)(segments[pcnt][6] * scale), roundcoords)).Append(" ");
+                        sb.Append("Q ").Append(RoundToDec((float)(segments[pcnt][3] * scale), roundcoords)).Append(" ")
+                        .Append(RoundToDec((float)(segments[pcnt][4] * scale), roundcoords)).Append(" ")
+                        .Append(RoundToDec((float)(segments[pcnt][5] * scale), roundcoords)).Append(" ")
+                        .Append(RoundToDec((float)(segments[pcnt][6] * scale), roundcoords)).Append(" ");
                     }
                 }
             }// End of roundcoords check
@@ -895,11 +896,11 @@ namespace ImageTracerNet
                     sb.Append("<line x1=\"").Append(segments[pcnt][3] * scale).Append("\" y1=\"").Append(segments[pcnt][4] * scale).Append("\" x2=\"").Append(segments[pcnt][5] * scale).Append("\" y2=\"").Append(segments[pcnt][6] * scale).Append("\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"cyan\" />");
                 }// End of quadratic control points
             }
-        }// End of svgpathstring()
+        }
 
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
-        public static String getsvgstring(IndexedImage ii, Options options)
+        private static string GetSvgString(IndexedImage ii, Options options)
         {
             //options = checkoptions(options);
             // SVG start
@@ -936,10 +937,10 @@ namespace ImageTracerNet
             foreach(KeyValuePair<double, int[]> entry in zindex)
             {
                 if (options.SvgRendering.Desc.IsNotZero()) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
-                svgpathstring(svgstr,
+                SvgPathString(svgstr,
                         thisdesc,
                         ii.Layers[entry.Value[0]][entry.Value[1]],
-                        tosvgcolorstr(ii.Palette[entry.Value[0]]),
+                        ToSvgColorString(ii.Palette[entry.Value[0]]),
                         options);
             }
 
@@ -948,16 +949,16 @@ namespace ImageTracerNet
 
             return svgstr.ToString();
 
-        }// End of getsvgstring()
+        }
 
-        static String tosvgcolorstr(byte[] c)
+        private static string ToSvgColorString(byte[] c)
         {
             const int shift = 0; // MJY: Try removing all the + 128 on the values. Might fix issues.
             return "fill=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke-width=\"1\" opacity=\"" + ((c[3] + shift) / 255.0) + "\" ";
         }
 
         // Gaussian kernels for blur
-        static double[][] gks = 
+        private static readonly double[][] Gks = 
         {
             new []{0.27901, 0.44198, 0.27901},
             new []{0.135336, 0.228569, 0.272192, 0.228569, 0.135336},
@@ -967,7 +968,7 @@ namespace ImageTracerNet
         };
 
         // Selective Gaussian blur for preprocessing
-        static ImageData blur(ImageData imgd, float rad, float del)
+        private static ImageData Blur(ImageData imgd, float rad, float del)
         {
             int i, j, k, d, idx;
             double racc, gacc, bacc, aacc, wacc;
@@ -977,7 +978,7 @@ namespace ImageTracerNet
             int radius = (int)Math.Floor(rad); if (radius < 1) { return imgd; }
             if (radius > 5) { radius = 5; }
             int delta = (int)Math.Abs(del); if (delta > 1024) { delta = 1024; }
-            double[] thisgk = gks[radius - 1];
+            double[] thisgk = Gks[radius - 1];
 
             // loop through all pixels, horizontal blur
             for (j = 0; j < imgd.Height; j++)
@@ -1061,6 +1062,6 @@ namespace ImageTracerNet
                 }
             }// End of Selective blur
             return imgd2;
-        }// End of blur()
-    }// End of ImageTracer class
+        }
+    }
 }

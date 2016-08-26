@@ -1,7 +1,7 @@
 ﻿namespace ImageTracerNet
 {
     // https://developer.mozilla.org/en-US/docs/Web/API/ImageData
-    public class ImageData
+    internal class ImageData
     {
         public int Width { get; }
         public int Height { get; }
