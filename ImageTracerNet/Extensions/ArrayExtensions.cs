@@ -38,9 +38,14 @@ namespace ImageTracerNet.Extensions
 
         // Do not use with reference types as every cell would be initialized with the same reference.
         // Used the Func overloads below with reference types.
-        public static T[] Initialize<T>(this T[] array, T value)
+        public static T[] Initialize<T>(this T[] array, T value) where T: struct
         {
             return array.Initialize(() => value);
+        }
+
+        public static T[] Initialize<T>(this T[] array, T value, params int[] indices) where T : struct
+        {
+            return array.Initialize(i => value, indices);
         }
 
         public static T[] Initialize<T>(this T[] array, Func<T> initializer)
@@ -53,6 +58,15 @@ namespace ImageTracerNet.Extensions
             for (var i = 0; i < array.Length; ++i)
             {
                 array[i] = initializer(i);
+            }
+            return array;
+        }
+
+        public static T[] Initialize<T>(this T[] array, Func<int, T> initializer, params int[] indices)
+        {
+            foreach (var index in indices)
+            {
+                array[index] = initializer(index);
             }
             return array;
         }

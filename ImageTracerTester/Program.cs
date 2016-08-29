@@ -105,14 +105,31 @@ namespace ImageTracerTester
             Console.WriteLine("Initial");
 
             //Enumerable.Repeat()
-            var arr2 = new int[height].Initialize(-1);
-            arr2[0] = 1;
-            arr2.Initialize();
-            var arr3 = new int[height][].Initialize(new int[1]);
-            arr3[0][0] = 2;
-            var arr4 = new int[height][].Initialize(() => new int[1]);
-            arr4[0][0] = 2;
-            Console.WriteLine("Test");
+            //var arr2 = new int[height].Initialize(-1);
+            //arr2[0] = 1;
+            //arr2.Initialize();
+            //var arr3 = new int[height][].Initialize(new int[1]);
+            //arr3[0][0] = 2;
+            //var arr4 = new int[height][].Initialize(() => new int[1]);
+            //arr4[0][0] = 2;
+            //Console.WriteLine("Test");
+
+            //var arr2 = new int[height][].Initialize(i => 
+            //i == 0 || i == width - 1 
+            //    ? new int[width].Initialize(-1, 0, width - 1)
+            //    : new int[width]);
+
+            var arr2 = new int[height][].Initialize(i =>
+            i == 0 || i == height - 1
+                ? new int[width].Initialize(-1)
+                : new int[width].Initialize(-1, 0, width - 1));
+
+            var result = true;
+            for (var i = 0; i < height; ++i)
+            {
+                result &= arr[i].SequenceEqual(arr2[i]);
+            }
+            Console.WriteLine("Test: " + result);
         }
     }
 }

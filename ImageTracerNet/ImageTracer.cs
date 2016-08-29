@@ -80,23 +80,22 @@ namespace ImageTracerNet
         //
         ////////////////////////////////////////////////////////////
 
+        // Creating indexed color array arr which has a boundary filled with -1 in every direction
+        private static int[][] CreateIndexedColorArray(int height, int width)
+        {
+            height += 2;
+            width += 2;
+            return new int[height][].Initialize(i =>
+            i == 0 || i == height - 1
+                ? new int[width].Initialize(-1)
+                : new int[width].Initialize(-1, 0, width - 1));
+        }
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
         // https://en.wikipedia.org/wiki/Color_quantization
         // https://en.wikipedia.org/wiki/K-means_clustering
         private static IndexedImage ColorQuantization(ImageData imgd, byte[][] palette, Options options)
         {
-            // Creating indexed color array arr which has a boundary filled with -1 in every direction
-            var arr = new int[imgd.Height + 2][].InitInner(imgd.Width + 2);
-            for (var j = 0; j < imgd.Height + 2; j++)
-            {
-                arr[j][0] = -1;
-                arr[j][imgd.Width + 1] = -1;
-            }
-            for (var i = 0; i < imgd.Width + 2; i++)
-            {
-                arr[0][i] = -1;
-                arr[imgd.Height + 1][i] = -1;
-            }
+            var arr = CreateIndexedColorArray(imgd.Height, imgd.Width);
 
             int idx = 0, cd, cdl, ci, c1, c2, c3, c4;
 
