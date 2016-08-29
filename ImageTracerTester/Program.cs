@@ -1,6 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using ImageTracerNet;
+using ImageTracerNet.Extensions;
+
 //using Options = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
 
 namespace ImageTracerTester
@@ -11,6 +14,7 @@ namespace ImageTracerTester
         {
             //SaveTracedImage(args);
             SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "70" });
+            //ColorArrayTest(100, 200);
         }
 
         private static void SaveTracedImage(string[] args)
@@ -79,6 +83,36 @@ namespace ImageTracerTester
         {
             if (i < (arr.Length - 1)) { try { return (float)Convert.ToDouble(arr[i + 1]); } catch (Exception) { } }
             return -1;
+        }
+
+        //////////////////////////////////////////////////////////
+
+        private static void ColorArrayTest(int height, int width)
+        {
+            height += 2;
+            width += 2;
+            var arr = new int[height][].InitInner(width);
+            for (var j = 0; j < height; j++)
+            {
+                arr[j][0] = -1;
+                arr[j][width - 1] = -1;
+            }
+            for (var i = 0; i < width; i++)
+            {
+                arr[0][i] = -1;
+                arr[height - 1][i] = -1;
+            }
+            Console.WriteLine("Initial");
+
+            //Enumerable.Repeat()
+            var arr2 = new int[height].Initialize(-1);
+            arr2[0] = 1;
+            arr2.Initialize();
+            var arr3 = new int[height][].Initialize(new int[1]);
+            arr3[0][0] = 2;
+            var arr4 = new int[height][].Initialize(() => new int[1]);
+            arr4[0][0] = 2;
+            Console.WriteLine("Test");
         }
     }
 }

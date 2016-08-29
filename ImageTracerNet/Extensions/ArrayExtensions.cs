@@ -8,22 +8,53 @@ namespace ImageTracerNet.Extensions
 {
     public static class ArrayExtensions
     {
+        //public static T[][] InitInner<T>(this T[][] jagged, int length)
+        //{
+        //    for (var i = 0; i < jagged.GetLength(0); ++i)
+        //    {
+        //        jagged[i] = new T[length];
+        //    }
+        //    return jagged;
+        //}
+
+        //public static T[][][] InitInner<T>(this T[][][] jagged, int length1, int length2)
+        //{
+        //    for (var i = 0; i < jagged.GetLength(0); ++i)
+        //    {
+        //        jagged[i] = new T[length1][].InitInner(length2);
+        //    }
+        //    return jagged;
+        //}
+
         public static T[][] InitInner<T>(this T[][] jagged, int length)
         {
-            for (var i = 0; i < jagged.GetLength(0); ++i)
-            {
-                jagged[i] = new T[length];
-            }
-            return jagged;
+            return jagged.Initialize(() => new T[length]);
         }
 
         public static T[][][] InitInner<T>(this T[][][] jagged, int length1, int length2)
         {
-            for (var i = 0; i < jagged.GetLength(0); ++i)
+            return jagged.Initialize(() => new T[length1][].InitInner(length2));
+        }
+
+        // Do not use with reference types as every cell would be initialized with the same reference.
+        // Used the Func overloads below with reference types.
+        public static T[] Initialize<T>(this T[] array, T value)
+        {
+            return array.Initialize(() => value);
+        }
+
+        public static T[] Initialize<T>(this T[] array, Func<T> initializer)
+        {
+            return array.Initialize(i => initializer());
+        }
+
+        public static T[] Initialize<T>(this T[] array, Func<int, T> initializer)
+        {
+            for (var i = 0; i < array.Length; ++i)
             {
-                jagged[i] = new T[length1][].InitInner(length2);
+                array[i] = initializer(i);
             }
-            return jagged;
+            return array;
         }
     }
 }

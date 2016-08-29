@@ -85,13 +85,18 @@ namespace ImageTracerNet
         // https://en.wikipedia.org/wiki/K-means_clustering
         private static IndexedImage ColorQuantization(ImageData imgd, byte[][] palette, Options options)
         {
-            var numberofcolors = options.ColorQuantization.NumberOfColors;
-            var minratio = options.ColorQuantization.MinColorRatio;
-            var cycles = options.ColorQuantization.ColorQuantCycles;
             // Creating indexed color array arr which has a boundary filled with -1 in every direction
             var arr = new int[imgd.Height + 2][].InitInner(imgd.Width + 2);
-            for (var j = 0; j < imgd.Height + 2; j++) { arr[j][0] = -1; arr[j][imgd.Width + 1] = -1; }
-            for (var i = 0; i < imgd.Width + 2; i++) { arr[0][i] = -1; arr[imgd.Height + 1][i] = -1; }
+            for (var j = 0; j < imgd.Height + 2; j++)
+            {
+                arr[j][0] = -1;
+                arr[j][imgd.Width + 1] = -1;
+            }
+            for (var i = 0; i < imgd.Width + 2; i++)
+            {
+                arr[0][i] = -1;
+                arr[imgd.Height + 1][i] = -1;
+            }
 
             int idx = 0, cd, cdl, ci, c1, c2, c3, c4;
 
@@ -100,11 +105,11 @@ namespace ImageTracerNet
             {
                 if (options.ColorQuantization.ColorSampling.IsNotZero())
                 {
-                    palette = SamplePalette(numberofcolors, imgd);
+                    palette = SamplePalette(options.ColorQuantization.NumberOfColors, imgd);
                 }
                 else
                 {
-                    palette = GeneratePalette(numberofcolors);
+                    palette = GeneratePalette(options.ColorQuantization.NumberOfColors);
                 }
             }
 
@@ -117,7 +122,7 @@ namespace ImageTracerNet
             var paletteacc = new long[palette.Length][].InitInner(5);
 
             // Repeat clustering step "cycles" times
-            for (var cnt = 0; cnt < cycles; cnt++)
+            for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
             {
 
                 // Average colors from the second iteration
@@ -139,7 +144,7 @@ namespace ImageTracerNet
                         ratio = paletteacc[k][4] / (double)(imgd.Width * imgd.Height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
-                        if ((ratio < minratio) && (cnt < cycles - 1))
+                        if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
                         {
                             palette[k][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
                             palette[k][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
