@@ -81,6 +81,13 @@ namespace ImageTracerNet
         ////////////////////////////////////////////////////////////
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction
+        // Example: 4x4 image becomes a 6x6 matrix:
+        // -1 -1 -1 -1 -1 -1
+        // -1  0  0  0  0 -1
+        // -1  0  0  0  0 -1
+        // -1  0  0  0  0 -1
+        // -1  0  0  0  0 -1
+        // -1 -1 -1 -1 -1 -1
         private static int[][] CreateIndexedColorArray(int height, int width)
         {
             height += 2;
@@ -90,6 +97,7 @@ namespace ImageTracerNet
                 ? new int[width].Initialize(-1)
                 : new int[width].Initialize(-1, 0, width - 1));
         }
+
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
         // https://en.wikipedia.org/wiki/Color_quantization
         // https://en.wikipedia.org/wiki/K-means_clustering
@@ -97,20 +105,10 @@ namespace ImageTracerNet
         {
             var arr = CreateIndexedColorArray(imgd.Height, imgd.Width);
 
-            int idx = 0, cd, cdl, ci, c1, c2, c3, c4;
-
             // Use custom palette if pal is defined or sample or generate custom length palette
-            if (palette == null)
-            {
-                if (options.ColorQuantization.ColorSampling.IsNotZero())
-                {
-                    palette = SamplePalette(options.ColorQuantization.NumberOfColors, imgd);
-                }
-                else
-                {
-                    palette = GeneratePalette(options.ColorQuantization.NumberOfColors);
-                }
-            }
+            palette = palette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
+                    ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
+                    : GeneratePalette(options.ColorQuantization.NumberOfColors));
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
@@ -123,7 +121,6 @@ namespace ImageTracerNet
             // Repeat clustering step "cycles" times
             for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
             {
-
                 // Average colors from the second iteration
                 if (cnt > 0)
                 {
@@ -170,18 +167,18 @@ namespace ImageTracerNet
                     for (var i = 0; i < imgd.Width; i++)
                     {
 
-                        idx = (j * imgd.Width + i) * 4;
+                        var idx = (j * imgd.Width + i) * 4;
 
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                        cdl = 256 + 256 + 256 + 256; ci = 0;
+                        var cdl = 256 + 256 + 256 + 256; var ci = 0;
                         for (var k = 0; k < palette.Length; k++)
                         {
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
-                            c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
-                            c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
-                            c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
-                            cd = c1 + c2 + c3 + c4 * 4; // weighted alpha seems to help images with transparency
+                            var c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
+                            var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
+                            var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
+                            var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
+                            var cd = c1 + c2 + c3 + c4 * 4;
 
                             // Remember this color if this is the closest yet
                             if (cd < cdl) { cdl = cd; ci = k; }
