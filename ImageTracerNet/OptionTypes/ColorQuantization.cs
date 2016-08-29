@@ -6,8 +6,8 @@ namespace ImageTracerNet.OptionTypes
     public class ColorQuantization
     {
         public double ColorSampling { get; set; } = 1f;
-        public double NumberOfColors { get; set; } = 16f;
+        public int NumberOfColors { get; set; } = 16;
         public double MinColorRatio { get; set; } = .02f;
-        public double ColorQuantCycles { get; set; } = 3f;
+        public int ColorQuantCycles { get; set; } = 3;
     }
 }

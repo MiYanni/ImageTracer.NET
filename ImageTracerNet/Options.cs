@@ -13,7 +13,7 @@ namespace ImageTracerNet
         public SvgRendering SvgRendering { get; set; } = new SvgRendering();
         public Blur Blur { get; set; } = new Blur();
 
-        public void SetOptionByName(string optionName, double value)
+        public void SetOptionByName(string optionName, object value)
         {
             var optionType = GetOptionTypeFromName(optionName);
             optionType.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Single(i => String.Equals(i.Name, optionName, StringComparison.CurrentCultureIgnoreCase)).SetValue(optionType, value);

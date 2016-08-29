@@ -66,7 +66,7 @@ namespace ImageTracerNet
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
             // 3. Batch pathscan
-            var bps = BatchPathScan(rawlayers, Math.Floor(options.Tracing.PathOmit));
+            var bps = BatchPathScan(rawlayers, options.Tracing.PathOmit);
             // 4. Batch interpollation
             var bis = BatchInterNodes(bps);
             // 5. Batch tracing
@@ -81,16 +81,17 @@ namespace ImageTracerNet
         ////////////////////////////////////////////////////////////
 
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
-        // https://en.wikipedia.org/wiki/Color_quantization    https://en.wikipedia.org/wiki/K-means_clustering
+        // https://en.wikipedia.org/wiki/Color_quantization
+        // https://en.wikipedia.org/wiki/K-means_clustering
         private static IndexedImage ColorQuantization(ImageData imgd, byte[][] palette, Options options)
         {
-            int numberofcolors = (int)Math.Floor(options.ColorQuantization.NumberOfColors);
-            double minratio = options.ColorQuantization.MinColorRatio;
-            int cycles = (int)Math.Floor(options.ColorQuantization.ColorQuantCycles);
+            var numberofcolors = options.ColorQuantization.NumberOfColors;
+            var minratio = options.ColorQuantization.MinColorRatio;
+            var cycles = options.ColorQuantization.ColorQuantCycles;
             // Creating indexed color array arr which has a boundary filled with -1 in every direction
-            int[][] arr = new int[imgd.Height + 2][].InitInner(imgd.Width + 2);
-            for (int j = 0; j < imgd.Height + 2; j++) { arr[j][0] = -1; arr[j][imgd.Width + 1] = -1; }
-            for (int i = 0; i < imgd.Width + 2; i++) { arr[0][i] = -1; arr[imgd.Height + 1][i] = -1; }
+            var arr = new int[imgd.Height + 2][].InitInner(imgd.Width + 2);
+            for (var j = 0; j < imgd.Height + 2; j++) { arr[j][0] = -1; arr[j][imgd.Width + 1] = -1; }
+            for (var i = 0; i < imgd.Width + 2; i++) { arr[0][i] = -1; arr[imgd.Height + 1][i] = -1; }
 
             int idx = 0, cd, cdl, ci, c1, c2, c3, c4;
 
@@ -108,12 +109,15 @@ namespace ImageTracerNet
             }
 
             // Selective Gaussian blur preprocessing
-            if (options.Blur.BlurRadius > 0) { imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta); }
+            if (options.Blur.BlurRadius > 0)
+            {
+                imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
+            }
 
-            long[][] paletteacc = new long[palette.Length][].InitInner(5);
+            var paletteacc = new long[palette.Length][].InitInner(5);
 
             // Repeat clustering step "cycles" times
-            for (int cnt = 0; cnt < cycles; cnt++)
+            for (var cnt = 0; cnt < cycles; cnt++)
             {
 
                 // Average colors from the second iteration
@@ -121,7 +125,7 @@ namespace ImageTracerNet
                 {
                     // averaging paletteacc for palette
                     double ratio;
-                    for (int k = 0; k < palette.Length; k++)
+                    for (var k = 0; k < palette.Length; k++)
                     {
                         const int shift = 0; // MJY: From -128
                         // averaging
@@ -147,7 +151,7 @@ namespace ImageTracerNet
                 }// End of Average colors from the second iteration
 
                 // Reseting palette accumulator for averaging
-                for (int i = 0; i < palette.Length; i++)
+                for (var i = 0; i < palette.Length; i++)
                 {
                     paletteacc[i][0] = 0;
                     paletteacc[i][1] = 0;
@@ -157,16 +161,16 @@ namespace ImageTracerNet
                 }
 
                 // loop through all pixels
-                for (int j = 0; j < imgd.Height; j++)
+                for (var j = 0; j < imgd.Height; j++)
                 {
-                    for (int i = 0; i < imgd.Width; i++)
+                    for (var i = 0; i < imgd.Width; i++)
                     {
 
                         idx = (j * imgd.Width + i) * 4;
 
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
                         cdl = 256 + 256 + 256 + 256; ci = 0;
-                        for (int k = 0; k < palette.Length; k++)
+                        for (var k = 0; k < palette.Length; k++)
                         {
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
                             c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
@@ -201,12 +205,12 @@ namespace ImageTracerNet
         // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
         private static byte[][] GeneratePalette(int numberofcolors)
         {
-            byte[][] palette = new byte[numberofcolors][].InitInner(4);
+            var palette = new byte[numberofcolors][].InitInner(4);
             if (numberofcolors < 8)
             {
                 const int shift = 0; // MJY: From -128
                 // Grayscale
-                byte graystep = (byte)Math.Floor(255 / (double)(numberofcolors - 1));
+                var graystep = (byte)Math.Floor(255 / (double)(numberofcolors - 1));
                 for (byte ccnt = 0; ccnt < numberofcolors; ccnt++)
                 {
                     palette[ccnt][0] = (byte)(shift + ccnt * graystep);
@@ -219,14 +223,14 @@ namespace ImageTracerNet
             {
                 const int shift = 0; // MJY: From -128
                 // RGB color cube
-                int colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-                int colorstep = (int)Math.Floor(255 / (double)(colorqnum - 1)); // distance between points
-                int ccnt = 0;
-                for (int rcnt = 0; rcnt < colorqnum; rcnt++)
+                var colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
+                var colorstep = (int)Math.Floor(255 / (double)(colorqnum - 1)); // distance between points
+                var ccnt = 0;
+                for (var rcnt = 0; rcnt < colorqnum; rcnt++)
                 {
-                    for (int gcnt = 0; gcnt < colorqnum; gcnt++)
+                    for (var gcnt = 0; gcnt < colorqnum; gcnt++)
                     {
-                        for (int bcnt = 0; bcnt < colorqnum; bcnt++)
+                        for (var bcnt = 0; bcnt < colorqnum; bcnt++)
                         {
                             palette[ccnt][0] = (byte)(shift + rcnt * colorstep);
                             palette[ccnt][1] = (byte)(shift + gcnt * colorstep);
@@ -238,7 +242,7 @@ namespace ImageTracerNet
                 }// End of red loop
 
                 // Rest is random
-                for (int rcnt = ccnt; rcnt < numberofcolors; rcnt++)
+                for (var rcnt = ccnt; rcnt < numberofcolors; rcnt++)
                 {
                     palette[ccnt][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
                     palette[ccnt][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
@@ -251,8 +255,8 @@ namespace ImageTracerNet
 
         private static byte[][] SamplePalette(int numberofcolors, ImageData imgd)
         {
-            int idx = 0; byte[][] palette = new byte[numberofcolors][].InitInner(4);
-            for (int i = 0; i < numberofcolors; i++)
+            var idx = 0; var palette = new byte[numberofcolors][].InitInner(4);
+            for (var i = 0; i < numberofcolors; i++)
             {
                 idx = (int)(Math.Floor(Rng.NextDouble() * imgd.Data.Length / 4) * 4);
                 palette[i][0] = imgd.Data[idx];
@@ -273,12 +277,12 @@ namespace ImageTracerNet
         {
             // Creating layers for each indexed color in arr
             int val = 0, aw = ii.Array[0].Length, ah = ii.Array.Length, n1, n2, n3, n4, n5, n6, n7, n8;
-            int[][][] layers = new int[ii.Palette.Length][][].InitInner(ah, aw);
+            var layers = new int[ii.Palette.Length][][].InitInner(ah, aw);
 
             // Looping through all pixels and calculating edge node type
-            for (int j = 1; j < ah - 1; j++)
+            for (var j = 1; j < ah - 1; j++)
             {
-                for (int i = 1; i < aw - 1; i++)
+                for (var i = 1; i < aw - 1; i++)
                 {
 
                     // This pixel's indexed color
@@ -313,16 +317,16 @@ namespace ImageTracerNet
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         //
-        private static List<List<int[]>> PathScan(int[][] arr, double pathomit)
+        private static List<List<int[]>> PathScan(int[][] arr, int pathomit)
         {
-            List<List<int[]>> paths = new List<List<int[]>>();
+            var paths = new List<List<int[]>>();
             List<int[]> thispath;
             int px = 0, py = 0, w = arr[0].Length, h = arr.Length, dir = 0;
             bool pathfinished = true, holepath = false;
 
-            for (int j = 0; j < h; j++)
+            for (var j = 0; j < h; j++)
             {
-                for (int i = 0; i < w; i++)
+                for (var i = 0; i < w; i++)
                 {
                     if ((arr[j][i] != 0) && (arr[j][i] != 15))
                     {
@@ -587,10 +591,10 @@ namespace ImageTracerNet
         }
 
         // 3. Batch pathscan
-        private static TriListIntArray BatchPathScan(int[][][] layers, double pathomit)
+        private static TriListIntArray BatchPathScan(int[][][] layers, int pathomit)
         {
-            TriListIntArray bpaths = new TriListIntArray();
-            foreach (int[][] layer in layers)
+            var bpaths = new TriListIntArray();
+            foreach (var layer in layers)
             {
                 bpaths.Add(PathScan(layer, pathomit));
             }
@@ -600,20 +604,20 @@ namespace ImageTracerNet
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
         private static List<List<double[]>> InterNodes(List<List<int[]>> paths)
         {
-            List<List<double[]>> ins = new List<List<double[]>>();
+            var ins = new List<List<double[]>>();
             List<double[]> thisinp;
             double[] thispoint, nextpoint = new double[2];
             int[] pp1, pp2, pp3;
 
             int palen = 0, nextidx = 0, nextidx2 = 0;
             // paths loop
-            for (int pacnt = 0; pacnt < paths.Count; pacnt++)
+            for (var pacnt = 0; pacnt < paths.Count; pacnt++)
             {
                 ins.Add(new List<double[]>());
                 thisinp = ins[ins.Count - 1];
                 palen = paths[pacnt].Count;
                 // pathpoints loop
-                for (int pcnt = 0; pcnt < palen; pcnt++)
+                for (var pcnt = 0; pcnt < palen; pcnt++)
                 {
                     // interpolate between two path points
                     nextidx = (pcnt + 1) % palen; nextidx2 = (pcnt + 2) % palen;
@@ -657,8 +661,8 @@ namespace ImageTracerNet
         // 4. Batch interpollation
         private static TriListDoubleArray BatchInterNodes(TriListIntArray bpaths)
         {
-            TriListDoubleArray binternodes = new TriListDoubleArray();
-            for (int k = 0; k < bpaths.Count; k++)
+            var binternodes = new TriListDoubleArray();
+            for (var k = 0; k < bpaths.Count; k++)
             {
                 binternodes.Add(InterNodes(bpaths[k]));
             }
@@ -686,9 +690,9 @@ namespace ImageTracerNet
         private static List<double[]> TracePath(List<double[]> path, double ltreshold, double qtreshold)
         {
             int pcnt = 0, seqend = 0; double segtype1, segtype2;
-            List<double[]> smp = new List<double[]>();
+            var smp = new List<double[]>();
             //Double [] thissegment;
-            int pathlength = path.Count;
+            var pathlength = path.Count;
 
             while (pcnt < pathlength)
             {
@@ -716,22 +720,22 @@ namespace ImageTracerNet
         // called from tracepath()
         private static List<double[]> FitSeq(List<double[]> path, double ltreshold, double qtreshold, int seqstart, int seqend)
         {
-            List<double[]> segment = new List<double[]>();
+            var segment = new List<double[]>();
             double[] thissegment;
-            int pathlength = path.Count;
+            var pathlength = path.Count;
 
             // return if invalid seqend
             if ((seqend > pathlength) || (seqend < 0)) { return segment; }
 
-            int errorpoint = seqstart;
-            bool curvepass = true;
+            var errorpoint = seqstart;
+            var curvepass = true;
             double px, py, dist2, errorval = 0;
             double tl = seqend - seqstart; if (tl < 0) { tl += pathlength; }
             double vx = (path[seqend][0] - path[seqstart][0]) / tl,
                     vy = (path[seqend][1] - path[seqstart][1]) / tl;
 
             // 5.2. Fit a straight line on the sequence
-            int pcnt = (seqstart + 1) % pathlength;
+            var pcnt = (seqstart + 1) % pathlength;
             double pl;
             while (pcnt != seqend)
             {
@@ -759,7 +763,7 @@ namespace ImageTracerNet
             }
 
             // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
-            int fitpoint = errorpoint; curvepass = true; errorval = 0;
+            var fitpoint = errorpoint; curvepass = true; errorval = 0;
 
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
             // helpers and projecting to get control point
@@ -800,7 +804,7 @@ namespace ImageTracerNet
 
             // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error,
             // set splitpoint = (fitting point + errorpoint)/2
-            int splitpoint = (fitpoint + errorpoint) / 2;
+            var splitpoint = (fitpoint + errorpoint) / 2;
 
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
             segment = FitSeq(path, ltreshold, qtreshold, seqstart, splitpoint);
@@ -811,8 +815,8 @@ namespace ImageTracerNet
         // 5. Batch tracing paths
         private static List<List<double[]>> BatchTracePaths(List<List<double[]>> internodepaths, double ltres, double qtres)
         {
-            List<List<double[]>> btracedpaths = new List<List<double[]>>();
-            for (int k = 0; k < internodepaths.Count; k++)
+            var btracedpaths = new List<List<double[]>>();
+            for (var k = 0; k < internodepaths.Count; k++)
             {
                 btracedpaths.Add(TracePath(internodepaths[k], ltres, qtres));
             }
@@ -822,8 +826,8 @@ namespace ImageTracerNet
         // 5. Batch tracing layers
         private static TriListDoubleArray BatchTraceLayers(TriListDoubleArray binternodes, double ltres, double qtres)
         {
-            TriListDoubleArray btbis = new TriListDoubleArray();
-            for (int k = 0; k < binternodes.Count; k++)
+            var btbis = new TriListDoubleArray();
+            for (var k = 0; k < binternodes.Count; k++)
             {
                 btbis.Add(BatchTracePaths(binternodes[k], ltres, qtres));
             }
@@ -850,7 +854,7 @@ namespace ImageTracerNet
 
             if (roundcoords.AreEqual(-1))
             {
-                for (int pcnt = 0; pcnt < segments.Count; pcnt++)
+                for (var pcnt = 0; pcnt < segments.Count; pcnt++)
                 {
                     if (segments[pcnt][0].AreEqual(1.0))
                     {
@@ -864,7 +868,7 @@ namespace ImageTracerNet
             }
             else
             {
-                for (int pcnt = 0; pcnt < segments.Count; pcnt++)
+                for (var pcnt = 0; pcnt < segments.Count; pcnt++)
                 {
                     if (segments[pcnt][0].AreEqual(1.0))
                     {
@@ -884,7 +888,7 @@ namespace ImageTracerNet
             sb.Append("Z\" />");
 
             // Rendering control points
-            for (int pcnt = 0; pcnt < segments.Count; pcnt++)
+            for (var pcnt = 0; pcnt < segments.Count; pcnt++)
             {
                 if ((lcpr > 0) && segments[pcnt][0].AreEqual(1.0))
                 {
@@ -907,19 +911,19 @@ namespace ImageTracerNet
             //options = checkoptions(options);
             // SVG start
             int w = (int)(ii.Width * options.SvgRendering.Scale), h = (int)(ii.Height * options.SvgRendering.Scale);
-            String viewboxorviewport = options.SvgRendering.Viewbox.IsNotZero() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
-            StringBuilder svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
+            var viewboxorviewport = options.SvgRendering.Viewbox.IsNotZero() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
+            var svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
             if (options.SvgRendering.Desc.IsNotZero()) { svgstr.Append("desc=\"Created with ImageTracer.java version " + VersionNumber + "\" "); }
             svgstr.Append(">");
 
             // creating Z-index
-            SortedDictionary<double, int[]> zindex = new SortedDictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
+            var zindex = new SortedDictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
             double label;
             // Layer loop
-            for (int k = 0; k < ii.Layers.Count; k++)
+            for (var k = 0; k < ii.Layers.Count; k++)
             {
                 // Path loop
-                for (int pcnt = 0; pcnt < ii.Layers[k].Count; pcnt++)
+                for (var pcnt = 0; pcnt < ii.Layers[k].Count; pcnt++)
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
                     label = ii.Layers[k][pcnt][0][2] * w + ii.Layers[k][pcnt][0][1];
@@ -935,8 +939,8 @@ namespace ImageTracerNet
 
             // Drawing
             // Z-index loop
-            String thisdesc = "";
-            foreach(KeyValuePair<double, int[]> entry in zindex)
+            var thisdesc = "";
+            foreach(var entry in zindex)
             {
                 if (options.SvgRendering.Desc.IsNotZero()) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
                 SvgPathString(svgstr,
@@ -970,17 +974,17 @@ namespace ImageTracerNet
         };
 
         // Selective Gaussian blur for preprocessing
-        private static ImageData Blur(ImageData imgd, double rad, double del)
+        private static ImageData Blur(ImageData imgd, int rad, double del)
         {
             int i, j, k, d, idx;
             double racc, gacc, bacc, aacc, wacc;
-            ImageData imgd2 = new ImageData(imgd.Width, imgd.Height, new byte[imgd.Width * imgd.Height * 4]);
+            var imgd2 = new ImageData(imgd.Width, imgd.Height, new byte[imgd.Width * imgd.Height * 4]);
 
             // radius and delta limits, this kernel
-            int radius = (int)Math.Floor(rad); if (radius < 1) { return imgd; }
+            var radius = rad; if (radius < 1) { return imgd; }
             if (radius > 5) { radius = 5; }
-            int delta = (int)Math.Abs(del); if (delta > 1024) { delta = 1024; }
-            double[] thisgk = Gks[radius - 1];
+            var delta = (int)Math.Abs(del); if (delta > 1024) { delta = 1024; }
+            var thisgk = Gks[radius - 1];
 
             // loop through all pixels, horizontal blur
             for (j = 0; j < imgd.Height; j++)
@@ -1013,7 +1017,7 @@ namespace ImageTracerNet
             }// End of horizontal blur
 
             // copying the half blurred imgd2
-            byte[] himgd = imgd2.Data.Clone() as byte[];
+            var himgd = imgd2.Data.Clone() as byte[];
 
             // loop through all pixels, vertical blur
             for (j = 0; j < imgd.Height; j++)

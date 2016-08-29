@@ -7,6 +7,6 @@ namespace ImageTracerNet.OptionTypes
     {
         public double LTres { get; set; } = 1f;
         public double QTres { get; set; } = 1f;
-        public double PathOmit { get; set; } = 8f;
+        public int PathOmit { get; set; } = 8;
     }
 }
