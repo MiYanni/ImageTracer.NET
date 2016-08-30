@@ -116,7 +116,7 @@ namespace ImageTracerNet
                 imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
             }
 
-            var paletteacc = new long[palette.Length][].InitInner(5);
+            var paletteAcc = new long[palette.Length][].InitInner(5);
 
             // Repeat clustering step "cycles" times
             for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
@@ -125,19 +125,18 @@ namespace ImageTracerNet
                 if (cnt > 0)
                 {
                     // averaging paletteacc for palette
-                    double ratio;
                     for (var k = 0; k < palette.Length; k++)
                     {
                         const int shift = 0; // MJY: From -128
                         // averaging
-                        if (paletteacc[k][3] > 0)
+                        if (paletteAcc[k][3] > 0)
                         {
-                            palette[k][0] = (byte)(shift + Math.Floor(paletteacc[k][0] / (double)paletteacc[k][4]));
-                            palette[k][1] = (byte)(shift + Math.Floor(paletteacc[k][1] / (double)paletteacc[k][4]));
-                            palette[k][2] = (byte)(shift + Math.Floor(paletteacc[k][2] / (double)paletteacc[k][4]));
-                            palette[k][3] = (byte)(shift + Math.Floor(paletteacc[k][3] / (double)paletteacc[k][4]));
+                            palette[k][0] = (byte)(shift + Math.Floor(paletteAcc[k][0] / (double)paletteAcc[k][4]));
+                            palette[k][1] = (byte)(shift + Math.Floor(paletteAcc[k][1] / (double)paletteAcc[k][4]));
+                            palette[k][2] = (byte)(shift + Math.Floor(paletteAcc[k][2] / (double)paletteAcc[k][4]));
+                            palette[k][3] = (byte)(shift + Math.Floor(paletteAcc[k][3] / (double)paletteAcc[k][4]));
                         }
-                        ratio = paletteacc[k][4] / (double)(imgd.Width * imgd.Height);
+                        var ratio = paletteAcc[k][4] / (double)(imgd.Width * imgd.Height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
@@ -154,11 +153,11 @@ namespace ImageTracerNet
                 // Reseting palette accumulator for averaging
                 for (var i = 0; i < palette.Length; i++)
                 {
-                    paletteacc[i][0] = 0;
-                    paletteacc[i][1] = 0;
-                    paletteacc[i][2] = 0;
-                    paletteacc[i][3] = 0;
-                    paletteacc[i][4] = 0;
+                    paletteAcc[i][0] = 0;
+                    paletteAcc[i][1] = 0;
+                    paletteAcc[i][2] = 0;
+                    paletteAcc[i][3] = 0;
+                    paletteAcc[i][4] = 0;
                 }
 
                 // loop through all pixels
@@ -188,11 +187,11 @@ namespace ImageTracerNet
                         const int shift = 0; // MJY: From 128
 
                         // add to palettacc
-                        paletteacc[ci][0] += shift + imgd.Data[idx];
-                        paletteacc[ci][1] += shift + imgd.Data[idx + 1];
-                        paletteacc[ci][2] += shift + imgd.Data[idx + 2];
-                        paletteacc[ci][3] += shift + imgd.Data[idx + 3];
-                        paletteacc[ci][4]++;
+                        paletteAcc[ci][0] += shift + imgd.Data[idx];
+                        paletteAcc[ci][1] += shift + imgd.Data[idx + 1];
+                        paletteAcc[ci][2] += shift + imgd.Data[idx + 2];
+                        paletteAcc[ci][3] += shift + imgd.Data[idx + 3];
+                        paletteAcc[ci][4]++;
 
                         arr[j + 1][i + 1] = ci;
                     }// End of i loop
@@ -256,10 +255,10 @@ namespace ImageTracerNet
 
         private static byte[][] SamplePalette(int numberofcolors, ImageData imgd)
         {
-            var idx = 0; var palette = new byte[numberofcolors][].InitInner(4);
+            var palette = new byte[numberofcolors][].InitInner(4);
             for (var i = 0; i < numberofcolors; i++)
             {
-                idx = (int)(Math.Floor(Rng.NextDouble() * imgd.Data.Length / 4) * 4);
+                var idx = (int)(Math.Floor(Rng.NextDouble() * imgd.Data.Length / 4) * 4);
                 palette[i][0] = imgd.Data[idx];
                 palette[i][1] = imgd.Data[idx + 1];
                 palette[i][2] = imgd.Data[idx + 2];
@@ -277,7 +276,7 @@ namespace ImageTracerNet
         private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            int val = 0, aw = ii.Array[0].Length, ah = ii.Array.Length, n1, n2, n3, n4, n5, n6, n7, n8;
+            int aw = ii.Array[0].Length, ah = ii.Array.Length;
             var layers = new int[ii.Palette.Length][][].InitInner(ah, aw);
 
             // Looping through all pixels and calculating edge node type
@@ -287,16 +286,24 @@ namespace ImageTracerNet
                 {
 
                     // This pixel's indexed color
-                    val = ii.Array[j][i];
+                    var val = ii.Array[j][i];
 
                     // Are neighbor pixel colors the same?
+                    int n1;
                     if ((j > 0) && (i > 0)) { n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0; } else { n1 = 0; }
+                    int n2;
                     if (j > 0) { n2 = ii.Array[j - 1][i] == val ? 1 : 0; } else { n2 = 0; }
+                    int n3;
                     if ((j > 0) && (i < aw - 1)) { n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0; } else { n3 = 0; }
+                    int n4;
                     if (i > 0) { n4 = ii.Array[j][i - 1] == val ? 1 : 0; } else { n4 = 0; }
+                    int n5;
                     if (i < aw - 1) { n5 = ii.Array[j][i + 1] == val ? 1 : 0; } else { n5 = 0; }
+                    int n6;
                     if ((j < ah - 1) && (i > 0)) { n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0; } else { n6 = 0; }
+                    int n7;
                     if (j < ah - 1) { n7 = ii.Array[j + 1][i] == val ? 1 : 0; } else { n7 = 0; }
+                    int n8;
                     if ((j < ah - 1) && (i < aw - 1)) { n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0; } else { n8 = 0; }
 
                     // this pixel"s type and looking back on previous pixels
@@ -321,9 +328,8 @@ namespace ImageTracerNet
         private static List<List<int[]>> PathScan(int[][] arr, int pathomit)
         {
             var paths = new List<List<int[]>>();
-            List<int[]> thispath;
-            int px = 0, py = 0, w = arr[0].Length, h = arr.Length, dir = 0;
-            bool pathfinished = true, holepath = false;
+            int w = arr[0].Length, h = arr.Length, dir = 0;
+            bool holepath = false;
 
             for (var j = 0; j < h; j++)
             {
@@ -332,10 +338,10 @@ namespace ImageTracerNet
                     if ((arr[j][i] != 0) && (arr[j][i] != 15))
                     {
                         // Init
-                        px = i; py = j;
+                        var px = i; var py = j;
                         paths.Add(new List<int[]>());
-                        thispath = paths[paths.Count - 1];
-                        pathfinished = false;
+                        var thispath = paths[paths.Count - 1];
+                        var pathfinished = false;
                         // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
                         if (arr[py][px] == 1) { dir = 0; }
                         if (arr[py][px] == 2) { dir = 3; }
@@ -606,27 +612,24 @@ namespace ImageTracerNet
         private static List<List<double[]>> InterNodes(List<List<int[]>> paths)
         {
             var ins = new List<List<double[]>>();
-            List<double[]> thisinp;
-            double[] thispoint, nextpoint = new double[2];
-            int[] pp1, pp2, pp3;
+            double[] nextpoint = new double[2];
 
-            int palen = 0, nextidx = 0, nextidx2 = 0;
             // paths loop
             for (var pacnt = 0; pacnt < paths.Count; pacnt++)
             {
                 ins.Add(new List<double[]>());
-                thisinp = ins[ins.Count - 1];
-                palen = paths[pacnt].Count;
+                var thisinp = ins[ins.Count - 1];
+                var palen = paths[pacnt].Count;
                 // pathpoints loop
                 for (var pcnt = 0; pcnt < palen; pcnt++)
                 {
                     // interpolate between two path points
-                    nextidx = (pcnt + 1) % palen; nextidx2 = (pcnt + 2) % palen;
+                    var nextidx = (pcnt + 1) % palen; var nextidx2 = (pcnt + 2) % palen;
                     thisinp.Add(new double[3]);
-                    thispoint = thisinp[thisinp.Count - 1];
-                    pp1 = paths[pacnt][pcnt];
-                    pp2 = paths[pacnt][nextidx];
-                    pp3 = paths[pacnt][nextidx2];
+                    var thispoint = thisinp[thisinp.Count - 1];
+                    var pp1 = paths[pacnt][pcnt];
+                    var pp2 = paths[pacnt][nextidx];
+                    var pp3 = paths[pacnt][nextidx2];
                     thispoint[0] = (pp1[0] + pp2[0]) / 2.0;
                     thispoint[1] = (pp1[1] + pp2[1]) / 2.0;
                     nextpoint[0] = (pp2[0] + pp3[0]) / 2.0;
@@ -690,7 +693,7 @@ namespace ImageTracerNet
 
         private static List<double[]> TracePath(List<double[]> path, double ltreshold, double qtreshold)
         {
-            int pcnt = 0, seqend = 0; double segtype1, segtype2;
+            int pcnt = 0;
             var smp = new List<double[]>();
             //Double [] thissegment;
             var pathlength = path.Count;
@@ -698,7 +701,7 @@ namespace ImageTracerNet
             while (pcnt < pathlength)
             {
                 // 5.1. Find sequences of points with only 2 segment types
-                segtype1 = path[pcnt][2]; segtype2 = -1; seqend = pcnt + 1;
+                var segtype1 = path[pcnt][2]; double segtype2 = -1; var seqend = pcnt + 1;
                 while ((path[seqend][2].AreEqual(segtype1) || path[seqend][2].AreEqual(segtype2) || segtype2.AreEqual(-1)) && (seqend < pathlength - 1))
                 {
                     if (path[seqend][2].AreNotEqual(segtype1) && segtype2.AreEqual(-1)) { segtype2 = path[seqend][2]; }
@@ -737,10 +740,9 @@ namespace ImageTracerNet
 
             // 5.2. Fit a straight line on the sequence
             var pcnt = (seqstart + 1) % pathlength;
-            double pl;
             while (pcnt != seqend)
             {
-                pl = pcnt - seqstart; if (pl < 0) { pl += pathlength; }
+                double pl = pcnt - seqstart; if (pl < 0) { pl += pathlength; }
                 px = path[seqstart][0] + vx * pl; py = path[seqstart][1] + vy * pl;
                 dist2 = (path[pcnt][0] - px) * (path[pcnt][0] - px) + (path[pcnt][1] - py) * (path[pcnt][1] - py);
                 if (dist2 > ltreshold) { curvepass = false; }
@@ -919,7 +921,6 @@ namespace ImageTracerNet
 
             // creating Z-index
             var zindex = new SortedDictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
-            double label;
             // Layer loop
             for (var k = 0; k < ii.Layers.Count; k++)
             {
@@ -927,7 +928,7 @@ namespace ImageTracerNet
                 for (var pcnt = 0; pcnt < ii.Layers[k].Count; pcnt++)
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
-                    label = ii.Layers[k][pcnt][0][2] * w + ii.Layers[k][pcnt][0][1];
+                    var label = ii.Layers[k][pcnt][0][2] * w + ii.Layers[k][pcnt][0][1];
                     // Creating new list if required
                     if (!zindex.ContainsKey(label)) { zindex[label] = new int[2]; }
                     // Adding layer and path number to list
@@ -940,9 +941,9 @@ namespace ImageTracerNet
 
             // Drawing
             // Z-index loop
-            var thisdesc = "";
             foreach(var entry in zindex)
             {
+                var thisdesc = "";
                 if (options.SvgRendering.Desc.IsNotZero()) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
                 SvgPathString(svgstr,
                         thisdesc,
@@ -977,7 +978,8 @@ namespace ImageTracerNet
         // Selective Gaussian blur for preprocessing
         private static ImageData Blur(ImageData imgd, int rad, double del)
         {
-            int i, j, k, d, idx;
+            int i, j, k;
+            int idx;
             double racc, gacc, bacc, aacc, wacc;
             var imgd2 = new ImageData(imgd.Width, imgd.Height, new byte[imgd.Width * imgd.Height * 4]);
 
@@ -1056,7 +1058,7 @@ namespace ImageTracerNet
                 {
                     idx = (j * imgd.Width + i) * 4;
                     // d is the difference between the blurred and the original pixel
-                    d = Math.Abs(imgd2.Data[idx] - imgd.Data[idx]) + Math.Abs(imgd2.Data[idx + 1] - imgd.Data[idx + 1]) +
+                    var d = Math.Abs(imgd2.Data[idx] - imgd.Data[idx]) + Math.Abs(imgd2.Data[idx + 1] - imgd.Data[idx + 1]) +
                             Math.Abs(imgd2.Data[idx + 2] - imgd.Data[idx + 2]) + Math.Abs(imgd2.Data[idx + 3] - imgd.Data[idx + 3]);
                     // selective blur: if d>delta, put the original pixel back
                     if (d > delta)
