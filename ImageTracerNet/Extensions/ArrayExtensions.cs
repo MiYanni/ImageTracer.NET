@@ -36,6 +36,15 @@ namespace ImageTracerNet.Extensions
             return jagged.Initialize(() => new T[length1][].InitInner(length2));
         }
 
+        public static T[][] SetDefault<T>(this T[][] jagged) where T: struct
+        {
+            foreach (var inner in jagged)
+            {
+                inner.Initialize(default(T));
+            }
+            return jagged;
+        }
+
         // Do not use with reference types as every cell would be initialized with the same reference.
         // Used the Func overloads below with reference types.
         public static T[] Initialize<T>(this T[] array, T value) where T: struct

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Text;
 using ImageTracerNet.Extensions;
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
@@ -110,14 +111,15 @@ namespace ImageTracerNet
                     ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
                     : GeneratePalette(options.ColorQuantization.NumberOfColors));
 
+            //var colorPalette = 
+
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
             {
                 imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
             }
 
-            var paletteAcc = new long[palette.Length][].InitInner(5);
-
+            var paletteAccumulator = new long[palette.Length][].InitInner(5);
             // Repeat clustering step "cycles" times
             for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
             {
@@ -129,14 +131,14 @@ namespace ImageTracerNet
                     {
                         const int shift = 0; // MJY: From -128
                         // averaging
-                        if (paletteAcc[k][3] > 0)
+                        if (paletteAccumulator[k][3] > 0)
                         {
-                            palette[k][0] = (byte)(shift + Math.Floor(paletteAcc[k][0] / (double)paletteAcc[k][4]));
-                            palette[k][1] = (byte)(shift + Math.Floor(paletteAcc[k][1] / (double)paletteAcc[k][4]));
-                            palette[k][2] = (byte)(shift + Math.Floor(paletteAcc[k][2] / (double)paletteAcc[k][4]));
-                            palette[k][3] = (byte)(shift + Math.Floor(paletteAcc[k][3] / (double)paletteAcc[k][4]));
+                            palette[k][0] = (byte)(shift + Math.Floor(paletteAccumulator[k][0] / (double)paletteAccumulator[k][4]));
+                            palette[k][1] = (byte)(shift + Math.Floor(paletteAccumulator[k][1] / (double)paletteAccumulator[k][4]));
+                            palette[k][2] = (byte)(shift + Math.Floor(paletteAccumulator[k][2] / (double)paletteAccumulator[k][4]));
+                            palette[k][3] = (byte)(shift + Math.Floor(paletteAccumulator[k][3] / (double)paletteAccumulator[k][4]));
                         }
-                        var ratio = paletteAcc[k][4] / (double)(imgd.Width * imgd.Height);
+                        var ratio = paletteAccumulator[k][4] / (double)(imgd.Width * imgd.Height);
 
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
@@ -151,25 +153,18 @@ namespace ImageTracerNet
                 }// End of Average colors from the second iteration
 
                 // Reseting palette accumulator for averaging
-                for (var i = 0; i < palette.Length; i++)
-                {
-                    paletteAcc[i][0] = 0;
-                    paletteAcc[i][1] = 0;
-                    paletteAcc[i][2] = 0;
-                    paletteAcc[i][3] = 0;
-                    paletteAcc[i][4] = 0;
-                }
+                paletteAccumulator.SetDefault();
 
                 // loop through all pixels
                 for (var j = 0; j < imgd.Height; j++)
                 {
                     for (var i = 0; i < imgd.Width; i++)
                     {
-
                         var idx = (j * imgd.Width + i) * 4;
 
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                        var cdl = 256 + 256 + 256 + 256; var ci = 0;
+                        var cdl = 256 + 256 + 256 + 256;
+                        var ci = 0;
                         for (var k = 0; k < palette.Length; k++)
                         {
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
@@ -180,23 +175,25 @@ namespace ImageTracerNet
                             var cd = c1 + c2 + c3 + c4 * 4;
 
                             // Remember this color if this is the closest yet
-                            if (cd < cdl) { cdl = cd; ci = k; }
-
+                            if (cd < cdl)
+                            {
+                                cdl = cd;
+                                ci = k;
+                            }
                         }// End of palette loop
 
                         const int shift = 0; // MJY: From 128
 
                         // add to palettacc
-                        paletteAcc[ci][0] += shift + imgd.Data[idx];
-                        paletteAcc[ci][1] += shift + imgd.Data[idx + 1];
-                        paletteAcc[ci][2] += shift + imgd.Data[idx + 2];
-                        paletteAcc[ci][3] += shift + imgd.Data[idx + 3];
-                        paletteAcc[ci][4]++;
+                        paletteAccumulator[ci][0] += shift + imgd.Data[idx];
+                        paletteAccumulator[ci][1] += shift + imgd.Data[idx + 1];
+                        paletteAccumulator[ci][2] += shift + imgd.Data[idx + 2];
+                        paletteAccumulator[ci][3] += shift + imgd.Data[idx + 3];
+                        paletteAccumulator[ci][4]++;
 
                         arr[j + 1][i + 1] = ci;
                     }// End of i loop
                 }// End of j loop
-
             }// End of Repeat clustering step "cycles" times
 
             return new IndexedImage(arr, palette);

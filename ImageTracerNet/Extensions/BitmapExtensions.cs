@@ -83,10 +83,10 @@ namespace ImageTracerNet.Extensions
             var colors = new Color[bytes.Length/4];
             for(var i = 0; i < bytes.Length/4; ++i)
             {
-                byte B = bytes[i * 4];
-                byte G = bytes[i * 4 + 1];
-                byte R = bytes[i * 4 + 2];
-                byte A = bytes[i * 4 + 3];
+                var B = bytes[i * 4];
+                var G = bytes[i * 4 + 1];
+                var R = bytes[i * 4 + 2];
+                var A = bytes[i * 4 + 3];
                 colors[i] = Color.FromArgb(A, R, G, B);
             }
 
