@@ -62,8 +62,41 @@ namespace ImageTracerNet
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
         private static IndexedImage ImageDataToTraceData(ImageData imgd, Options options, byte[][] palette)
         {
+            // Use custom palette if pal is defined or sample or generate custom length palette
+            palette = palette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
+                    ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
+                    : GeneratePalette(options.ColorQuantization.NumberOfColors));
+
+            // Selective Gaussian blur preprocessing
+            if (options.Blur.BlurRadius > 0)
+            {
+                imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
+            }
+
             // 1. Color quantization
             var ii = ColorQuantization(imgd, palette, options);
+            var ii2 = ColorQuantizationOrig(imgd, palette, options);
+
+            //var alist = new List<List<int>>();
+            //var check1 = ii.Array.SelectMany(v => v).SequenceEqual(ii2.Array.SelectMany(v => v));
+            //for (var i = 0; i < ii.Array.Length; ++i)
+            //{
+            //    if (!ii.Array[i].SequenceEqual(ii2.Array[i]))
+            //    {
+            //        alist.Add(ii.Array[i].Zip(ii2.Array[i], (f, s) => f - s).ToList());
+            //    }
+            //}
+
+            //var blist = new List<List<int>>();
+            //var check2 = ii.Palette.SelectMany(v => v).SequenceEqual(ii2.Palette.SelectMany(v => v));
+            //for (var i = 0; i < ii.Palette.Length; ++i)
+            //{
+            //    if (!ii.Palette[i].SequenceEqual(ii2.Palette[i]))
+            //    {
+            //        blist.Add(ii.Palette[i].Zip(ii2.Palette[i], (f, s) => f - s).ToList());
+            //    }
+            //}
+
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
             // 3. Batch pathscan
@@ -74,6 +107,19 @@ namespace ImageTracerNet
             ii.Layers = BatchTraceLayers(bis, options.Tracing.LTres, options.Tracing.QTres);
             return ii;
         }
+
+        private static Color NewGuy;
+        private static Color NewGuy2;
+        private static int Dist1;
+        private static int C1;
+        private static int C2;
+        private static int C3;
+        private static int C4;
+        private static int D1;
+        private static int D2;
+        private static int D3;
+        private static int D4;
+        private static int Dist2;
 
         ////////////////////////////////////////////////////////////
         //
@@ -106,18 +152,111 @@ namespace ImageTracerNet
         {
             var arr = CreateIndexedColorArray(imgd.Height, imgd.Width);
 
-            // Use custom palette if pal is defined or sample or generate custom length palette
-            palette = palette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
-                    ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
-                    : GeneratePalette(options.ColorQuantization.NumberOfColors));
+            //// Use custom palette if pal is defined or sample or generate custom length palette
+            //palette = palette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
+            //        ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
+            //        : GeneratePalette(options.ColorQuantization.NumberOfColors));
+
+            //// Selective Gaussian blur preprocessing
+            //if (options.Blur.BlurRadius > 0)
+            //{
+            //    imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
+            //}
 
             var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
-
-            // Selective Gaussian blur preprocessing
-            if (options.Blur.BlurRadius > 0)
+            var newAccumulator = new PaletteAccumulator[colorPalette.Length].Initialize(() => new PaletteAccumulator());
+            // Repeat clustering step "cycles" times
+            for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
             {
-                imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
-            }
+                // Average colors from the second iteration
+                if (cnt > 0)
+                {
+                    // averaging paletteacc for palette
+                    for (var k = 0; k < colorPalette.Length; k++)
+                    {
+                        // averaging
+                        if (newAccumulator[k].A > 0) // Non-transparent accumulation
+                        {
+                            colorPalette[k] = newAccumulator[k].CalculateAverage();
+                        }
+
+                        var ratio = newAccumulator[k].Count / (double)(imgd.Width * imgd.Height);
+                        // Randomizing a color, if there are too few pixels and there will be a new cycle
+                        if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
+                        {
+                            colorPalette[k] = Color.Indigo; //ColorExtensions.RandomColor();
+                        }
+                    }
+                }
+
+                // Reseting palette accumulator for averaging
+                foreach (var accumulator in newAccumulator)
+                {
+                    accumulator.R = 0;
+                    accumulator.G = 0;
+                    accumulator.B = 0;
+                    accumulator.A = 0;
+                    accumulator.Count = 0;
+                }
+
+                for (var j = 0; j < imgd.Height; j++)
+                {
+                    for (var i = 0; i < imgd.Width; i++)
+                    {
+                        var pixel = imgd.Colors[j * imgd.Width + i];
+                        var distance = 256 * 4;
+                        var paletteIndex = 0;
+                        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
+                        for (var k = 0; k < colorPalette.Length; k++)
+                        {
+                            var color = colorPalette[k];
+                            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
+                            var newDistance = color.CalculateRectilinearDistance(pixel);
+                            if (cnt == 0 && k == 5 && (j*imgd.Width + i) == 55)
+                            {
+                                NewGuy = pixel;
+                                NewGuy2 = color;
+                                Dist1 = newDistance;
+                            }
+
+                            if (newDistance >= distance) continue;
+
+                            distance = newDistance;
+                            paletteIndex = k;
+                        }
+
+                        // add to palettacc
+                        newAccumulator[paletteIndex].R += pixel.R;
+                        newAccumulator[paletteIndex].G += pixel.G;
+                        newAccumulator[paletteIndex].B += pixel.B;
+                        newAccumulator[paletteIndex].A += pixel.A;
+                        newAccumulator[paletteIndex].Count++;
+
+                        arr[j + 1][i + 1] = distance;
+                    }
+                }
+            }// End of Repeat clustering step "cycles" times
+
+            return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
+        }
+
+        // 1. Color quantization repeated "cycles" times, based on K-means clustering
+        // https://en.wikipedia.org/wiki/Color_quantization
+        // https://en.wikipedia.org/wiki/K-means_clustering
+        private static IndexedImage ColorQuantizationOrig(ImageData imgd, byte[][] palette, Options options)
+        {
+            var arr = CreateIndexedColorArray(imgd.Height, imgd.Width);
+
+            //// Use custom palette if pal is defined or sample or generate custom length palette
+            //palette = palette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
+            //        ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
+            //        : GeneratePalette(options.ColorQuantization.NumberOfColors));
+
+            //// Selective Gaussian blur preprocessing
+            //if (options.Blur.BlurRadius > 0)
+            //{
+            //    imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
+            //}
 
             var paletteAccumulator = new long[palette.Length][].InitInner(5);
             // Repeat clustering step "cycles" times
@@ -143,10 +282,15 @@ namespace ImageTracerNet
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
                         {
-                            palette[k][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
-                            palette[k][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
-                            palette[k][2] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
-                            palette[k][3] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                            //palette[k][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                            //palette[k][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                            //palette[k][2] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+                            //palette[k][3] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
+
+                            palette[k][0] = (byte)(shift + 75);
+                            palette[k][1] = (byte)(shift + 0);
+                            palette[k][2] = (byte)(shift + 130);
+                            palette[k][3] = (byte)(shift + 255);
                         }
 
                     }// End of palette loop
@@ -155,77 +299,57 @@ namespace ImageTracerNet
                 // Reseting palette accumulator for averaging
                 paletteAccumulator.SetDefault();
 
+                // loop through all pixels
                 for (var j = 0; j < imgd.Height; j++)
                 {
                     for (var i = 0; i < imgd.Width; i++)
                     {
-                        var pixel = imgd.Colors[j * imgd.Width + i];
-                        var distance = 256 * 4;
-                        var paletteIndex = 0;
-                        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                        for (var k = 0; k < colorPalette.Length; k++)
-                        {
-                            var color = colorPalette[k];
-                            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            var newDistance = color.CalculateRectilinearDistance(pixel);
-                            if (newDistance >= distance) continue;
+                        var idx = (j * imgd.Width + i) * 4;
 
-                            distance = newDistance;
-                            paletteIndex = k;
-                        }
+                        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
+                        var cdl = 256 + 256 + 256 + 256;
+                        var ci = 0;
+                        for (var k = 0; k < palette.Length; k++)
+                        {
+                            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
+                            /* R */ var c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
+                            /* G */ var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
+                            /* B */ var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
+                            /* A */ var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
+                            var cd = c1 + c2 + c3 + c4 * 4;
+
+                            if (cnt == 0 && k == 5 && (j * imgd.Width + i) == 55)
+                            {
+                                C1 = imgd.Data[idx];
+                                C2 = imgd.Data[idx + 1];
+                                C3 = imgd.Data[idx + 2];
+                                C4 = imgd.Data[idx + 3];
+                                D1 = palette[k][0];
+                                D2 = palette[k][1];
+                                D3 = palette[k][2];
+                                D4 = palette[k][3];
+
+                                Dist2 = cd;
+                            }
+
+                            // Remember this color if this is the closest yet
+                            if (cd < cdl)
+                            {
+                                cdl = cd;
+                                ci = k;
+                            }
+                        }// End of palette loop
 
                         // add to palettacc
-                        paletteAccumulator[paletteIndex][0] += pixel.R;
-                        paletteAccumulator[paletteIndex][1] += pixel.G;
-                        paletteAccumulator[paletteIndex][2] += pixel.B;
-                        paletteAccumulator[paletteIndex][3] += pixel.A;
-                        paletteAccumulator[paletteIndex][4]++;
+                        paletteAccumulator[ci][0] += imgd.Data[idx];
+                        paletteAccumulator[ci][1] += imgd.Data[idx + 1];
+                        paletteAccumulator[ci][2] += imgd.Data[idx + 2];
+                        paletteAccumulator[ci][3] += imgd.Data[idx + 3];
+                        paletteAccumulator[ci][4]++;
 
-                        arr[j + 1][i + 1] = paletteIndex;
-                    }
-                }
-
-                // loop through all pixels
-                //for (var j = 0; j < imgd.Height; j++)
-                //{
-                //    for (var i = 0; i < imgd.Width; i++)
-                //    {
-                //        var idx = (j * imgd.Width + i) * 4;
-
-                //        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                //        var cdl = 256 + 256 + 256 + 256;
-                //        var ci = 0;
-                //        for (var k = 0; k < palette.Length; k++)
-                //        {
-                //            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                //            /* R */
-                //            var c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
-                //            /* G */
-                //            var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
-                //            /* B */
-                //            var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
-                //            /* A */
-                //            var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
-                //            var cd = c1 + c2 + c3 + c4 * 4;
-
-                //            // Remember this color if this is the closest yet
-                //            if (cd < cdl)
-                //            {
-                //                cdl = cd;
-                //                ci = k;
-                //            }
-                //        }// End of palette loop
-
-                //        // add to palettacc
-                //        paletteAccumulator[ci][0] += imgd.Data[idx];
-                //        paletteAccumulator[ci][1] += imgd.Data[idx + 1];
-                //        paletteAccumulator[ci][2] += imgd.Data[idx + 2];
-                //        paletteAccumulator[ci][3] += imgd.Data[idx + 3];
-                //        paletteAccumulator[ci][4]++;
-
-                //        arr[j + 1][i + 1] = ci;
-                //    }// End of i loop
-                //}// End of j loop
+                        arr[j + 1][i + 1] = cdl;
+                    }// End of i loop
+                }// End of j loop
             }// End of Repeat clustering step "cycles" times
 
             return new IndexedImage(arr, palette);

@@ -14,6 +14,12 @@ namespace ImageTracerNet.Extensions
                 .ToArray();
         }
 
+        private static readonly Random Rng = new Random();
+        public static Color RandomColor()
+        {
+            return FromRgbaByteArray(Enumerable.Range(0, 4).Select(i => (byte)Math.Floor(Rng.NextDouble() * 255)).ToArray()).Single();
+        }
+
         //https://en.wikipedia.org/wiki/Rectilinear_distance
         public static int CalculateRectilinearDistance(this Color first, Color second)
         {
