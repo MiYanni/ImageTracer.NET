@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
+    <Compile Include="Extensions\ColorExtensions.cs" />
     <Compile Include="Extensions\MathExtensions.cs" />
     <Compile Include="ImageData.cs" />
     <Compile Include="ImageTracer.cs" />

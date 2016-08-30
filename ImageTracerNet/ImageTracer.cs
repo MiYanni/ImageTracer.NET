@@ -155,56 +155,77 @@ namespace ImageTracerNet
                 // Reseting palette accumulator for averaging
                 paletteAccumulator.SetDefault();
 
-                //foreach (var pixel in imgd.Colors)
-                //{
-                //    var distance = 256*4;
-                //    // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                //    foreach (var color in colorPalette)
-                //    {
-                //        // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                //        var newDistance = color.CalculateRectilinearDistance(pixel);
-                //    }
-                //}
-
-                // loop through all pixels
                 for (var j = 0; j < imgd.Height; j++)
                 {
                     for (var i = 0; i < imgd.Width; i++)
                     {
-                        var idx = (j * imgd.Width + i) * 4;
-
+                        var pixel = imgd.Colors[j * imgd.Width + i];
+                        var distance = 256 * 4;
+                        var paletteIndex = 0;
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                        var cdl = 256 + 256 + 256 + 256;
-                        var ci = 0;
-                        for (var k = 0; k < palette.Length; k++)
+                        for (var k = 0; k < colorPalette.Length; k++)
                         {
+                            var color = colorPalette[k];
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            /* R */ var c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
-                            /* G */ var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
-                            /* B */ var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
-                            /* A */ var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
-                            var cd = c1 + c2 + c3 + c4 * 4;
+                            var newDistance = color.CalculateRectilinearDistance(pixel);
+                            if (newDistance >= distance) continue;
 
-                            // Remember this color if this is the closest yet
-                            if (cd < cdl)
-                            {
-                                cdl = cd;
-                                ci = k;
-                            }
-                        }// End of palette loop
-
-                        const int shift = 0; // MJY: From 128
+                            distance = newDistance;
+                            paletteIndex = k;
+                        }
 
                         // add to palettacc
-                        paletteAccumulator[ci][0] += shift + imgd.Data[idx];
-                        paletteAccumulator[ci][1] += shift + imgd.Data[idx + 1];
-                        paletteAccumulator[ci][2] += shift + imgd.Data[idx + 2];
-                        paletteAccumulator[ci][3] += shift + imgd.Data[idx + 3];
-                        paletteAccumulator[ci][4]++;
+                        paletteAccumulator[paletteIndex][0] += pixel.R;
+                        paletteAccumulator[paletteIndex][1] += pixel.G;
+                        paletteAccumulator[paletteIndex][2] += pixel.B;
+                        paletteAccumulator[paletteIndex][3] += pixel.A;
+                        paletteAccumulator[paletteIndex][4]++;
 
-                        arr[j + 1][i + 1] = ci;
-                    }// End of i loop
-                }// End of j loop
+                        arr[j + 1][i + 1] = paletteIndex;
+                    }
+                }
+
+                // loop through all pixels
+                //for (var j = 0; j < imgd.Height; j++)
+                //{
+                //    for (var i = 0; i < imgd.Width; i++)
+                //    {
+                //        var idx = (j * imgd.Width + i) * 4;
+
+                //        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
+                //        var cdl = 256 + 256 + 256 + 256;
+                //        var ci = 0;
+                //        for (var k = 0; k < palette.Length; k++)
+                //        {
+                //            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
+                //            /* R */
+                //            var c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
+                //            /* G */
+                //            var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
+                //            /* B */
+                //            var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
+                //            /* A */
+                //            var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
+                //            var cd = c1 + c2 + c3 + c4 * 4;
+
+                //            // Remember this color if this is the closest yet
+                //            if (cd < cdl)
+                //            {
+                //                cdl = cd;
+                //                ci = k;
+                //            }
+                //        }// End of palette loop
+
+                //        // add to palettacc
+                //        paletteAccumulator[ci][0] += imgd.Data[idx];
+                //        paletteAccumulator[ci][1] += imgd.Data[idx + 1];
+                //        paletteAccumulator[ci][2] += imgd.Data[idx + 2];
+                //        paletteAccumulator[ci][3] += imgd.Data[idx + 3];
+                //        paletteAccumulator[ci][4]++;
+
+                //        arr[j + 1][i + 1] = ci;
+                //    }// End of i loop
+                //}// End of j loop
             }// End of Repeat clustering step "cycles" times
 
             return new IndexedImage(arr, palette);
