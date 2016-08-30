@@ -98,7 +98,7 @@ namespace ImageTracerNet.Extensions
         public static byte[] ToRgbaByteArray(this Bitmap image)
         {
             var colors = image.ToColorArray();
-            return colors.Select(c => new[] {c.R, c.G, c.B, c.A}).SelectMany(b => b).ToArray();
+            return colors.ToRgbaByteArray();
         }
 
         public static Bitmap ToBitmap(this int[] bitmapData, int width, int height, PixelFormat format)

@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Linq;
+using ImageTracerNet.Extensions;
 
 namespace ImageTracerNet
 {
@@ -18,10 +19,7 @@ namespace ImageTracerNet
             Height = height;
             Data = data;
             // RGBA to ARGB Color
-            Colors = Data.Select((comp, i) => new {Color = i/4, Component = comp})
-                .GroupBy(x => x.Color, x => x.Component).Select(comps =>
-                    Color.FromArgb(comps.ElementAt(3), comps.ElementAt(0), comps.ElementAt(1), comps.ElementAt(2)))
-                .ToArray();
+            Colors = ColorExtensions.FromRgbaByteArray(Data);
         }
     }
 }

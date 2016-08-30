@@ -111,7 +111,7 @@ namespace ImageTracerNet
                     ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
                     : GeneratePalette(options.ColorQuantization.NumberOfColors));
 
-            //var colorPalette = 
+            var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
@@ -155,6 +155,17 @@ namespace ImageTracerNet
                 // Reseting palette accumulator for averaging
                 paletteAccumulator.SetDefault();
 
+                //foreach (var pixel in imgd.Colors)
+                //{
+                //    var distance = 256*4;
+                //    // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
+                //    foreach (var color in colorPalette)
+                //    {
+                //        // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
+                //        var newDistance = color.CalculateRectilinearDistance(pixel);
+                //    }
+                //}
+
                 // loop through all pixels
                 for (var j = 0; j < imgd.Height; j++)
                 {
@@ -168,10 +179,10 @@ namespace ImageTracerNet
                         for (var k = 0; k < palette.Length; k++)
                         {
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            var c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
-                            var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
-                            var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
-                            var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
+                            /* R */ var c1 = Math.Abs(palette[k][0] - imgd.Data[idx]);
+                            /* G */ var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
+                            /* B */ var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
+                            /* A */ var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
                             var cd = c1 + c2 + c3 + c4 * 4;
 
                             // Remember this color if this is the closest yet
