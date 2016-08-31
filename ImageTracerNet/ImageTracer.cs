@@ -166,7 +166,7 @@ namespace ImageTracerNet
                         colorPalette[k] = ColorExtensions.RandomColor();
                     }
                 }
-            }// End of Repeat clustering step "cycles" times
+            }
 
             return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
         }
