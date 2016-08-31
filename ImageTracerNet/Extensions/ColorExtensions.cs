@@ -21,7 +21,7 @@ namespace ImageTracerNet.Extensions
         }
 
         //https://en.wikipedia.org/wiki/Rectilinear_distance
-        public static int CalculateRectilinearDistance(this Color first, Color second, bool test)
+        public static int CalculateRectilinearDistance(this Color first, Color second)
         {
             var firstArray = first.ToRgbaByteArray();
             var secondArray = second.ToRgbaByteArray();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using ImageTracerNet.Extensions;
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
@@ -117,6 +118,7 @@ namespace ImageTracerNet
         private static Color NewGuy;
         private static Color NewGuy2;
         private static int Dist1;
+        private static int P1;
         private static int C1;
         private static int C2;
         private static int C3;
@@ -126,6 +128,7 @@ namespace ImageTracerNet
         private static int D3;
         private static int D4;
         private static int Dist2;
+        private static int P2;
 
         ////////////////////////////////////////////////////////////
         //
@@ -190,7 +193,7 @@ namespace ImageTracerNet
                         // Randomizing a color, if there are too few pixels and there will be a new cycle
                         if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
                         {
-                            colorPalette[k] = Color.Indigo; //ColorExtensions.RandomColor();
+                            colorPalette[k] = Color.Indigo;  //ColorExtensions.RandomColor(); // //
                         }
                     }
                 }
@@ -217,18 +220,16 @@ namespace ImageTracerNet
                         {
                             var color = colorPalette[k];
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            var newDistance = color.CalculateRectilinearDistance(pixel, cnt == 0 && k == 5 && (j * imgd.Width + i) == 55);
-                            if (cnt == 0 && k == 5 && (j*imgd.Width + i) == 55)
-                            {
-                                NewGuy = pixel;
-                                NewGuy2 = color;
-                                Dist1 = newDistance;
-                            }
+                            var newDistance = color.CalculateRectilinearDistance(pixel);
 
                             if (newDistance >= distance) continue;
 
                             distance = newDistance;
                             paletteIndex = k;
+                        }
+                        if (cnt == 1 && (j * imgd.Width + i) == 55)
+                        {
+                            P1 = paletteIndex;
                         }
 
                         // add to palettacc
@@ -238,7 +239,7 @@ namespace ImageTracerNet
                         newAccumulator[paletteIndex].A += pixel.A;
                         newAccumulator[paletteIndex].Count++;
 
-                        arr[j + 1][i + 1] = distance;
+                        arr[j + 1][i + 1] = paletteIndex;
                     }
                 }
             }// End of Repeat clustering step "cycles" times
@@ -324,20 +325,6 @@ namespace ImageTracerNet
                             /* A */ var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
                             var cd = c1 + c2 + c3 + c4 * 4; // weighted alpha seems to help images with transparency
 
-                            if (cnt == 0 && k == 5 && (j * imgd.Width + i) == 55)
-                            {
-                                C1 = imgd.Data[idx];
-                                C2 = imgd.Data[idx + 1];
-                                C3 = imgd.Data[idx + 2];
-                                C4 = imgd.Data[idx + 3];
-                                D1 = palette[k][0];
-                                D2 = palette[k][1];
-                                D3 = palette[k][2];
-                                D4 = palette[k][3];
-
-                                Dist2 = cd;
-                            }
-
                             // Remember this color if this is the closest yet
                             if (cd < cdl)
                             {
@@ -346,6 +333,11 @@ namespace ImageTracerNet
                             }
                         }// End of palette loop
 
+                        if (cnt == 1 && (j * imgd.Width + i) == 55)
+                        {
+                            P2 = ci;
+                        }
+
                         // add to palettacc
                         paletteAccumulator[ci][0] += imgd.Data[idx];
                         paletteAccumulator[ci][1] += imgd.Data[idx + 1];
@@ -353,7 +345,7 @@ namespace ImageTracerNet
                         paletteAccumulator[ci][3] += imgd.Data[idx + 3];
                         paletteAccumulator[ci][4]++;
 
-                        arr[j + 1][i + 1] = cdl;
+                        arr[j + 1][i + 1] = ci;
                     }// End of i loop
                 }// End of j loop
             }// End of Repeat clustering step "cycles" times
