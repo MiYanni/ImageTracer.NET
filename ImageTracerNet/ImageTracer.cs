@@ -119,33 +119,11 @@ namespace ImageTracerNet
         {
             var arr = CreateIndexedColorArray(imgd.Height, imgd.Width);
             var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
-            var newAccumulator = new PaletteAccumulator[colorPalette.Length].Initialize(() => new PaletteAccumulator());
             // Repeat clustering step "cycles" times
             for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
             {
-                // Average colors from the second iteration
-                if (cnt > 0)
-                {
-                    // averaging paletteacc for palette
-                    for (var k = 0; k < colorPalette.Length; k++)
-                    {
-                        // averaging
-                        if (newAccumulator[k].A > 0) // Non-transparent accumulation
-                        {
-                            colorPalette[k] = newAccumulator[k].CalculateAverage();
-                        }
-
-                        var ratio = newAccumulator[k].Count / (double)(imgd.Width * imgd.Height);
-                        // Randomizing a color, if there are too few pixels and there will be a new cycle
-                        if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
-                        {
-                            colorPalette[k] = ColorExtensions.RandomColor();
-                        }
-                    }
-                }
-
                 // Reseting palette accumulator for averaging
-                newAccumulator = new PaletteAccumulator[colorPalette.Length].Initialize(() => new PaletteAccumulator());
+                var newAccumulator = new PaletteAccumulator[colorPalette.Length].Initialize(() => new PaletteAccumulator());
 
                 for (var j = 0; j < imgd.Height; j++)
                 {
@@ -175,6 +153,23 @@ namespace ImageTracerNet
                         newAccumulator[paletteIndex].Count++;
 
                         arr[j + 1][i + 1] = paletteIndex;
+                    }
+                }
+
+                // averaging paletteacc for palette
+                for (var k = 0; k < colorPalette.Length; k++)
+                {
+                    // averaging
+                    if (newAccumulator[k].A > 0) // Non-transparent accumulation
+                    {
+                        colorPalette[k] = newAccumulator[k].CalculateAverage();
+                    }
+
+                    var ratio = newAccumulator[k].Count / (double)(imgd.Width * imgd.Height);
+                    // Randomizing a color, if there are too few pixels and there will be a new cycle
+                    if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
+                    {
+                        colorPalette[k] = ColorExtensions.RandomColor();
                     }
                 }
             }// End of Repeat clustering step "cycles" times
