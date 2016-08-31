@@ -98,11 +98,17 @@ namespace ImageTracerNet
                 }
             }
 
-            var thing = new[]
-            {
-                NewGuy.R - C1, NewGuy.G - C2, NewGuy.B - C3, NewGuy.A - C4,
-                NewGuy2.R - D1, NewGuy2.G - D2, NewGuy2.B - D3, NewGuy2.A - D4
-            };
+            var check3 = Indices1.SequenceEqual(Indices2);
+            //var check4 = Palette1.First().Select(p => new [] {p.R, p.G, p.B, p.A, p.Count}).SequenceEqual(Palette2.First().Select(p => new[] { p.R, p.G, p.B, p.A, p.Count }));
+            var check4 = Palette1.First().Select((p, i) => new {i, p.Count}).ToList();
+            var check5 = Palette2.First().Select((p, i) => new { i, p.Count }).ToList();
+            //var check6 = check4.
+
+            //var thing = new[]
+            //{
+            //    NewGuy.R - C1, NewGuy.G - C2, NewGuy.B - C3, NewGuy.A - C4,
+            //    NewGuy2.R - D1, NewGuy2.G - D2, NewGuy2.B - D3, NewGuy2.A - D4
+            //};
 
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
@@ -115,20 +121,29 @@ namespace ImageTracerNet
             return ii;
         }
 
-        private static Color NewGuy;
-        private static Color NewGuy2;
-        private static int Dist1;
+        //private static Color NewGuy;
+        //private static Color NewGuy2;
+        //private static int Dist1;
         private static int P1;
-        private static int C1;
-        private static int C2;
-        private static int C3;
-        private static int C4;
-        private static int D1;
-        private static int D2;
-        private static int D3;
-        private static int D4;
-        private static int Dist2;
+        private static List<Color> List1 = new List<Color>();
+        private static List<List<PaletteAccumulator>> Palette1 = new List<List<PaletteAccumulator>>();
+        private static List<int> Indices1 = new List<int>();
+        private static int MyCount1 = 0;
+        private static Dictionary<int, long> Dict1 = new Dictionary<int, long>();
+        //private static int C1;
+        //private static int C2;
+        //private static int C3;
+        //private static int C4;
+        //private static int D1;
+        //private static int D2;
+        //private static int D3;
+        //private static int D4;
+        //private static int Dist2;
         private static int P2;
+        private static List<Color> List2 = new List<Color>();
+        private static List<List<PaletteAccumulator>> Palette2 = new List<List<PaletteAccumulator>>();
+        private static List<int> Indices2 = new List<int>();
+        private static int MyCount2 = 0;
 
         ////////////////////////////////////////////////////////////
         //
@@ -174,6 +189,7 @@ namespace ImageTracerNet
 
             var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
             var newAccumulator = new PaletteAccumulator[colorPalette.Length].Initialize(() => new PaletteAccumulator());
+            var dict1 = new Dictionary<int, long>();
             // Repeat clustering step "cycles" times
             for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
             {
@@ -187,6 +203,8 @@ namespace ImageTracerNet
                         if (newAccumulator[k].A > 0) // Non-transparent accumulation
                         {
                             colorPalette[k] = newAccumulator[k].CalculateAverage();
+                            List1.Add(colorPalette[k]);
+                            //Palette1.Add(newAccumulator[k]);
                         }
 
                         var ratio = newAccumulator[k].Count / (double)(imgd.Width * imgd.Height);
@@ -199,14 +217,15 @@ namespace ImageTracerNet
                 }
 
                 // Reseting palette accumulator for averaging
-                foreach (var accumulator in newAccumulator)
-                {
-                    accumulator.R = 0;
-                    accumulator.G = 0;
-                    accumulator.B = 0;
-                    accumulator.A = 0;
-                    accumulator.Count = 0;
-                }
+                //foreach (var accumulator in newAccumulator)
+                //{
+                //    accumulator.R = 0;
+                //    accumulator.G = 0;
+                //    accumulator.B = 0;
+                //    accumulator.A = 0;
+                //    accumulator.Count = 0;
+                //}
+                newAccumulator = new PaletteAccumulator[colorPalette.Length].Initialize(() => new PaletteAccumulator());
 
                 for (var j = 0; j < imgd.Height; j++)
                 {
@@ -227,20 +246,34 @@ namespace ImageTracerNet
                             distance = newDistance;
                             paletteIndex = k;
                         }
-                        if (cnt == 1 && (j * imgd.Width + i) == 55)
+                        if (cnt == 0 && (j * imgd.Width + i) == 31345)
                         {
                             P1 = paletteIndex;
                         }
+                        if (cnt == 0)
+                        {
+                            Indices1.Add(paletteIndex);
+                        
 
                         // add to palettacc
-                        newAccumulator[paletteIndex].R += pixel.R;
-                        newAccumulator[paletteIndex].G += pixel.G;
-                        newAccumulator[paletteIndex].B += pixel.B;
-                        newAccumulator[paletteIndex].A += pixel.A;
-                        newAccumulator[paletteIndex].Count++;
+                        //newAccumulator[paletteIndex].R += pixel.R;
+                        //newAccumulator[paletteIndex].G += pixel.G;
+                        //newAccumulator[paletteIndex].B += pixel.B;
+                        //newAccumulator[paletteIndex].A += pixel.A;
+                        newAccumulator[paletteIndex].Count = newAccumulator[paletteIndex].Count + 1;
+                        //dict1[paletteIndex]++;
+                        dict1[paletteIndex] = (dict1.ContainsKey(paletteIndex) ? dict1[paletteIndex] : 0) + 1;
+                        MyCount1++;
 
                         arr[j + 1][i + 1] = paletteIndex;
+                        }
                     }
+                }
+                Palette1.Add(newAccumulator.ToList());
+                if (cnt == 0)
+                {
+                    
+                    Dict1 = dict1;
                 }
             }// End of Repeat clustering step "cycles" times
 
@@ -283,6 +316,8 @@ namespace ImageTracerNet
                             palette[k][1] = (byte)(shift + Math.Floor(paletteAccumulator[k][1] / (double)paletteAccumulator[k][4]));
                             palette[k][2] = (byte)(shift + Math.Floor(paletteAccumulator[k][2] / (double)paletteAccumulator[k][4]));
                             palette[k][3] = (byte)(shift + Math.Floor(paletteAccumulator[k][3] / (double)paletteAccumulator[k][4]));
+                            List2.Add(Color.FromArgb(palette[k][3], palette[k][0], palette[k][1], palette[k][2]));
+                            //Palette2.Add(new PaletteAccumulator {R = paletteAccumulator[k][0], G = paletteAccumulator[k][1] , B = paletteAccumulator[k][2], A = paletteAccumulator[k][3], Count = (int)paletteAccumulator[k][4]});
                         }
                         var ratio = paletteAccumulator[k][4] / (double)(imgd.Width * imgd.Height);
 
@@ -333,21 +368,30 @@ namespace ImageTracerNet
                             }
                         }// End of palette loop
 
-                        if (cnt == 1 && (j * imgd.Width + i) == 55)
+                        if (cnt == 0 && (j * imgd.Width + i) == 31345)
                         {
                             P2 = ci;
                         }
+                        if (cnt == 0)
+                        {
+                            Indices2.Add(ci);
+                        
 
                         // add to palettacc
-                        paletteAccumulator[ci][0] += imgd.Data[idx];
-                        paletteAccumulator[ci][1] += imgd.Data[idx + 1];
-                        paletteAccumulator[ci][2] += imgd.Data[idx + 2];
-                        paletteAccumulator[ci][3] += imgd.Data[idx + 3];
+                        //paletteAccumulator[ci][0] += imgd.Data[idx];
+                        //paletteAccumulator[ci][1] += imgd.Data[idx + 1];
+                        //paletteAccumulator[ci][2] += imgd.Data[idx + 2];
+                        //paletteAccumulator[ci][3] += imgd.Data[idx + 3];
                         paletteAccumulator[ci][4]++;
+                        MyCount2++;
 
                         arr[j + 1][i + 1] = ci;
+                        }
                     }// End of i loop
                 }// End of j loop
+                Palette2.Add(paletteAccumulator.Select(
+                            p => new PaletteAccumulator { R = p[0], G = p[1], B = p[2], A = p[3], Count = (int)p[4] })
+                            .ToList());
             }// End of Repeat clustering step "cycles" times
 
             return new IndexedImage(arr, palette);
