@@ -245,13 +245,14 @@ namespace ImageTracerNet
         private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            int aw = ii.Array[0].Length, ah = ii.Array.Length;
-            var layers = new int[ii.Palette.Length][][].InitInner(ah, aw);
+            var width = ii.Array[0].Length;
+            var height = ii.Array.Length;
+            var layers = new int[ii.Palette.Length][][].InitInner(height, width);
 
             // Looping through all pixels and calculating edge node type
-            for (var j = 1; j < ah - 1; j++)
+            for (var j = 1; j < height - 1; j++)
             {
-                for (var i = 1; i < aw - 1; i++)
+                for (var i = 1; i < width - 1; i++)
                 {
                     // This pixel's indexed color
                     var val = ii.Array[j][i];
@@ -268,7 +269,7 @@ namespace ImageTracerNet
                         n2 = ii.Array[j - 1][i] == val ? 1 : 0;
                     }
                     var n3 = 0;
-                    if ((j > 0) && (i < aw - 1))
+                    if ((j > 0) && (i < width - 1))
                     {
                         n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0;
                     }
@@ -278,34 +279,42 @@ namespace ImageTracerNet
                         n4 = ii.Array[j][i - 1] == val ? 1 : 0;
                     }
                     var n5 = 0;
-                    if (i < aw - 1)
+                    if (i < width - 1)
                     {
                         n5 = ii.Array[j][i + 1] == val ? 1 : 0;
                     }
                     var n6 = 0;
-                    if ((j < ah - 1) && (i > 0))
+                    if ((j < height - 1) && (i > 0))
                     {
                         n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0;
                     }
                     var n7 = 0;
-                    if (j < ah - 1)
+                    if (j < height - 1)
                     {
                         n7 = ii.Array[j + 1][i] == val ? 1 : 0;
                     }
                     var n8 = 0;
-                    if ((j < ah - 1) && (i < aw - 1))
+                    if ((j < height - 1) && (i < width - 1))
                     {
                         n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0;
                     }
 
                     // this pixel"s type and looking back on previous pixels
                     layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
-                    if (n4 == 0) { layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8; }
-                    if (n2 == 0) { layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8; }
-                    if (n1 == 0) { layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8; }
-
-                }// End of i loop
-            }// End of j loop
+                    if (n4 == 0)
+                    {
+                        layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8;
+                    }
+                    if (n2 == 0)
+                    {
+                        layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8;
+                    }
+                    if (n1 == 0)
+                    {
+                        layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8;
+                    }
+                }
+            }
 
             return layers;
         }

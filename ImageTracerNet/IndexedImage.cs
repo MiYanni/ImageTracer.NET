@@ -16,7 +16,8 @@ namespace ImageTracerNet
 
         public IndexedImage(int[][] array, byte[][] palette)
         {
-            Array = array; Palette = palette;
+            Array = array;
+            Palette = palette;
             // Color quantization adds +2 to the original width and height
             Width = array[0].Length - 2;
             Height = array.Length - 2;
