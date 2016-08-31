@@ -171,61 +171,64 @@ namespace ImageTracerNet
             return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
         }
 
-        // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
-        private static byte[][] GeneratePalette(int numberofcolors)
+        private static byte[][] GenerateGrayscale(int numberOfColors, byte[][] palette, int step)
         {
-            var palette = new byte[numberofcolors][].InitInner(4);
-            if (numberofcolors < 8)
+            // Grayscale
+            for (byte colorCount = 0; colorCount < numberOfColors; colorCount++)
             {
-                const int shift = 0; // MJY: From -128
-                // Grayscale
-                var graystep = (byte)Math.Floor(255 / (double)(numberofcolors - 1));
-                for (byte ccnt = 0; ccnt < numberofcolors; ccnt++)
-                {
-                    palette[ccnt][0] = (byte)(shift + ccnt * graystep);
-                    palette[ccnt][1] = (byte)(shift + ccnt * graystep);
-                    palette[ccnt][2] = (byte)(shift + ccnt * graystep);
-                    palette[ccnt][3] = 255;
-                }
+                var component = (byte)(colorCount * step);
+                palette[colorCount][0] = component;
+                palette[colorCount][1] = component;
+                palette[colorCount][2] = component;
+                palette[colorCount][3] = 255;
             }
-            else
-            {
-                const int shift = 0; // MJY: From -128
-                // RGB color cube
-                var colorqnum = (int)Math.Floor(Math.Pow(numberofcolors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-                var colorstep = (int)Math.Floor(255 / (double)(colorqnum - 1)); // distance between points
-                var ccnt = 0;
-                for (var rcnt = 0; rcnt < colorqnum; rcnt++)
-                {
-                    for (var gcnt = 0; gcnt < colorqnum; gcnt++)
-                    {
-                        for (var bcnt = 0; bcnt < colorqnum; bcnt++)
-                        {
-                            palette[ccnt][0] = (byte)(shift + rcnt * colorstep);
-                            palette[ccnt][1] = (byte)(shift + gcnt * colorstep);
-                            palette[ccnt][2] = (byte)(shift + bcnt * colorstep);
-                            palette[ccnt][3] = 127;
-                            ccnt++;
-                        }// End of blue loop
-                    }// End of green loop
-                }// End of red loop
-
-                // Rest is random
-                for (var rcnt = ccnt; rcnt < numberofcolors; rcnt++)
-                {
-                    palette[ccnt][0] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
-                    palette[ccnt][1] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
-                    palette[ccnt][2] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
-                    palette[ccnt][3] = (byte)(shift + Math.Floor(Rng.NextDouble() * 255));
-                }
-            }// End of numberofcolors check
             return palette;
         }
 
-        private static byte[][] SamplePalette(int numberofcolors, ImageData imgd)
+        // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
+        private static byte[][] GeneratePalette(int numberOfColors)
         {
-            var palette = new byte[numberofcolors][].InitInner(4);
-            for (var i = 0; i < numberofcolors; i++)
+            var palette = new byte[numberOfColors][].InitInner(4);
+            var step = 255 / (numberOfColors - 1); // distance between points
+            if (numberOfColors < 8)
+            {
+                return GenerateGrayscale(numberOfColors, palette, step);
+            }
+
+            // RGB color cube
+            var colorQNum = (int)Math.Floor(Math.Pow(numberOfColors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
+            var colorCount = 0;
+            for (var redCount = 0; redCount < colorQNum; redCount++)
+            {
+                for (var greenCount = 0; greenCount < colorQNum; greenCount++)
+                {
+                    for (var blueCount = 0; blueCount < colorQNum; blueCount++)
+                    {
+                        palette[colorCount][0] = (byte)(redCount * step);
+                        palette[colorCount][1] = (byte)(greenCount * step);
+                        palette[colorCount][2] = (byte)(blueCount * step);
+                        palette[colorCount][3] = 255;
+                        colorCount++;
+                    }
+                }
+            }
+
+            // Rest is random
+            for (var randomCount = colorCount; randomCount < numberOfColors; randomCount++)
+            {
+                palette[colorCount][0] = (byte)Math.Floor(Rng.NextDouble() * 255);
+                palette[colorCount][1] = (byte)Math.Floor(Rng.NextDouble() * 255);
+                palette[colorCount][2] = (byte)Math.Floor(Rng.NextDouble() * 255);
+                palette[colorCount][3] = (byte)Math.Floor(Rng.NextDouble() * 255);
+            }
+            return palette;
+        }
+
+        // This palette randomly samples the image
+        private static byte[][] SamplePalette(int numberOfColors, ImageData imgd)
+        {
+            var palette = new byte[numberOfColors][].InitInner(4);
+            for (var i = 0; i < numberOfColors; i++)
             {
                 var idx = (int)(Math.Floor(Rng.NextDouble() * imgd.Data.Length / 4) * 4);
                 palette[i][0] = imgd.Data[idx];
