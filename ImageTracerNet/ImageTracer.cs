@@ -253,27 +253,50 @@ namespace ImageTracerNet
             {
                 for (var i = 1; i < aw - 1; i++)
                 {
-
                     // This pixel's indexed color
                     var val = ii.Array[j][i];
 
                     // Are neighbor pixel colors the same?
-                    int n1;
-                    if ((j > 0) && (i > 0)) { n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0; } else { n1 = 0; }
-                    int n2;
-                    if (j > 0) { n2 = ii.Array[j - 1][i] == val ? 1 : 0; } else { n2 = 0; }
-                    int n3;
-                    if ((j > 0) && (i < aw - 1)) { n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0; } else { n3 = 0; }
-                    int n4;
-                    if (i > 0) { n4 = ii.Array[j][i - 1] == val ? 1 : 0; } else { n4 = 0; }
-                    int n5;
-                    if (i < aw - 1) { n5 = ii.Array[j][i + 1] == val ? 1 : 0; } else { n5 = 0; }
-                    int n6;
-                    if ((j < ah - 1) && (i > 0)) { n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0; } else { n6 = 0; }
-                    int n7;
-                    if (j < ah - 1) { n7 = ii.Array[j + 1][i] == val ? 1 : 0; } else { n7 = 0; }
-                    int n8;
-                    if ((j < ah - 1) && (i < aw - 1)) { n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0; } else { n8 = 0; }
+                    var n1 = 0;
+                    if ((j > 0) && (i > 0))
+                    {
+                        n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0;
+                    }
+                    var n2 = 0;
+                    if (j > 0)
+                    {
+                        n2 = ii.Array[j - 1][i] == val ? 1 : 0;
+                    }
+                    var n3 = 0;
+                    if ((j > 0) && (i < aw - 1))
+                    {
+                        n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0;
+                    }
+                    var n4 = 0;
+                    if (i > 0)
+                    {
+                        n4 = ii.Array[j][i - 1] == val ? 1 : 0;
+                    }
+                    var n5 = 0;
+                    if (i < aw - 1)
+                    {
+                        n5 = ii.Array[j][i + 1] == val ? 1 : 0;
+                    }
+                    var n6 = 0;
+                    if ((j < ah - 1) && (i > 0))
+                    {
+                        n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0;
+                    }
+                    var n7 = 0;
+                    if (j < ah - 1)
+                    {
+                        n7 = ii.Array[j + 1][i] == val ? 1 : 0;
+                    }
+                    var n8 = 0;
+                    if ((j < ah - 1) && (i < aw - 1))
+                    {
+                        n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0;
+                    }
 
                     // this pixel"s type and looking back on previous pixels
                     layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
