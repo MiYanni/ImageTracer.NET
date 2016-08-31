@@ -100,9 +100,9 @@ namespace ImageTracerNet
 
             var check3 = Indices1.SequenceEqual(Indices2);
             //var check4 = Palette1.First().Select(p => new [] {p.R, p.G, p.B, p.A, p.Count}).SequenceEqual(Palette2.First().Select(p => new[] { p.R, p.G, p.B, p.A, p.Count }));
-            var check4 = Palette1.First().Select((p, i) => new {i, p.Count}).ToList();
-            var check5 = Palette2.First().Select((p, i) => new { i, p.Count }).ToList();
-            //var check6 = check4.
+            var check4 = Palette1.First().Select((p, i) => new []{i, p.Count}).SelectMany(p => p).ToList();
+            var check5 = Palette2.First().Select((p, i) => new []{ i, p.Count }).SelectMany(p => p).ToList();
+            var check6 = check4.SequenceEqual(check5);
 
             //var thing = new[]
             //{
