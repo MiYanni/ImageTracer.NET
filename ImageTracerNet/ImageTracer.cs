@@ -64,7 +64,8 @@ namespace ImageTracerNet
         private static IndexedImage ImageDataToTraceData(ImageData imgd, Options options, byte[][] palette)
         {
             // Use custom palette if pal is defined or sample or generate custom length palette
-            palette = palette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
+            var colorPalette = palette != null ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) : null;
+            colorPalette = colorPalette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
                     ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
                     : GeneratePalette(options.ColorQuantization.NumberOfColors));
 
@@ -75,7 +76,7 @@ namespace ImageTracerNet
             }
 
             // 1. Color quantization
-            var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
+            //var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
             var ii = ColorQuantization(imgd, colorPalette, options);
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
@@ -171,72 +172,57 @@ namespace ImageTracerNet
             return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
         }
 
-        private static byte[][] GenerateGrayscale(int numberOfColors, byte[][] palette, int step)
+        private static Color[] GenerateGrayscale(int numberOfColors)
         {
-            // Grayscale
-            for (byte colorCount = 0; colorCount < numberOfColors; colorCount++)
+            var step = 255 / (numberOfColors - 1); // distance between points
+            return new Color[numberOfColors].Initialize(i =>
             {
-                var component = (byte)(colorCount * step);
-                palette[colorCount][0] = component;
-                palette[colorCount][1] = component;
-                palette[colorCount][2] = component;
-                palette[colorCount][3] = 255;
-            }
-            return palette;
+                var component = (byte)(i * step);
+                return Color.FromArgb(255, component, component, component);
+            });
         }
 
-        // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
-        private static byte[][] GeneratePalette(int numberOfColors)
+        private static IEnumerable<Color> GenerateRgbCube(int numberOfColors)
         {
-            var palette = new byte[numberOfColors][].InitInner(4);
             var step = 255 / (numberOfColors - 1); // distance between points
-            if (numberOfColors < 8)
-            {
-                return GenerateGrayscale(numberOfColors, palette, step);
-            }
-
-            // RGB color cube
             var colorQNum = (int)Math.Floor(Math.Pow(numberOfColors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-            var colorCount = 0;
+
             for (var redCount = 0; redCount < colorQNum; redCount++)
             {
                 for (var greenCount = 0; greenCount < colorQNum; greenCount++)
                 {
                     for (var blueCount = 0; blueCount < colorQNum; blueCount++)
                     {
-                        palette[colorCount][0] = (byte)(redCount * step);
-                        palette[colorCount][1] = (byte)(greenCount * step);
-                        palette[colorCount][2] = (byte)(blueCount * step);
-                        palette[colorCount][3] = 255;
-                        colorCount++;
+                        yield return Color.FromArgb(255, (byte)(redCount * step), (byte)(greenCount * step), (byte)(blueCount * step));
                     }
                 }
             }
+        }
 
-            // Rest is random
-            for (var randomCount = colorCount; randomCount < numberOfColors; randomCount++)
+        // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
+        private static Color[] GeneratePalette(int numberOfColors)
+        {
+            if (numberOfColors < 8)
             {
-                palette[colorCount][0] = (byte)Math.Floor(Rng.NextDouble() * 255);
-                palette[colorCount][1] = (byte)Math.Floor(Rng.NextDouble() * 255);
-                palette[colorCount][2] = (byte)Math.Floor(Rng.NextDouble() * 255);
-                palette[colorCount][3] = (byte)Math.Floor(Rng.NextDouble() * 255);
+                return GenerateGrayscale(numberOfColors);
             }
-            return palette;
+
+            // Number of points on each edge on the RGB color cube total
+            var colorQNumTotal = (int)Math.Floor(Math.Pow(numberOfColors, 1.0 / 3.0)) * 3;
+            var rgbCube = GenerateRgbCube(numberOfColors);
+
+            // RGB color cube used for part of the palette; the rest is random
+            return new Color[numberOfColors].Initialize(i => i < colorQNumTotal ? rgbCube.ElementAt(i) : ColorExtensions.RandomColor());
         }
 
         // This palette randomly samples the image
-        private static byte[][] SamplePalette(int numberOfColors, ImageData imgd)
+        private static Color[] SamplePalette(int numberOfColors, ImageData imageData)
         {
-            var palette = new byte[numberOfColors][].InitInner(4);
-            for (var i = 0; i < numberOfColors; i++)
+            return new Color[numberOfColors].Initialize(() =>
             {
-                var idx = (int)(Math.Floor(Rng.NextDouble() * imgd.Data.Length / 4) * 4);
-                palette[i][0] = imgd.Data[idx];
-                palette[i][1] = imgd.Data[idx + 1];
-                palette[i][2] = imgd.Data[idx + 2];
-                palette[i][3] = imgd.Data[idx + 3];
-            }
-            return palette;
+                var index = (int)(Math.Floor(Rng.NextDouble() * imageData.Data.Length / 4) * 4);
+                return Color.FromArgb(imageData.Data[index + 3], imageData.Data[index], imageData.Data[index + 1], imageData.Data[index + 2]);
+            });
         }
 
         // 2. Layer separation and edge detection
