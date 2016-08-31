@@ -17,6 +17,15 @@ namespace ImageTracerNet
         public Color CalculateAverage()
         {
             return ColorExtensions.FromRgbaByteArray(new []{R, G, B, A}.Select(comp => (byte)(comp / Count)).ToArray()).Single();
-        } 
+        }
+
+        public void Accumulate(Color color)
+        {
+            R += color.R;
+            G += color.G;
+            B += color.B;
+            A += color.A;
+            Count++;
+        }
     }
 }

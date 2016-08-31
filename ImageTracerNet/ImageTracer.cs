@@ -75,8 +75,8 @@ namespace ImageTracerNet
             }
 
             // 1. Color quantization
-            var ii = ColorQuantization(imgd, palette, options);
-
+            var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
+            var ii = ColorQuantization(imgd, colorPalette, options);
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
             // 3. Batch pathscan
@@ -115,21 +115,20 @@ namespace ImageTracerNet
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
         // https://en.wikipedia.org/wiki/Color_quantization
         // https://en.wikipedia.org/wiki/K-means_clustering
-        private static IndexedImage ColorQuantization(ImageData imgd, byte[][] palette, Options options)
+        private static IndexedImage ColorQuantization(ImageData imageData, Color[] colorPalette, Options options)
         {
-            var arr = CreateIndexedColorArray(imgd.Height, imgd.Width);
-            var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
+            var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
             // Repeat clustering step "cycles" times
-            for (var cnt = 0; cnt < options.ColorQuantization.ColorQuantCycles; cnt++)
+            for (var cycleCount = 0; cycleCount < options.ColorQuantization.ColorQuantCycles; cycleCount++)
             {
                 // Reseting palette accumulator for averaging
-                var newAccumulator = new PaletteAccumulator[colorPalette.Length].Initialize(() => new PaletteAccumulator());
+                var accumulatorPaletteIndexer = Enumerable.Range(0, colorPalette.Length).ToDictionary(i => i, i => new PaletteAccumulator());
 
-                for (var j = 0; j < imgd.Height; j++)
+                for (var j = 0; j < imageData.Height; j++)
                 {
-                    for (var i = 0; i < imgd.Width; i++)
+                    for (var i = 0; i < imageData.Width; i++)
                     {
-                        var pixel = imgd.Colors[j * imgd.Width + i];
+                        var pixel = imageData.Colors[j * imageData.Width + i];
                         var distance = 256 * 4;
                         var paletteIndex = 0;
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
@@ -144,14 +143,9 @@ namespace ImageTracerNet
                             distance = newDistance;
                             paletteIndex = k;
                         }
-                        
-                        // add to palettacc
-                        newAccumulator[paletteIndex].R += pixel.R;
-                        newAccumulator[paletteIndex].G += pixel.G;
-                        newAccumulator[paletteIndex].B += pixel.B;
-                        newAccumulator[paletteIndex].A += pixel.A;
-                        newAccumulator[paletteIndex].Count++;
 
+                        // add to palettacc
+                        accumulatorPaletteIndexer[paletteIndex].Accumulate(pixel);
                         arr[j + 1][i + 1] = paletteIndex;
                     }
                 }
@@ -160,14 +154,14 @@ namespace ImageTracerNet
                 for (var k = 0; k < colorPalette.Length; k++)
                 {
                     // averaging
-                    if (newAccumulator[k].A > 0) // Non-transparent accumulation
+                    if (accumulatorPaletteIndexer[k].A > 0) // Non-transparent accumulation
                     {
-                        colorPalette[k] = newAccumulator[k].CalculateAverage();
+                        colorPalette[k] = accumulatorPaletteIndexer[k].CalculateAverage();
                     }
 
-                    var ratio = newAccumulator[k].Count / (double)(imgd.Width * imgd.Height);
+                    var ratio = accumulatorPaletteIndexer[k].Count / (double)(imageData.Width * imageData.Height);
                     // Randomizing a color, if there are too few pixels and there will be a new cycle
-                    if ((ratio < options.ColorQuantization.MinColorRatio) && (cnt < options.ColorQuantization.ColorQuantCycles - 1))
+                    if ((ratio < options.ColorQuantization.MinColorRatio) && (cycleCount < options.ColorQuantization.ColorQuantCycles - 1))
                     {
                         colorPalette[k] = ColorExtensions.RandomColor();
                     }
