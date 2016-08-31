@@ -258,7 +258,7 @@ namespace ImageTracerNet
                         // add to palettacc
                         newAccumulator[paletteIndex].R += pixel.R;
                         newAccumulator[paletteIndex].G += pixel.G;
-                        //newAccumulator[paletteIndex].B += pixel.B;
+                        newAccumulator[paletteIndex].B += pixel.B;
                         newAccumulator[paletteIndex].A += pixel.A;
                         newAccumulator[paletteIndex].Count = newAccumulator[paletteIndex].Count + 1;
                         //dict1[paletteIndex]++;
@@ -380,7 +380,7 @@ namespace ImageTracerNet
                         // add to palettacc
                         paletteAccumulator[ci][0] += imgd.Data[idx];
                         paletteAccumulator[ci][1] += imgd.Data[idx + 1];
-                        //paletteAccumulator[ci][2] += imgd.Data[idx + 2];
+                        paletteAccumulator[ci][2] += imgd.Data[idx + 2];
                         paletteAccumulator[ci][3] += imgd.Data[idx + 3];
                         paletteAccumulator[ci][4]++;
                         MyCount2++;
