@@ -250,23 +250,23 @@ namespace ImageTracerNet
                         {
                             P1 = paletteIndex;
                         }
-                        if (cnt == 0)
-                        {
+                        //if (cnt == 0)
+                        //{
                             Indices1.Add(paletteIndex);
                         
 
                         // add to palettacc
-                        //newAccumulator[paletteIndex].R += pixel.R;
-                        //newAccumulator[paletteIndex].G += pixel.G;
+                        newAccumulator[paletteIndex].R += pixel.R;
+                        newAccumulator[paletteIndex].G += pixel.G;
                         //newAccumulator[paletteIndex].B += pixel.B;
-                        //newAccumulator[paletteIndex].A += pixel.A;
+                        newAccumulator[paletteIndex].A += pixel.A;
                         newAccumulator[paletteIndex].Count = newAccumulator[paletteIndex].Count + 1;
                         //dict1[paletteIndex]++;
                         dict1[paletteIndex] = (dict1.ContainsKey(paletteIndex) ? dict1[paletteIndex] : 0) + 1;
                         MyCount1++;
 
                         arr[j + 1][i + 1] = paletteIndex;
-                        }
+                        //}
                     }
                 }
                 Palette1.Add(newAccumulator.ToList());
@@ -372,21 +372,21 @@ namespace ImageTracerNet
                         {
                             P2 = ci;
                         }
-                        if (cnt == 0)
-                        {
+                        //if (cnt == 0)
+                        //{
                             Indices2.Add(ci);
                         
 
                         // add to palettacc
-                        //paletteAccumulator[ci][0] += imgd.Data[idx];
-                        //paletteAccumulator[ci][1] += imgd.Data[idx + 1];
+                        paletteAccumulator[ci][0] += imgd.Data[idx];
+                        paletteAccumulator[ci][1] += imgd.Data[idx + 1];
                         //paletteAccumulator[ci][2] += imgd.Data[idx + 2];
-                        //paletteAccumulator[ci][3] += imgd.Data[idx + 3];
+                        paletteAccumulator[ci][3] += imgd.Data[idx + 3];
                         paletteAccumulator[ci][4]++;
                         MyCount2++;
 
                         arr[j + 1][i + 1] = ci;
-                        }
+                        //}
                     }// End of i loop
                 }// End of j loop
                 Palette2.Add(paletteAccumulator.Select(
