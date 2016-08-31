@@ -77,25 +77,31 @@ namespace ImageTracerNet
             var ii = ColorQuantization(imgd, palette, options);
             var ii2 = ColorQuantizationOrig(imgd, palette, options);
 
-            //var alist = new List<List<int>>();
-            //var check1 = ii.Array.SelectMany(v => v).SequenceEqual(ii2.Array.SelectMany(v => v));
-            //for (var i = 0; i < ii.Array.Length; ++i)
-            //{
-            //    if (!ii.Array[i].SequenceEqual(ii2.Array[i]))
-            //    {
-            //        alist.Add(ii.Array[i].Zip(ii2.Array[i], (f, s) => f - s).ToList());
-            //    }
-            //}
+            var alist = new List<List<int>>();
+            var check1 = ii.Array.SelectMany(v => v).SequenceEqual(ii2.Array.SelectMany(v => v));
+            for (var i = 0; i < ii.Array.Length; ++i)
+            {
+                if (!ii.Array[i].SequenceEqual(ii2.Array[i]))
+                {
+                    alist.Add(ii.Array[i].Zip(ii2.Array[i], (f, s) => f - s).ToList());
+                }
+            }
 
-            //var blist = new List<List<int>>();
-            //var check2 = ii.Palette.SelectMany(v => v).SequenceEqual(ii2.Palette.SelectMany(v => v));
-            //for (var i = 0; i < ii.Palette.Length; ++i)
-            //{
-            //    if (!ii.Palette[i].SequenceEqual(ii2.Palette[i]))
-            //    {
-            //        blist.Add(ii.Palette[i].Zip(ii2.Palette[i], (f, s) => f - s).ToList());
-            //    }
-            //}
+            var blist = new List<List<int>>();
+            var check2 = ii.Palette.SelectMany(v => v).SequenceEqual(ii2.Palette.SelectMany(v => v));
+            for (var i = 0; i < ii.Palette.Length; ++i)
+            {
+                if (!ii.Palette[i].SequenceEqual(ii2.Palette[i]))
+                {
+                    blist.Add(ii.Palette[i].Zip(ii2.Palette[i], (f, s) => f - s).ToList());
+                }
+            }
+
+            var thing = new[]
+            {
+                NewGuy.R - C1, NewGuy.G - C2, NewGuy.B - C3, NewGuy.A - C4,
+                NewGuy2.R - D1, NewGuy2.G - D2, NewGuy2.B - D3, NewGuy2.A - D4
+            };
 
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
@@ -211,7 +217,7 @@ namespace ImageTracerNet
                         {
                             var color = colorPalette[k];
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            var newDistance = color.CalculateRectilinearDistance(pixel);
+                            var newDistance = color.CalculateRectilinearDistance(pixel, cnt == 0 && k == 5 && (j * imgd.Width + i) == 55);
                             if (cnt == 0 && k == 5 && (j*imgd.Width + i) == 55)
                             {
                                 NewGuy = pixel;
@@ -316,7 +322,7 @@ namespace ImageTracerNet
                             /* G */ var c2 = Math.Abs(palette[k][1] - imgd.Data[idx + 1]);
                             /* B */ var c3 = Math.Abs(palette[k][2] - imgd.Data[idx + 2]);
                             /* A */ var c4 = Math.Abs(palette[k][3] - imgd.Data[idx + 3]);
-                            var cd = c1 + c2 + c3 + c4 * 4;
+                            var cd = c1 + c2 + c3 + c4 * 4; // weighted alpha seems to help images with transparency
 
                             if (cnt == 0 && k == 5 && (j * imgd.Width + i) == 55)
                             {

@@ -21,11 +21,12 @@ namespace ImageTracerNet.Extensions
         }
 
         //https://en.wikipedia.org/wiki/Rectilinear_distance
-        public static int CalculateRectilinearDistance(this Color first, Color second)
+        public static int CalculateRectilinearDistance(this Color first, Color second, bool test)
         {
             var firstArray = first.ToRgbaByteArray();
             var secondArray = second.ToRgbaByteArray();
-            return firstArray.Zip(secondArray, (f, s) => Math.Abs(f - s)).Aggregate((f, s) => f + s) * 4;
+            // weighted alpha seems to help images with transparency
+            return firstArray.Zip(secondArray, (f, s) => Math.Abs(f - s)).Select((d, i) => i == 3 ? d * 4 : d).Aggregate((f, s) => f + s);
         }
 
         public static byte[] ToRgbaByteArray(this Color[] colors)
