@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using ImageTracerNet;
 using ImageTracerNet.Extensions;
+using ImageTracerNet.Palettes;
 
 //using Options = System.Collections.Generic.Dictionary<string, float>; // HashMap<String, Float>()
 
@@ -13,8 +16,9 @@ namespace ImageTracerTester
         private static void Main(string[] args)
         {
             //SaveTracedImage(args);
-            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "70" });
+            //SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "70" });
             //ColorArrayTest(100, 200);
+            GaussianBlurTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-blurred.png");
         }
 
         private static void SaveTracedImage(string[] args)
@@ -130,6 +134,16 @@ namespace ImageTracerTester
                 result &= arr[i].SequenceEqual(arr2[i]);
             }
             Console.WriteLine("Test: " + result);
+        }
+
+        private static void GaussianBlurTest(string imagePath, string outputPath)
+        {
+            var image = new Bitmap(imagePath);
+            var outputImage = new Bitmap(image.Width, image.Height);
+            var gaussianBlur = new GaussianBlur();
+            var rectangle = new Rectangle(0, 0, image.Width, image.Height);
+            gaussianBlur.Apply(outputImage, image, rectangle, 0, image.Height - 1);
+            outputImage.Save(outputPath, ImageFormat.Png);
         }
     }
 }

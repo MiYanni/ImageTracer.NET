@@ -53,6 +53,7 @@
     <Compile Include="Options.cs" />
     <Compile Include="OptionTypes\SvgRendering.cs" />
     <Compile Include="OptionTypes\Tracing.cs" />
+    <Compile Include="Palettes\GaussianBlur.cs" />
     <Compile Include="Palettes\PaletteAccumulator.cs" />
     <Compile Include="Palettes\PaletteGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
