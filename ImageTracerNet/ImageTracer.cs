@@ -32,7 +32,7 @@ namespace ImageTracerNet
 
         public static string ImageToSvg(Bitmap image, Options options, byte[][] palette) 
         {
-            return ImageDataToSvg(LoadImageData(image), options, palette);
+            return ImageDataToSvg(image, LoadImageData(image), options, palette);
         }
 
         // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
@@ -43,7 +43,7 @@ namespace ImageTracerNet
 
         public static IndexedImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
         {
-            return ImageDataToTraceData(LoadImageData(image), options, palette);
+            return ImageDataToTraceData(image, LoadImageData(image), options, palette);
         }
 
         ////////////////////////////////////////////////////////////
@@ -56,19 +56,20 @@ namespace ImageTracerNet
         }
 
         // Tracing ImageData, then returning the SVG String
-        private static string ImageDataToSvg(ImageData imgd, Options options, byte[][] palette)
+        private static string ImageDataToSvg(Bitmap image, ImageData imgd, Options options, byte[][] palette)
         {
-            return GetSvgString(ImageDataToTraceData(imgd, options, palette), options);
+            return GetSvgString(ImageDataToTraceData(image, imgd, options, palette), options);
         }
 
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
-        private static IndexedImage ImageDataToTraceData(ImageData imgd, Options options, byte[][] palette)
+        private static IndexedImage ImageDataToTraceData(Bitmap image, ImageData imgd, Options options, byte[][] palette)
         {
             // Use custom palette if pal is defined or sample or generate custom length palette
-            var colorPalette = palette != null ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) : null;
-            colorPalette = colorPalette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
-                    ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
-                    : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
+            //var colorPalette = palette != null ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) : null;
+            //colorPalette = colorPalette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
+            //        ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
+            //        : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
+            var colorPalette = SmartPalette.Generate(image);
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
@@ -77,6 +78,7 @@ namespace ImageTracerNet
             }
 
             // 1. Color quantization
+            //TODO: Remove Quantization logic while using SmartPalette.
             var ii = ColorQuantization(imgd, colorPalette, options);
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
