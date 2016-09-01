@@ -160,8 +160,10 @@ namespace ImageTracerNet
                         colorPalette[k] = accumulatorPaletteIndexer[k].CalculateAverage();
                     }
 
-                    var ratio = accumulatorPaletteIndexer[k].Count / (double)(imageData.Width * imageData.Height);
+                    //https://github.com/jankovicsandras/imagetracerjava/issues/2
                     // Randomizing a color, if there are too few pixels and there will be a new cycle
+                    if (cycleCount >= options.ColorQuantization.ColorQuantCycles - 1) continue;
+                    var ratio = accumulatorPaletteIndexer[k].Count / (double)(imageData.Width * imageData.Height);
                     if ((ratio < options.ColorQuantization.MinColorRatio) && (cycleCount < options.ColorQuantization.ColorQuantCycles - 1))
                     {
                         colorPalette[k] = ColorExtensions.RandomColor();
