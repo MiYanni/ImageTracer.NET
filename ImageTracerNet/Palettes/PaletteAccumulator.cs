@@ -1,9 +1,8 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Linq;
 using ImageTracerNet.Extensions;
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Palettes
 {
     internal class PaletteAccumulator
     {

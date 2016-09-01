@@ -53,7 +53,8 @@
     <Compile Include="Options.cs" />
     <Compile Include="OptionTypes\SvgRendering.cs" />
     <Compile Include="OptionTypes\Tracing.cs" />
-    <Compile Include="PaletteAccumulator.cs" />
+    <Compile Include="Palettes\PaletteAccumulator.cs" />
+    <Compile Include="Palettes\PaletteGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

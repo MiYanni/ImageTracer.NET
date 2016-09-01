@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ImageTracerNet.Extensions;
+using ImageTracerNet.Palettes;
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
 using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>; // ArrayList<ArrayList<ArrayList<Double[]>>>
 
@@ -66,8 +67,8 @@ namespace ImageTracerNet
             // Use custom palette if pal is defined or sample or generate custom length palette
             var colorPalette = palette != null ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) : null;
             colorPalette = colorPalette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
-                    ? SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
-                    : GeneratePalette(options.ColorQuantization.NumberOfColors));
+                    ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
+                    : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
@@ -76,7 +77,6 @@ namespace ImageTracerNet
             }
 
             // 1. Color quantization
-            //var colorPalette = ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray());
             var ii = ColorQuantization(imgd, colorPalette, options);
             // 2. Layer separation and edge detection
             var rawlayers = Layering(ii);
@@ -172,59 +172,6 @@ namespace ImageTracerNet
             }
 
             return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
-        }
-
-        private static Color[] GenerateGrayscale(int numberOfColors)
-        {
-            var step = 255 / (numberOfColors - 1); // distance between points
-            return new Color[numberOfColors].Initialize(i =>
-            {
-                var component = (byte)(i * step);
-                return Color.FromArgb(255, component, component, component);
-            });
-        }
-
-        private static IEnumerable<Color> GenerateRgbCube(int numberOfColors)
-        {
-            var step = 255 / (numberOfColors - 1); // distance between points
-            var colorQNum = (int)Math.Floor(Math.Pow(numberOfColors, 1.0 / 3.0)); // Number of points on each edge on the RGB color cube
-
-            for (var redCount = 0; redCount < colorQNum; redCount++)
-            {
-                for (var greenCount = 0; greenCount < colorQNum; greenCount++)
-                {
-                    for (var blueCount = 0; blueCount < colorQNum; blueCount++)
-                    {
-                        yield return Color.FromArgb(255, (byte)(redCount * step), (byte)(greenCount * step), (byte)(blueCount * step));
-                    }
-                }
-            }
-        }
-
-        // Generating a palette with numberofcolors, array[numberofcolors][4] where [i][0] = R ; [i][1] = G ; [i][2] = B ; [i][3] = A
-        private static Color[] GeneratePalette(int numberOfColors)
-        {
-            if (numberOfColors < 8)
-            {
-                return GenerateGrayscale(numberOfColors);
-            }
-
-            // Number of points on each edge on the RGB color cube total
-            var colorQNumTotal = (int)Math.Floor(Math.Pow(numberOfColors, 1.0 / 3.0)) * 3;
-            var rgbCube = GenerateRgbCube(numberOfColors);
-
-            // RGB color cube used for part of the palette; the rest is random
-            return new Color[numberOfColors].Initialize(i => i < colorQNumTotal ? rgbCube.ElementAt(i) : ColorExtensions.RandomColor());
-        }
-
-        // This palette randomly samples the image
-        private static Color[] SamplePalette(int numberOfColors, ImageData imageData)
-        {
-            return new Color[numberOfColors].Initialize(() =>
-            {
-                var index = (int)(Math.Floor(Rng.NextDouble() * imageData.Data.Length / 4) * 4);
-                return Color.FromArgb(imageData.Data[index + 3], imageData.Data[index], imageData.Data[index + 1], imageData.Data[index + 2]);
-            });
         }
 
         // 2. Layer separation and edge detection
