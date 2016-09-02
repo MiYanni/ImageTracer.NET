@@ -16,10 +16,10 @@ namespace ImageTracerTester
         private static void Main(string[] args)
         {
             //SaveTracedImage(args);
-            //SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "70" });
+            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "44", "numberofcolors", "64" });
             //ColorArrayTest(100, 200);
-            GaussianBlurTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-blurred.png");
-            ColorPaletteTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-palette.png", 8, 8);
+            //GaussianBlurTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-blurred.png");
+            //ColorPaletteTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-palette.png", 8, 8);
         }
 
         private static void SaveTracedImage(string[] args)
@@ -86,7 +86,13 @@ namespace ImageTracerTester
 
         public static float parsenext(String[] arr, int i)
         {
-            if (i < (arr.Length - 1)) { try { return (float)Convert.ToDouble(arr[i + 1]); } catch (Exception) { } }
+            if (i < (arr.Length - 1))
+            {
+                try
+                {
+                    return (float)Convert.ToDouble(arr[i + 1]);
+                } catch (Exception) { }
+            }
             return -1;
         }
 

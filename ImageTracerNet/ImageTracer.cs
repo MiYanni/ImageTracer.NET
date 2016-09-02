@@ -64,12 +64,15 @@ namespace ImageTracerNet
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
         private static IndexedImage ImageDataToTraceData(Bitmap image, ImageData imgd, Options options, byte[][] palette)
         {
+            var paletteRowsColumns = (int)Math.Sqrt(options.ColorQuantization.NumberOfColors);
             // Use custom palette if pal is defined or sample or generate custom length palette
-            //var colorPalette = palette != null ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) : null;
+            var colorPalette = palette != null 
+                ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) 
+                : SmartPalette.Generate(image, paletteRowsColumns, paletteRowsColumns);
             //colorPalette = colorPalette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
             //        ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
             //        : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
-            var colorPalette = SmartPalette.Generate(image);
+            //var colorPalette = SmartPalette.Generate(image);
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)

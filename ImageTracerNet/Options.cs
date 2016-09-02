@@ -16,7 +16,11 @@ namespace ImageTracerNet
         public void SetOptionByName(string optionName, object value)
         {
             var optionType = GetOptionTypeFromName(optionName);
-            optionType.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Single(i => String.Equals(i.Name, optionName, StringComparison.CurrentCultureIgnoreCase)).SetValue(optionType, value);
+            var property = optionType.GetType()
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Single(i => String.Equals(i.Name, optionName, StringComparison.CurrentCultureIgnoreCase));
+            
+            property.SetValue(optionType, Convert.ChangeType(value, property.PropertyType));
         }
 
         private object GetOptionTypeFromName(string optionName)
