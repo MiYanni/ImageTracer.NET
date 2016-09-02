@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.Palettes;
+using System.Windows.Media.Imaging;
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
 using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>; // ArrayList<ArrayList<ArrayList<Double[]>>>
 
@@ -64,15 +65,17 @@ namespace ImageTracerNet
         // Tracing ImageData, then returning IndexedImage with tracedata in layers
         private static IndexedImage ImageDataToTraceData(Bitmap image, ImageData imgd, Options options, byte[][] palette)
         {
-            var paletteRowsColumns = (int)Math.Sqrt(options.ColorQuantization.NumberOfColors);
+            //var paletteRowsColumns = (int)Math.Sqrt(options.ColorQuantization.NumberOfColors);
             // Use custom palette if pal is defined or sample or generate custom length palette
-            var colorPalette = palette != null 
-                ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) 
-                : SmartPalette.Generate(image, paletteRowsColumns, paletteRowsColumns);
+            //var colorPalette = palette != null 
+            //    ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) 
+            //    : SmartPalette.Generate(image, paletteRowsColumns, paletteRowsColumns);
+
             //colorPalette = colorPalette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
             //        ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
             //        : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
-            //var colorPalette = SmartPalette.Generate(image);
+
+            var colorPalette = BitmapPalettes.Halftone256.Colors.Select(c => Color.FromArgb(c.A, c.R, c.G, c.B)).ToArray();
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
