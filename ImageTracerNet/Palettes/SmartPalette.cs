@@ -6,10 +6,10 @@ namespace ImageTracerNet.Palettes
 {
     internal static class SmartPalette
     {
-        public static Color[] Generate(Bitmap image)
+        public static Color[] Generate(Bitmap image, int rows = 4, int columns = 4)
         {
             var blurred = BlurImage(image);
-            var blocks = DivideImage(blurred);
+            var blocks = DivideImage(blurred, rows, columns);
             return blocks.Select(AverageImageColor).ToArray();
         }
 

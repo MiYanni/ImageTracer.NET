@@ -16,9 +16,10 @@ namespace ImageTracerTester
         private static void Main(string[] args)
         {
             //SaveTracedImage(args);
-            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "70" });
+            //SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "70" });
             //ColorArrayTest(100, 200);
-            //GaussianBlurTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-blurred.png");
+            GaussianBlurTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-blurred.png");
+            ColorPaletteTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-palette.png", 8, 8);
         }
 
         private static void SaveTracedImage(string[] args)
@@ -144,6 +145,42 @@ namespace ImageTracerTester
             var rectangle = new Rectangle(0, 0, image.Width, image.Height);
             gaussianBlur.Apply(outputImage, image, rectangle, 0, image.Height - 1);
             outputImage.Save(outputPath, ImageFormat.Png);
+        }
+
+        private static void ColorPaletteTest(string imagePath, string outputPath, int rows = 4, int columns = 4)
+        {
+            var image = new Bitmap(imagePath);
+            var palette = SmartPalette.Generate(image, rows, columns);
+            var blockHeight = image.Height / rows;
+            var blockWidth = image.Width / columns;
+            var paletteImage = new Bitmap(image.Width, image.Height);
+            for (var i = 0; i < rows; ++i)
+            {
+                for (var j = 0; j < columns; ++j)
+                {
+                    var rectangle = new Rectangle(j * blockWidth, i * blockHeight, blockWidth, blockHeight);
+                    var blockIndex = (i * rows) + j;
+                    var color = palette[blockIndex];
+                    //http://stackoverflow.com/a/12502497/294804
+                    //var colorImage = new Bitmap(rectangle.Width, rectangle.Height);
+                    //using (var graphics = Graphics.FromImage(colorImage))
+                    //{
+                    //    var block = new Rectangle(0, 0, rectangle.Width, rectangle.Height);
+                    //    //http://stackoverflow.com/questions/5641078/convert-from-color-to-brush
+                    //    graphics.FillRectangle(new SolidBrush(color), block);
+                    //}
+
+                    //https://msdn.microsoft.com/en-us/library/aa457087.aspx
+                    using (var g = Graphics.FromImage(paletteImage))
+                    {
+                        //g.DrawImage(colorImage, 0, 0, rectangle, GraphicsUnit.Pixel);
+                        //http://stackoverflow.com/a/15889822/294804
+                        g.FillRectangle(new SolidBrush(color), rectangle);
+                    }
+                    //paletteImage.Save(outputPath + "_" + blockIndex + ".png", ImageFormat.Png);
+                }
+            }
+            paletteImage.Save(outputPath, ImageFormat.Png);
         }
     }
 }
