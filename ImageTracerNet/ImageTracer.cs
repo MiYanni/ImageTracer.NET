@@ -80,6 +80,7 @@ namespace ImageTracerNet
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
             {
+                // TODO: This seems to not work currently.
                 imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
             }
 
@@ -110,76 +111,76 @@ namespace ImageTracerNet
         // -1  0  0  0  0 -1
         // -1  0  0  0  0 -1
         // -1 -1 -1 -1 -1 -1
-        //private static int[][] CreateIndexedColorArray(int height, int width)
-        //{
-        //    height += 2;
-        //    width += 2;
-        //    return new int[height][].Initialize(i =>
-        //    i == 0 || i == height - 1
-        //        ? new int[width].Initialize(-1)
-        //        : new int[width].Initialize(-1, 0, width - 1));
-        //}
+        private static int[][] CreateIndexedColorArray(int height, int width)
+        {
+            height += 2;
+            width += 2;
+            return new int[height][].Initialize(i =>
+            i == 0 || i == height - 1
+                ? new int[width].Initialize(-1)
+                : new int[width].Initialize(-1, 0, width - 1));
+        }
 
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
         // https://en.wikipedia.org/wiki/Color_quantization
         // https://en.wikipedia.org/wiki/K-means_clustering
-        //private static IndexedImage ColorQuantization(ImageData imageData, Color[] colorPalette, Options options)
-        //{
-        //    var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
-        //    // Repeat clustering step "cycles" times
-        //    for (var cycleCount = 0; cycleCount < options.ColorQuantization.ColorQuantCycles; cycleCount++)
-        //    {
-        //        // Reseting palette accumulator for averaging
-        //        var accumulatorPaletteIndexer = Enumerable.Range(0, colorPalette.Length).ToDictionary(i => i, i => new PaletteAccumulator());
+        private static IndexedImage ColorQuantization(ImageData imageData, Color[] colorPalette, Options options)
+        {
+            var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
+            // Repeat clustering step "cycles" times
+            for (var cycleCount = 0; cycleCount < options.ColorQuantization.ColorQuantCycles; cycleCount++)
+            {
+                // Reseting palette accumulator for averaging
+                var accumulatorPaletteIndexer = Enumerable.Range(0, colorPalette.Length).ToDictionary(i => i, i => new PaletteAccumulator());
 
-        //        for (var j = 0; j < imageData.Height; j++)
-        //        {
-        //            for (var i = 0; i < imageData.Width; i++)
-        //            {
-        //                var pixel = imageData.Colors[j * imageData.Width + i];
-        //                var distance = 256 * 4;
-        //                var paletteIndex = 0;
-        //                // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-        //                for (var k = 0; k < colorPalette.Length; k++)
-        //                {
-        //                    var color = colorPalette[k];
-        //                    // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-        //                    var newDistance = color.CalculateRectilinearDistance(pixel);
+                for (var j = 0; j < imageData.Height; j++)
+                {
+                    for (var i = 0; i < imageData.Width; i++)
+                    {
+                        var pixel = imageData.Colors[j * imageData.Width + i];
+                        var distance = 256 * 4;
+                        var paletteIndex = 0;
+                        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
+                        for (var k = 0; k < colorPalette.Length; k++)
+                        {
+                            var color = colorPalette[k];
+                            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
+                            var newDistance = color.CalculateRectilinearDistance(pixel);
 
-        //                    if (newDistance >= distance) continue;
+                            if (newDistance >= distance) continue;
 
-        //                    distance = newDistance;
-        //                    paletteIndex = k;
-        //                }
+                            distance = newDistance;
+                            paletteIndex = k;
+                        }
 
-        //                // add to palettacc
-        //                accumulatorPaletteIndexer[paletteIndex].Accumulate(pixel);
-        //                arr[j + 1][i + 1] = paletteIndex;
-        //            }
-        //        }
+                        // add to palettacc
+                        accumulatorPaletteIndexer[paletteIndex].Accumulate(pixel);
+                        arr[j + 1][i + 1] = paletteIndex;
+                    }
+                }
 
-        //        // averaging paletteacc for palette
-        //        for (var k = 0; k < colorPalette.Length; k++)
-        //        {
-        //            // averaging
-        //            if (accumulatorPaletteIndexer[k].A > 0) // Non-transparent accumulation
-        //            {
-        //                colorPalette[k] = accumulatorPaletteIndexer[k].CalculateAverage();
-        //            }
+                // averaging paletteacc for palette
+                for (var k = 0; k < colorPalette.Length; k++)
+                {
+                    // averaging
+                    if (accumulatorPaletteIndexer[k].A > 0) // Non-transparent accumulation
+                    {
+                        colorPalette[k] = accumulatorPaletteIndexer[k].CalculateAverage();
+                    }
 
-        //            //https://github.com/jankovicsandras/imagetracerjava/issues/2
-        //            // Randomizing a color, if there are too few pixels and there will be a new cycle
-        //            if (cycleCount >= options.ColorQuantization.ColorQuantCycles - 1) continue;
-        //            var ratio = accumulatorPaletteIndexer[k].Count / (double)(imageData.Width * imageData.Height);
-        //            if ((ratio < options.ColorQuantization.MinColorRatio) && (cycleCount < options.ColorQuantization.ColorQuantCycles - 1))
-        //            {
-        //                colorPalette[k] = ColorExtensions.RandomColor();
-        //            }
-        //        }
-        //    }
+                    //https://github.com/jankovicsandras/imagetracerjava/issues/2
+                    // Randomizing a color, if there are too few pixels and there will be a new cycle
+                    if (cycleCount >= options.ColorQuantization.ColorQuantCycles - 1) continue;
+                    var ratio = accumulatorPaletteIndexer[k].Count / (double)(imageData.Width * imageData.Height);
+                    if ((ratio < options.ColorQuantization.MinColorRatio) && (cycleCount < options.ColorQuantization.ColorQuantCycles - 1))
+                    {
+                        colorPalette[k] = ColorExtensions.RandomColor();
+                    }
+                }
+            }
 
-        //    return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
-        //}
+            return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
+        }
 
         // 2. Layer separation and edge detection
         // Edge node types ( ▓:light or 1; ░:dark or 0 )
@@ -190,73 +191,39 @@ namespace ImageTracerNet
         private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            var width = ii.Array[0].Length;
-            var height = ii.Array.Length;
-            var layers = new int[ii.Palette.Length][][].InitInner(height, width);
+            var layers = new int[ii.Palette.Length][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
 
             // Looping through all pixels and calculating edge node type
-            for (var j = 1; j < height - 1; j++)
+            for (var j = 1; j < ii.ArrayHeight - 1; j++)
             {
-                for (var i = 1; i < width - 1; i++)
+                for (var i = 1; i < ii.ArrayWidth - 1; i++)
                 {
                     // This pixel's indexed color
                     var val = ii.Array[j][i];
 
                     // Are neighbor pixel colors the same?
-                    var n1 = 0;
-                    if ((j > 0) && (i > 0))
-                    {
-                        n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0;
-                    }
-                    var n2 = 0;
-                    if (j > 0)
-                    {
-                        n2 = ii.Array[j - 1][i] == val ? 1 : 0;
-                    }
-                    var n3 = 0;
-                    if ((j > 0) && (i < width - 1))
-                    {
-                        n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0;
-                    }
-                    var n4 = 0;
-                    if (i > 0)
-                    {
-                        n4 = ii.Array[j][i - 1] == val ? 1 : 0;
-                    }
-                    var n5 = 0;
-                    if (i < width - 1)
-                    {
-                        n5 = ii.Array[j][i + 1] == val ? 1 : 0;
-                    }
-                    var n6 = 0;
-                    if ((j < height - 1) && (i > 0))
-                    {
-                        n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0;
-                    }
-                    var n7 = 0;
-                    if (j < height - 1)
-                    {
-                        n7 = ii.Array[j + 1][i] == val ? 1 : 0;
-                    }
-                    var n8 = 0;
-                    if ((j < height - 1) && (i < width - 1))
-                    {
-                        n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0;
-                    }
+                    /*Top Left*/    var n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0;
+                    /*Top Mid*/     var n2 = ii.Array[j - 1][i] == val ? 1 : 0;
+                    /*Top Right*/   var n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0;
+                    /*Mid Left*/    var n4 = ii.Array[j][i - 1] == val ? 1 : 0;
+                    /*Mid Right*/   var n5 = ii.Array[j][i + 1] == val ? 1 : 0;
+                    /*Bottom Left*/ var n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0;
+                    /*Bottom Mid*/  var n7 = ii.Array[j + 1][i] == val ? 1 : 0;
+                    /*Bottom Right*/var n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0;
 
                     // this pixel"s type and looking back on previous pixels
-                    layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
-                    if (n4 == 0)
+                    /*X*/layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
+                    /*Mid Left*/if (n4 == 0)
                     {
-                        layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8;
+                        /*A*/layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8;
                     }
-                    if (n2 == 0)
+                    /*Top Mid*/if (n2 == 0)
                     {
-                        layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8;
+                        /*B*/layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8;
                     }
-                    if (n1 == 0)
+                    /*Top Left*/if (n1 == 0)
                     {
-                        layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8;
+                        /*C*/layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8;
                     }
                 }
             }
@@ -859,7 +826,7 @@ namespace ImageTracerNet
         {
             //options = checkoptions(options);
             // SVG start
-            int w = (int)(ii.Width * options.SvgRendering.Scale), h = (int)(ii.Height * options.SvgRendering.Scale);
+            int w = (int)(ii.ImageWidth * options.SvgRendering.Scale), h = (int)(ii.ImageHeight * options.SvgRendering.Scale);
             var viewboxorviewport = options.SvgRendering.Viewbox.IsNotZero() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
             var svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
             if (options.SvgRendering.Desc.IsNotZero()) { svgstr.Append("desc=\"Created with ImageTracer.java version " + VersionNumber + "\" "); }

@@ -10,10 +10,12 @@ namespace ImageTracerNet
     // Container for the color-indexed image before and tracedata after vectorizing
     internal class IndexedImage
     {
-        public int Width { get; }
-        public int Height { get; }
+        public int ImageWidth { get; }
+        public int ImageHeight { get; }
         // array[x][y] of palette colors
         public int[][] Array { get; }
+        public int ArrayWidth { get; }
+        public int ArrayHeight { get; }
         // array[palettelength][4] RGBA color palette
         public byte[][] Palette { get;  }
         // tracedata
@@ -23,9 +25,11 @@ namespace ImageTracerNet
         {
             Array = array;
             Palette = palette;
-            // Color quantization adds +2 to the original width and height
-            Width = array[0].Length - 2;
-            Height = array.Length - 2;
+            ArrayWidth = Array[0].Length;
+            ArrayHeight = Array.Length;
+            // Indexed color array adds +2 to the original width and height
+            ImageWidth = ArrayWidth - 2;
+            ImageHeight = ArrayHeight - 2;
         }
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction
