@@ -87,9 +87,9 @@ namespace ImageTracerNet
             // 1. Color quantization
             var ii = IndexedImage.Create(imgd, colorPalette, options.ColorQuantization);
             // 2. Layer separation and edge detection
-            var rawlayers = Layering(ii);
+            var rawLayers = Layering(ii);
             // 3. Batch pathscan
-            var bps = BatchPathScan(rawlayers, options.Tracing.PathOmit);
+            var bps = rawLayers.Select(layer => PathScan(layer, options.Tracing.PathOmit)).ToList();
             // 4. Batch interpollation
             var bis = BatchInterNodes(bps);
             // 5. Batch tracing
@@ -103,137 +103,13 @@ namespace ImageTracerNet
         //
         ////////////////////////////////////////////////////////////
 
-        // Creating indexed color array arr which has a boundary filled with -1 in every direction
-        // Example: 4x4 image becomes a 6x6 matrix:
-        // -1 -1 -1 -1 -1 -1
-        // -1  0  0  0  0 -1
-        // -1  0  0  0  0 -1
-        // -1  0  0  0  0 -1
-        // -1  0  0  0  0 -1
-        // -1 -1 -1 -1 -1 -1
-        private static int[][] CreateIndexedColorArray(int height, int width)
-        {
-            height += 2;
-            width += 2;
-            return new int[height][].Initialize(i =>
-            i == 0 || i == height - 1
-                ? new int[width].Initialize(-1)
-                : new int[width].Initialize(-1, 0, width - 1));
-        }
-
-        // 1. Color quantization repeated "cycles" times, based on K-means clustering
-        // https://en.wikipedia.org/wiki/Color_quantization
-        // https://en.wikipedia.org/wiki/K-means_clustering
-        private static IndexedImage ColorQuantization(ImageData imageData, Color[] colorPalette, Options options)
-        {
-            var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
-            // Repeat clustering step "cycles" times
-            for (var cycleCount = 0; cycleCount < options.ColorQuantization.ColorQuantCycles; cycleCount++)
-            {
-                // Reseting palette accumulator for averaging
-                var accumulatorPaletteIndexer = Enumerable.Range(0, colorPalette.Length).ToDictionary(i => i, i => new PaletteAccumulator());
-
-                for (var j = 0; j < imageData.Height; j++)
-                {
-                    for (var i = 0; i < imageData.Width; i++)
-                    {
-                        var pixel = imageData.Colors[j * imageData.Width + i];
-                        var distance = 256 * 4;
-                        var paletteIndex = 0;
-                        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                        for (var k = 0; k < colorPalette.Length; k++)
-                        {
-                            var color = colorPalette[k];
-                            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-                            var newDistance = color.CalculateRectilinearDistance(pixel);
-
-                            if (newDistance >= distance) continue;
-
-                            distance = newDistance;
-                            paletteIndex = k;
-                        }
-
-                        // add to palettacc
-                        accumulatorPaletteIndexer[paletteIndex].Accumulate(pixel);
-                        arr[j + 1][i + 1] = paletteIndex;
-                    }
-                }
-
-                // averaging paletteacc for palette
-                for (var k = 0; k < colorPalette.Length; k++)
-                {
-                    // averaging
-                    if (accumulatorPaletteIndexer[k].A > 0) // Non-transparent accumulation
-                    {
-                        colorPalette[k] = accumulatorPaletteIndexer[k].CalculateAverage();
-                    }
-
-                    //https://github.com/jankovicsandras/imagetracerjava/issues/2
-                    // Randomizing a color, if there are too few pixels and there will be a new cycle
-                    if (cycleCount >= options.ColorQuantization.ColorQuantCycles - 1) continue;
-                    var ratio = accumulatorPaletteIndexer[k].Count / (double)(imageData.Width * imageData.Height);
-                    if ((ratio < options.ColorQuantization.MinColorRatio) && (cycleCount < options.ColorQuantization.ColorQuantCycles - 1))
-                    {
-                        colorPalette[k] = ColorExtensions.RandomColor();
-                    }
-                }
-            }
-
-            return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
-        }
-
         // 2. Layer separation and edge detection
 
         // Edge node types ( ▓:light or 1; ░:dark or 0 )
 
-
         // 12  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        //
-        //private static int[][][] Layering(IndexedImage ii)
-        //{
-        //    // Creating layers for each indexed color in arr
-        //    var layers = new int[ii.Palette.Length][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
-
-        //    // Looping through all pixels and calculating edge node type
-        //    for (var j = 1; j < ii.ArrayHeight - 1; j++)
-        //    {
-        //        for (var i = 1; i < ii.ArrayWidth - 1; i++)
-        //        {
-        //            // This pixel's indexed color
-        //            var val = ii.Array[j][i];
-
-        //            // Are neighbor pixel colors the same?
-        //            /*Top Left*/    var n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0;
-        //            /*Top Mid*/     var n2 = ii.Array[j - 1][i] == val ? 1 : 0;
-        //            /*Top Right*/   var n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0;
-        //            /*Mid Left*/    var n4 = ii.Array[j][i - 1] == val ? 1 : 0;
-        //            /*Mid Right*/   var n5 = ii.Array[j][i + 1] == val ? 1 : 0;
-        //            /*Bottom Left*/ var n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0;
-        //            /*Bottom Mid*/  var n7 = ii.Array[j + 1][i] == val ? 1 : 0;
-        //            /*Bottom Right*/var n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0;
-
-        //            // this pixel"s type and looking back on previous pixels
-        //            /*X*/layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
-        //            /*Mid Left*/if (n4 == 0)
-        //            {
-        //                /*A*/layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8;
-        //            }
-        //            /*Top Mid*/if (n2 == 0)
-        //            {
-        //                /*B*/layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8;
-        //            }
-        //            /*Top Left*/if (n1 == 0)
-        //            {
-        //                /*C*/layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8;
-        //            }
-        //        }
-        //    }
-
-        //    return layers;
-        //}
-
         private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
@@ -278,11 +154,12 @@ namespace ImageTracerNet
 
         // 3. Walking through an edge node array, discarding edge node types 0 and 15 and creating paths from the rest.
         // Walk directions (dir): 0 > ; 1 ^ ; 2 < ; 3 v
+
         // Edge node types ( ▓:light or 1; ░:dark or 0 )
+
         // ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        //
         private static List<List<int[]>> PathScan(int[][] arr, int pathomit)
         {
             var paths = new List<List<int[]>>();
@@ -553,17 +430,6 @@ namespace ImageTracerNet
             }// End of j loop
 
             return paths;
-        }
-
-        // 3. Batch pathscan
-        private static TriListIntArray BatchPathScan(int[][][] layers, int pathomit)
-        {
-            var bpaths = new TriListIntArray();
-            foreach (var layer in layers)
-            {
-                bpaths.Add(PathScan(layer, pathomit));
-            }
-            return bpaths;
         }
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
