@@ -13,7 +13,7 @@ namespace ImageTracerNet
         public int ImageWidth { get; }
         public int ImageHeight { get; }
         // array[x][y] of palette colors
-        public int[][] Array { get; }
+        private readonly int[][] _array;
         public int ArrayWidth { get; }
         public int ArrayHeight { get; }
         // array[palettelength][4] RGBA color palette
@@ -23,13 +23,18 @@ namespace ImageTracerNet
 
         public IndexedImage(int[][] array, byte[][] palette)
         {
-            Array = array;
+            _array = array;
             Palette = palette;
-            ArrayWidth = Array[0].Length;
-            ArrayHeight = Array.Length;
+            ArrayWidth = _array[0].Length;
+            ArrayHeight = _array.Length;
             // Indexed color array adds +2 to the original width and height
             ImageWidth = ArrayWidth - 2;
             ImageHeight = ArrayHeight - 2;
+        }
+
+        public PixelGroup GetPixelGroup(int row, int column)
+        {
+            return new PixelGroup(_array, row, column);
         }
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction

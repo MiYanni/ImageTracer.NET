@@ -183,11 +183,57 @@ namespace ImageTracerNet
         }
 
         // 2. Layer separation and edge detection
+
         // Edge node types ( ▓:light or 1; ░:dark or 0 )
+
+
         // 12  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         //
+        //private static int[][][] Layering(IndexedImage ii)
+        //{
+        //    // Creating layers for each indexed color in arr
+        //    var layers = new int[ii.Palette.Length][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
+
+        //    // Looping through all pixels and calculating edge node type
+        //    for (var j = 1; j < ii.ArrayHeight - 1; j++)
+        //    {
+        //        for (var i = 1; i < ii.ArrayWidth - 1; i++)
+        //        {
+        //            // This pixel's indexed color
+        //            var val = ii.Array[j][i];
+
+        //            // Are neighbor pixel colors the same?
+        //            /*Top Left*/    var n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0;
+        //            /*Top Mid*/     var n2 = ii.Array[j - 1][i] == val ? 1 : 0;
+        //            /*Top Right*/   var n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0;
+        //            /*Mid Left*/    var n4 = ii.Array[j][i - 1] == val ? 1 : 0;
+        //            /*Mid Right*/   var n5 = ii.Array[j][i + 1] == val ? 1 : 0;
+        //            /*Bottom Left*/ var n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0;
+        //            /*Bottom Mid*/  var n7 = ii.Array[j + 1][i] == val ? 1 : 0;
+        //            /*Bottom Right*/var n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0;
+
+        //            // this pixel"s type and looking back on previous pixels
+        //            /*X*/layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
+        //            /*Mid Left*/if (n4 == 0)
+        //            {
+        //                /*A*/layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8;
+        //            }
+        //            /*Top Mid*/if (n2 == 0)
+        //            {
+        //                /*B*/layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8;
+        //            }
+        //            /*Top Left*/if (n1 == 0)
+        //            {
+        //                /*C*/layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8;
+        //            }
+        //        }
+        //    }
+
+        //    return layers;
+        //}
+
         private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
@@ -199,31 +245,30 @@ namespace ImageTracerNet
                 for (var i = 1; i < ii.ArrayWidth - 1; i++)
                 {
                     // This pixel's indexed color
-                    var val = ii.Array[j][i];
+                    var pg = ii.GetPixelGroup(j, i);
 
                     // Are neighbor pixel colors the same?
-                    /*Top Left*/    var n1 = ii.Array[j - 1][i - 1] == val ? 1 : 0;
-                    /*Top Mid*/     var n2 = ii.Array[j - 1][i] == val ? 1 : 0;
-                    /*Top Right*/   var n3 = ii.Array[j - 1][i + 1] == val ? 1 : 0;
-                    /*Mid Left*/    var n4 = ii.Array[j][i - 1] == val ? 1 : 0;
-                    /*Mid Right*/   var n5 = ii.Array[j][i + 1] == val ? 1 : 0;
-                    /*Bottom Left*/ var n6 = ii.Array[j + 1][i - 1] == val ? 1 : 0;
-                    /*Bottom Mid*/  var n7 = ii.Array[j + 1][i] == val ? 1 : 0;
-                    /*Bottom Right*/var n8 = ii.Array[j + 1][i + 1] == val ? 1 : 0;
-
-                    // this pixel"s type and looking back on previous pixels
-                    /*X*/layers[val][j + 1][i + 1] = 1 + n5 * 2 + n8 * 4 + n7 * 8;
-                    /*Mid Left*/if (n4 == 0)
+                    // this pixel's type and looking back on previous pixels
+                    // X
+                    // 1, 3, 5, 7, 9, 11, 13, 15
+                    layers[pg.Mid][j + 1][i + 1] = 1 + Convert.ToInt32(pg.MidRight == pg.Mid) * 2 + Convert.ToInt32(pg.BottomRight == pg.Mid) * 4 + Convert.ToInt32(pg.BottomMid == pg.Mid) * 8;
+                    if (pg.MidLeft != pg.Mid)
                     {
-                        /*A*/layers[val][j + 1][i] = 0 + 2 + n7 * 4 + n6 * 8;
+                        // A
+                        // 2, 6, 10, 14
+                        layers[pg.Mid][j + 1][i] = 2 + Convert.ToInt32(pg.BottomMid == pg.Mid) * 4 + Convert.ToInt32(pg.BottomLeft == pg.Mid) * 8;
                     }
-                    /*Top Mid*/if (n2 == 0)
+                    if (pg.TopMid != pg.Mid)
                     {
-                        /*B*/layers[val][j][i + 1] = 0 + n3 * 2 + n5 * 4 + 8;
+                        // B
+                        // 8, 10, 12, 14
+                        layers[pg.Mid][j][i + 1] = 8 + Convert.ToInt32(pg.TopRight == pg.Mid) * 2 + Convert.ToInt32(pg.MidRight == pg.Mid) * 4;
                     }
-                    /*Top Left*/if (n1 == 0)
+                    if (pg.TopLeft != pg.Mid)
                     {
-                        /*C*/layers[val][j][i] = 0 + n2 * 2 + 4 + n4 * 8;
+                        // C
+                        // 4, 6, 12, 14
+                        layers[pg.Mid][j][i] = 4 + Convert.ToInt32(pg.TopMid == pg.Mid) * 2 + Convert.ToInt32(pg.MidLeft == pg.Mid) * 8;
                     }
                 }
             }
