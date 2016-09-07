@@ -163,269 +163,313 @@ namespace ImageTracerNet
         private static List<List<int[]>> PathScan(int[][] arr, int pathomit)
         {
             var paths = new List<List<int[]>>();
-            int w = arr[0].Length, h = arr.Length, dir = 0;
-            bool holepath = false;
+            var w = arr[0].Length;
+            var h = arr.Length;
+            var dir = 0;
+            var holepath = false;
 
             for (var j = 0; j < h; j++)
             {
                 for (var i = 0; i < w; i++)
                 {
-                    if ((arr[j][i] != 0) && (arr[j][i] != 15))
+                    // Follow path
+                    // MJY: Logically, arr[j][i] cannot equal 0
+                    if ((arr[j][i] == 0) || (arr[j][i] == 15)) continue;
+
+                    // Init
+                    var px = i;
+                    var py = j;
+                    var thispath = new List<int[]>();
+                    paths.Add(thispath);
+                    var pathfinished = false;
+                    // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
+                    if (arr[py][px] == 1) { dir = 0; }
+                    if (arr[py][px] == 2) { dir = 3; }
+                    if (arr[py][px] == 3) { dir = 0; }
+                    if (arr[py][px] == 4) { dir = 1; holepath = false; }
+                    if (arr[py][px] == 5) { dir = 0; }
+                    if (arr[py][px] == 6) { dir = 3; }
+                    if (arr[py][px] == 7) { dir = 0; holepath = true; }
+                    if (arr[py][px] == 8) { dir = 0; }
+                    if (arr[py][px] == 9) { dir = 3; }
+                    if (arr[py][px] == 10) { dir = 3; }
+                    if (arr[py][px] == 11) { dir = 1; holepath = true; }
+                    if (arr[py][px] == 12) { dir = 0; }
+                    if (arr[py][px] == 13) { dir = 3; holepath = true; }
+                    if (arr[py][px] == 14) { dir = 0; holepath = true; }
+                    // Path points loop
+                    while (!pathfinished)
                     {
-                        // Init
-                        var px = i; var py = j;
-                        paths.Add(new List<int[]>());
-                        var thispath = paths[paths.Count - 1];
-                        var pathfinished = false;
-                        // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
-                        if (arr[py][px] == 1) { dir = 0; }
-                        if (arr[py][px] == 2) { dir = 3; }
-                        if (arr[py][px] == 3) { dir = 0; }
-                        if (arr[py][px] == 4) { dir = 1; holepath = false; }
-                        if (arr[py][px] == 5) { dir = 0; }
-                        if (arr[py][px] == 6) { dir = 3; }
-                        if (arr[py][px] == 7) { dir = 0; holepath = true; }
-                        if (arr[py][px] == 8) { dir = 0; }
-                        if (arr[py][px] == 9) { dir = 3; }
-                        if (arr[py][px] == 10) { dir = 3; }
-                        if (arr[py][px] == 11) { dir = 1; holepath = true; }
-                        if (arr[py][px] == 12) { dir = 0; }
-                        if (arr[py][px] == 13) { dir = 3; holepath = true; }
-                        if (arr[py][px] == 14) { dir = 0; holepath = true; }
-                        // Path points loop
-                        while (!pathfinished)
+                        // New path point
+                        var pathPoint = new int[3];
+                        pathPoint[0] = px - 1;
+                        pathPoint[1] = py - 1;
+                        pathPoint[2] = arr[py][px];
+                        thispath.Add(pathPoint);
+
+                        // Node types
+                        if (arr[py][px] == 1)
                         {
-
-                            // New path point
-                            thispath.Add(new int[3]);
-                            thispath[thispath.Count - 1][0] = px - 1;
-                            thispath[thispath.Count - 1][1] = py - 1;
-                            thispath[thispath.Count - 1][2] = arr[py][px];
-
-                            // Node types
-                            if (arr[py][px] == 1)
+                            arr[py][px] = 0;
+                            if (dir == 0)
                             {
-                                arr[py][px] = 0;
-                                if (dir == 0)
-                                {
-                                    py--; dir = 1;
-                                }
-                                else if (dir == 3)
-                                {
-                                    px--; dir = 2;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
+                                py--; dir = 1;
                             }
-
-                            else if (arr[py][px] == 2)
+                            else if (dir == 3)
                             {
-                                arr[py][px] = 0;
-                                if (dir == 3)
-                                {
-                                    px++; dir = 0;
-                                }
-                                else if (dir == 2)
-                                {
-                                    py--; dir = 1;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
+                                px--;
+                                dir = 2;
                             }
-
-                            else if (arr[py][px] == 3)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 0)
-                                {
-                                    px++;
-                                }
-                                else if (dir == 2)
-                                {
-                                    px--;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 4)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 1)
-                                {
-                                    px++; dir = 0;
-                                }
-                                else if (dir == 2)
-                                {
-                                    py++; dir = 3;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 5)
-                            {
-                                if (dir == 0)
-                                {
-                                    arr[py][px] = 13; py++; dir = 3;
-                                }
-                                else if (dir == 1)
-                                {
-                                    arr[py][px] = 13; px--; dir = 2;
-                                }
-                                else if (dir == 2)
-                                {
-                                    arr[py][px] = 7; py--; dir = 1;
-                                }
-                                else if (dir == 3)
-                                {
-                                    arr[py][px] = 7; px++; dir = 0;
-                                }
-                            }
-
-                            else if (arr[py][px] == 6)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 1)
-                                {
-                                    py--;
-                                }
-                                else if (dir == 3)
-                                {
-                                    py++;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 7)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 0)
-                                {
-                                    py++; dir = 3;
-                                }
-                                else if (dir == 1)
-                                {
-                                    px--; dir = 2;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 8)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 0)
-                                {
-                                    py++; dir = 3;
-                                }
-                                else if (dir == 1)
-                                {
-                                    px--; dir = 2;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 9)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 1)
-                                {
-                                    py--;
-                                }
-                                else if (dir == 3)
-                                {
-                                    py++;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 10)
-                            {
-                                if (dir == 0)
-                                {
-                                    arr[py][px] = 11; py--; dir = 1;
-                                }
-                                else if (dir == 1)
-                                {
-                                    arr[py][px] = 14; px++; dir = 0;
-                                }
-                                else if (dir == 2)
-                                {
-                                    arr[py][px] = 14; py++; dir = 3;
-                                }
-                                else if (dir == 3)
-                                {
-                                    arr[py][px] = 11; px--; dir = 2;
-                                }
-                            }
-
-                            else if (arr[py][px] == 11)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 1)
-                                {
-                                    px++; dir = 0;
-                                }
-                                else if (dir == 2)
-                                {
-                                    py++; dir = 3;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 12)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 0)
-                                {
-                                    px++;
-                                }
-                                else if (dir == 2)
-                                {
-                                    px--;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 13)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 2)
-                                {
-                                    py--; dir = 1;
-                                }
-                                else if (dir == 3)
-                                {
-                                    px++; dir = 0;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            else if (arr[py][px] == 14)
-                            {
-                                arr[py][px] = 0;
-                                if (dir == 0)
-                                {
-                                    py--; dir = 1;
-                                }
-                                else if (dir == 3)
-                                {
-                                    px--; dir = 2;
-                                }
-                                else { pathfinished = true; paths.Remove(thispath); }
-                            }
-
-                            // Close path
-                            if ((px - 1 == thispath[0][0]) && (py - 1 == thispath[0][1]))
+                            else
                             {
                                 pathfinished = true;
-                                // Discarding 'hole' type paths and paths shorter than pathomit
-                                if (holepath || (thispath.Count < pathomit))
-                                {
-                                    paths.Remove(thispath);
-                                }
+                                paths.Remove(thispath);
                             }
+                        }
+                        else if (arr[py][px] == 2)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 3)
+                            {
+                                px++; dir = 0;
+                            }
+                            else if (dir == 2)
+                            {
+                                py--;
+                                dir = 1;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 3)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 0)
+                            {
+                                px++;
+                            }
+                            else if (dir == 2)
+                            {
+                                px--;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 4)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 1)
+                            {
+                                px++; dir = 0;
+                            }
+                            else if (dir == 2)
+                            {
+                                py++;
+                                dir = 3;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 5)
+                        {
+                            if (dir == 0)
+                            {
+                                arr[py][px] = 13; py++; dir = 3;
+                            }
+                            else if (dir == 1)
+                            {
+                                arr[py][px] = 13; px--; dir = 2;
+                            }
+                            else if (dir == 2)
+                            {
+                                arr[py][px] = 7; py--; dir = 1;
+                            }
+                            else if (dir == 3)
+                            {
+                                arr[py][px] = 7; px++; dir = 0;
+                            }
+                        }
+                        else if (arr[py][px] == 6)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 1)
+                            {
+                                py--;
+                            }
+                            else if (dir == 3)
+                            {
+                                py++;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 7)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 0)
+                            {
+                                py++; dir = 3;
+                            }
+                            else if (dir == 1)
+                            {
+                                px--;
+                                dir = 2;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 8)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 0)
+                            {
+                                py++; dir = 3;
+                            }
+                            else if (dir == 1)
+                            {
+                                px--;
+                                dir = 2;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 9)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 1)
+                            {
+                                py--;
+                            }
+                            else if (dir == 3)
+                            {
+                                py++;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 10)
+                        {
+                            if (dir == 0)
+                            {
+                                arr[py][px] = 11; py--; dir = 1;
+                            }
+                            else if (dir == 1)
+                            {
+                                arr[py][px] = 14; px++; dir = 0;
+                            }
+                            else if (dir == 2)
+                            {
+                                arr[py][px] = 14; py++; dir = 3;
+                            }
+                            else if (dir == 3)
+                            {
+                                arr[py][px] = 11; px--; dir = 2;
+                            }
+                        }
+                        else if (arr[py][px] == 11)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 1)
+                            {
+                                px++; dir = 0;
+                            }
+                            else if (dir == 2)
+                            {
+                                py++;
+                                dir = 3;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 12)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 0)
+                            {
+                                px++;
+                            }
+                            else if (dir == 2)
+                            {
+                                px--;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 13)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 2)
+                            {
+                                py--; dir = 1;
+                            }
+                            else if (dir == 3)
+                            {
+                                px++;
+                                dir = 0;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
+                        else if (arr[py][px] == 14)
+                        {
+                            arr[py][px] = 0;
+                            if (dir == 0)
+                            {
+                                py--; dir = 1;
+                            }
+                            else if (dir == 3)
+                            {
+                                px--;
+                                dir = 2;
+                            }
+                            else
+                            {
+                                pathfinished = true;
+                                paths.Remove(thispath);
+                            }
+                        }
 
-                        }// End of Path points loop
-
-                    }// End of Follow path
-
+                        // Close path
+                        if ((px - 1 == thispath[0][0]) && (py - 1 == thispath[0][1]))
+                        {
+                            pathfinished = true;
+                            // Discarding 'hole' type paths and paths shorter than pathomit
+                            if (holepath || (thispath.Count < pathomit))
+                            {
+                                paths.Remove(thispath);
+                            }
+                        }
+                    }// End of Path points loop
                 }// End of i loop
             }// End of j loop
 
