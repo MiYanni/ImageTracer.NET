@@ -214,13 +214,39 @@ namespace ImageTracerNet
                         };
                         arr[py][px] = nonZeroNodes.ContainsKey(nodeValue) ? nonZeroNodes[nodeValue][dir] : 0;
 
+                        var nodeValueDirPair = new Tuple<int, int>(nodeValue, dir);
+                        var minusOneYs = new List<Tuple<int, int>>
+                        {
+                            {1, 0},
+                            {2, 2},
+                            {5, 2},
+                            {6, 1},
+                            {9, 1},
+                            {10, 0},
+                            {13, 2},
+                            {14, 0}
+                        };
+
+                        var plusOneYs = new List<Tuple<int, int>>
+                        {
+                            {4, 2},
+                            {5, 0},
+                            {6, 3},
+                            {7, 0},
+                            {8, 0},
+                            {9, 3},
+                            {10, 2},
+                            {11, 2}
+                        };
+
+                        py += minusOneYs.Contains(nodeValueDirPair) ? -1 : (plusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
+
                         // Node types
                         if (nodeValue == 1)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py--;
+                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
@@ -236,7 +262,6 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 2)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 3)
                             {
                                 px++;
@@ -244,7 +269,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 2)
                             {
-                                py--;
+                                //py--;
                                 dir = 1;
                             }
                             else
@@ -255,7 +280,6 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 3)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 px++;
@@ -272,7 +296,6 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 4)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
                                 px++;
@@ -280,7 +303,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 2)
                             {
-                                py++;
+                                //py++;
                                 dir = 3;
                             }
                             else
@@ -293,39 +316,34 @@ namespace ImageTracerNet
                         {
                             if (dir == 0)
                             {
-                                //arr[py][px] = 13;
-                                py++;
+                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 1)
                             {
-                                //arr[py][px] = 13;
                                 px--;
                                 dir = 2;
                             }
                             else if (dir == 2)
                             {
-                                //arr[py][px] = 7;
-                                py--;
+                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
                             {
-                                //arr[py][px] = 7;
                                 px++;
                                 dir = 0;
                             }
                         }
                         else if (nodeValue == 6)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
-                                py--;
+                                //py--;
                             }
                             else if (dir == 3)
                             {
-                                py++;
+                                //py++;
                             }
                             else
                             {
@@ -335,10 +353,9 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 7)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py++;
+                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 1)
@@ -354,10 +371,9 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 8)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py++;
+                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 1)
@@ -373,14 +389,13 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 9)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
-                                py--;
+                                //py--;
                             }
                             else if (dir == 3)
                             {
-                                py++;
+                                //py++;
                             }
                             else
                             {
@@ -392,32 +407,27 @@ namespace ImageTracerNet
                         {
                             if (dir == 0)
                             {
-                                //arr[py][px] = 11;
-                                py--;
+                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 1)
                             {
-                                //arr[py][px] = 14;
                                 px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
                             {
-                                //arr[py][px] = 14;
-                                py++;
+                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 3)
                             {
-                                //arr[py][px] = 11;
                                 px--;
                                 dir = 2;
                             }
                         }
                         else if (nodeValue == 11)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
                                 px++;
@@ -425,7 +435,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 2)
                             {
-                                py++;
+                                //py++;
                                 dir = 3;
                             }
                             else
@@ -436,7 +446,6 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 12)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 px++;
@@ -453,10 +462,9 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 13)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 2)
                             {
-                                py--;
+                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
@@ -472,10 +480,9 @@ namespace ImageTracerNet
                         }
                         else if (nodeValue == 14)
                         {
-                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py--;
+                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
