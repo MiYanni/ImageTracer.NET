@@ -160,73 +160,64 @@ namespace ImageTracerNet
         // ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        private static List<List<int[]>> PathScan(int[][] arr, int pathomit)
+        private static List<List<int[]>> PathScan(int[][] arr, int pathOmit)
         {
             var paths = new List<List<int[]>>();
             var w = arr[0].Length;
             var h = arr.Length;
             //var dir = 0;
-            var holepath = false;
+            var holePath = false;
 
             for (var j = 0; j < h; j++)
             {
                 for (var i = 0; i < w; i++)
                 {
-                    var nodeValue = arr[j][i];
+                    var initialNodeValue = arr[j][i];
 
                     // Follow path
                     // MJY: Logically, arr[j][i] cannot equal 0
-                    if ((nodeValue == 0) || (nodeValue == 15)) continue;
+                    if ((initialNodeValue == 0) || (initialNodeValue == 15)) continue;
+
+                    // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
+                    //var initialZeroNodes = new []{1, 3, 5, 7, 8, 12, 14};
+                    var initialOneNodes = new[] { 4, 11 };
+                    var initialThreeNodes = new[] { 2, 6, 9, 10, 13 };
+                    var dir = initialOneNodes.Contains(initialNodeValue) ? 1 : (initialThreeNodes.Contains(initialNodeValue) ? 3 : 0);
+
+                    var holeNodes = new[] { 7, 11, 13, 14 };
+                    const int nonHoleNode = 4;
+                    holePath = holeNodes.Contains(initialNodeValue) || (nonHoleNode != initialNodeValue && holePath);
 
                     // Init
                     var px = i;
                     var py = j;
-                    var thispath = new List<int[]>();
-                    paths.Add(thispath);
-                    var pathfinished = false;
-
-                    // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
-                    //var zeroNodes = new []{1, 3, 5, 7, 8, 12, 14};
-                    var oneNodes = new[] {4, 11};
-                    var threeNodes = new[] {2, 6, 9, 10, 13};
-                    var dir = oneNodes.Contains(nodeValue) ? 1 : (threeNodes.Contains(nodeValue) ? 3 : 0);
-
-                    var holeNodes = new[] {7, 11, 13, 14};
-                    const int nonHoleNode = 4;
-                    holepath = holeNodes.Contains(nodeValue) || (nonHoleNode != nodeValue && holepath);
-
-                    //if (arr[py][px] == 1) { dir = 0; }
-                    //if (arr[py][px] == 3) { dir = 0; }
-                    //if (arr[py][px] == 5) { dir = 0; }
-                    //if (arr[py][px] == 7) { dir = 0; holepath = true; }
-                    //if (arr[py][px] == 8) { dir = 0; }
-                    //if (arr[py][px] == 12) { dir = 0; }
-                    //if (arr[py][px] == 14) { dir = 0; holepath = true; }
-
-                    //if (arr[py][px] == 4) { dir = 1; holepath = false; }
-                    //if (arr[py][px] == 11) { dir = 1; holepath = true; }
-
-                    //if (arr[py][px] == 2) { dir = 3; }
-                    //if (arr[py][px] == 6) { dir = 3; }
-                    //if (arr[py][px] == 9) { dir = 3; }
-                    //if (arr[py][px] == 10) { dir = 3; }
-                    //if (arr[py][px] == 13) { dir = 3; holepath = true; }
-
+                    var thisPath = new List<int[]>();
+                    paths.Add(thisPath);
+                    var pathFinished = false;
 
                     // Path points loop
-                    while (!pathfinished)
+                    while (!pathFinished)
                     {
+                        var nodeValue = arr[py][px];
+
                         // New path point
                         var pathPoint = new int[3];
                         pathPoint[0] = px - 1;
                         pathPoint[1] = py - 1;
-                        pathPoint[2] = arr[py][px];
-                        thispath.Add(pathPoint);
+                        pathPoint[2] = nodeValue;
+                        thisPath.Add(pathPoint);
+
+                        var nonZeroNodes = new Dictionary<int, int[]>
+                        {
+                            [5] = new []{13, 13, 7, 7},
+                            [10] = new []{11, 14, 14, 11}
+                        };
+                        arr[py][px] = nonZeroNodes.ContainsKey(nodeValue) ? nonZeroNodes[nodeValue][dir] : 0;
 
                         // Node types
-                        if (arr[py][px] == 1)
+                        if (nodeValue == 1)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 py--;
@@ -239,13 +230,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 2)
+                        else if (nodeValue == 2)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 3)
                             {
                                 px++;
@@ -258,13 +249,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 3)
+                        else if (nodeValue == 3)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 px++;
@@ -275,13 +266,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 4)
+                        else if (nodeValue == 4)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
                                 px++;
@@ -294,40 +285,40 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 5)
+                        else if (nodeValue == 5)
                         {
                             if (dir == 0)
                             {
-                                arr[py][px] = 13;
+                                //arr[py][px] = 13;
                                 py++;
                                 dir = 3;
                             }
                             else if (dir == 1)
                             {
-                                arr[py][px] = 13;
+                                //arr[py][px] = 13;
                                 px--;
                                 dir = 2;
                             }
                             else if (dir == 2)
                             {
-                                arr[py][px] = 7;
+                                //arr[py][px] = 7;
                                 py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
                             {
-                                arr[py][px] = 7;
+                                //arr[py][px] = 7;
                                 px++;
                                 dir = 0;
                             }
                         }
-                        else if (arr[py][px] == 6)
+                        else if (nodeValue == 6)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
                                 py--;
@@ -338,13 +329,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 7)
+                        else if (nodeValue == 7)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 py++;
@@ -357,13 +348,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 8)
+                        else if (nodeValue == 8)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 py++;
@@ -376,13 +367,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 9)
+                        else if (nodeValue == 9)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
                                 py--;
@@ -393,40 +384,40 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 10)
+                        else if (nodeValue == 10)
                         {
                             if (dir == 0)
                             {
-                                arr[py][px] = 11;
+                                //arr[py][px] = 11;
                                 py--;
                                 dir = 1;
                             }
                             else if (dir == 1)
                             {
-                                arr[py][px] = 14;
+                                //arr[py][px] = 14;
                                 px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
                             {
-                                arr[py][px] = 14;
+                                //arr[py][px] = 14;
                                 py++;
                                 dir = 3;
                             }
                             else if (dir == 3)
                             {
-                                arr[py][px] = 11;
+                                //arr[py][px] = 11;
                                 px--;
                                 dir = 2;
                             }
                         }
-                        else if (arr[py][px] == 11)
+                        else if (nodeValue == 11)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 1)
                             {
                                 px++;
@@ -439,13 +430,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 12)
+                        else if (nodeValue == 12)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 px++;
@@ -456,13 +447,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 13)
+                        else if (nodeValue == 13)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 2)
                             {
                                 py--;
@@ -475,13 +466,13 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
-                        else if (arr[py][px] == 14)
+                        else if (nodeValue == 14)
                         {
-                            arr[py][px] = 0;
+                            //arr[py][px] = 0;
                             if (dir == 0)
                             {
                                 py--;
@@ -494,19 +485,19 @@ namespace ImageTracerNet
                             }
                             else
                             {
-                                pathfinished = true;
-                                paths.Remove(thispath);
+                                pathFinished = true;
+                                paths.Remove(thisPath);
                             }
                         }
 
                         // Close path
-                        if ((px - 1 == thispath[0][0]) && (py - 1 == thispath[0][1]))
+                        if ((px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]))
                         {
-                            pathfinished = true;
+                            pathFinished = true;
                             // Discarding 'hole' type paths and paths shorter than pathomit
-                            if (holepath || (thispath.Count < pathomit))
+                            if (holePath || (thisPath.Count < pathOmit))
                             {
-                                paths.Remove(thispath);
+                                paths.Remove(thisPath);
                             }
                         }
                     }// End of Path points loop
