@@ -60,6 +60,7 @@
     <Compile Include="Palettes\PaletteAccumulator.cs" />
     <Compile Include="Palettes\PaletteGenerator.cs" />
     <Compile Include="Palettes\SmartPalette.cs" />
+    <Compile Include="Pathing.cs" />
     <Compile Include="PixelGroup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

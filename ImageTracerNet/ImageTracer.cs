@@ -89,7 +89,7 @@ namespace ImageTracerNet
             // 2. Layer separation and edge detection
             var rawLayers = Layering(ii);
             // 3. Batch pathscan
-            var bps = rawLayers.Select(layer => PathScan(layer, options.Tracing.PathOmit)).ToList();
+            var bps = rawLayers.Select(layer => Pathing.Scan(layer, options.Tracing.PathOmit)).ToList();
             // 4. Batch interpollation
             var bis = BatchInterNodes(bps);
             // 5. Batch tracing
@@ -160,181 +160,169 @@ namespace ImageTracerNet
         // ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        private static List<List<int[]>> PathScan(int[][] arr, int pathOmit)
-        {
-            var paths = new List<List<int[]>>();
-            var w = arr[0].Length;
-            var h = arr.Length;
-            //var dir = 0;
-            var holePath = false;
+        //private static List<List<int[]>> PathScan(int[][] arr, int pathOmit)
+        //{
+        //    var paths = new List<List<int[]>>();
+        //    var w = arr[0].Length;
+        //    var h = arr.Length;
+        //    //var dir = 0;
+        //    var holePath = false;
 
-            for (var j = 0; j < h; j++)
-            {
-                for (var i = 0; i < w; i++)
-                {
-                    var initialNodeValue = arr[j][i];
+        //    for (var j = 0; j < h; j++)
+        //    {
+        //        for (var i = 0; i < w; i++)
+        //        {
+        //            var initialNodeValue = arr[j][i];
 
-                    // Follow path
-                    // MJY: Logically, arr[j][i] cannot equal 0
-                    if ((initialNodeValue == 0) || (initialNodeValue == 15)) continue;
+        //            // Follow path
+        //            // MJY: Logically, arr[j][i] cannot equal 0
+        //            if ((initialNodeValue == 0) || (initialNodeValue == 15)) continue;
 
-                    // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
-                    //var initialZeroNodes = new []{1, 3, 5, 7, 8, 12, 14};
-                    var initialOneNodes = new[] { 4, 11 };
-                    var initialThreeNodes = new[] { 2, 6, 9, 10, 13 };
-                    var dir = initialOneNodes.Contains(initialNodeValue) ? 1 : (initialThreeNodes.Contains(initialNodeValue) ? 3 : 0);
+        //            // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
+        //            var initialOneNodes = new[] { 4, 11 };
+        //            var initialThreeNodes = new[] { 2, 6, 9, 10, 13 };
+        //            var dir = initialOneNodes.Contains(initialNodeValue) ? 1 : (initialThreeNodes.Contains(initialNodeValue) ? 3 : 0);
 
-                    var holeNodes = new[] { 7, 11, 13, 14 };
-                    const int nonHoleNode = 4;
-                    holePath = holeNodes.Contains(initialNodeValue) || (nonHoleNode != initialNodeValue && holePath);
+        //            var holeNodes = new[] { 7, 11, 13, 14 };
+        //            const int nonHoleNode = 4;
+        //            holePath = holeNodes.Contains(initialNodeValue) || (nonHoleNode != initialNodeValue && holePath);
 
-                    // Init
-                    var px = i;
-                    var py = j;
-                    var thisPath = new List<int[]>();
-                    paths.Add(thisPath);
-                    var pathFinished = false;
+        //            // Init
+        //            var px = i;
+        //            var py = j;
+        //            var thisPath = new List<int[]>();
+        //            paths.Add(thisPath);
+        //            var pathFinished = false;
 
-                    // Path points loop
-                    while (!pathFinished)
-                    {
-                        var nodeValue = arr[py][px];
+        //            // Path points loop
+        //            while (!pathFinished)
+        //            {
+        //                var nodeValue = arr[py][px];
 
-                        // New path point
-                        var pathPoint = new int[3];
-                        pathPoint[0] = px - 1;
-                        pathPoint[1] = py - 1;
-                        pathPoint[2] = nodeValue;
-                        thisPath.Add(pathPoint);
+        //                // New path point
+        //                var pathPoint = new int[3];
+        //                pathPoint[0] = px - 1;
+        //                pathPoint[1] = py - 1;
+        //                pathPoint[2] = nodeValue;
+        //                thisPath.Add(pathPoint);
 
-                        // Node types
-                        var nonZeroNodes = new Dictionary<int, int[]>
-                        {
-                            [5] = new []{13, 13, 7, 7},
-                            [10] = new []{11, 14, 14, 11}
-                        };
-                        arr[py][px] = nonZeroNodes.ContainsKey(nodeValue) ? nonZeroNodes[nodeValue][dir] : 0;
+        //                // Node types
+        //                var nonZeroNodes = new Dictionary<int, int[]>
+        //                {
+        //                    [5] = new []{13, 13, 7, 7},
+        //                    [10] = new []{11, 14, 14, 11}
+        //                };
+        //                arr[py][px] = nonZeroNodes.ContainsKey(nodeValue) ? nonZeroNodes[nodeValue][dir] : 0;
 
-                        var nodeValueDirPair = new Tuple<int, int>(nodeValue, dir);
-                        var minusOneYs = new List<Tuple<int, int>>
-                        {
-                            {1, 0},
-                            {2, 2},
-                            {5, 2},
-                            {6, 1},
-                            {9, 1},
-                            {10, 0},
-                            {13, 2},
-                            {14, 0}
-                        };
-                        var plusOneYs = new List<Tuple<int, int>>
-                        {
-                            {4, 2},
-                            {5, 0},
-                            {6, 3},
-                            {7, 0},
-                            {8, 0},
-                            {9, 3},
-                            {10, 2},
-                            {11, 2}
-                        };
-                        py += minusOneYs.Contains(nodeValueDirPair) ? -1 : (plusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
+        //                var nodeValueDirPair = new Tuple<int, int>(nodeValue, dir);
+        //                var minusOneYs = new List<Tuple<int, int>>
+        //                {
+        //                    {1, 0},
+        //                    {2, 2},
+        //                    {5, 2},
+        //                    {6, 1},
+        //                    {9, 1},
+        //                    {10, 0},
+        //                    {13, 2},
+        //                    {14, 0}
+        //                };
+        //                var plusOneYs = new List<Tuple<int, int>>
+        //                {
+        //                    {4, 2},
+        //                    {5, 0},
+        //                    {6, 3},
+        //                    {7, 0},
+        //                    {8, 0},
+        //                    {9, 3},
+        //                    {10, 2},
+        //                    {11, 2}
+        //                };
+        //                py += minusOneYs.Contains(nodeValueDirPair) ? -1 : (plusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
 
-                        var minusOneXs = new List<Tuple<int, int>>
-                        {
-                            {1, 3},
-                            {3, 2},
-                            {5, 1},
-                            {7, 1},
-                            {8, 1},
-                            {10, 3},
-                            {12, 2},
-                            {14, 3}
-                        };
-                        var plusOneXs = new List<Tuple<int, int>>
-                        {
-                            {2, 3},
-                            {3, 0},
-                            {4, 1},
-                            {5, 3},
-                            {10, 1},
-                            {11, 1},
-                            {12, 0},
-                            {13, 3}
-                        };
-                        px += minusOneXs.Contains(nodeValueDirPair) ? -1 : (plusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
+        //                var minusOneXs = new List<Tuple<int, int>>
+        //                {
+        //                    {1, 3},
+        //                    {3, 2},
+        //                    {5, 1},
+        //                    {7, 1},
+        //                    {8, 1},
+        //                    {10, 3},
+        //                    {12, 2},
+        //                    {14, 3}
+        //                };
+        //                var plusOneXs = new List<Tuple<int, int>>
+        //                {
+        //                    {2, 3},
+        //                    {3, 0},
+        //                    {4, 1},
+        //                    {5, 3},
+        //                    {10, 1},
+        //                    {11, 1},
+        //                    {12, 0},
+        //                    {13, 3}
+        //                };
+        //                px += minusOneXs.Contains(nodeValueDirPair) ? -1 : (plusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
 
-                        var dirZeroAssignments = new List<Tuple<int, int>>
-                        {
-                            {2, 3},
-                            {4, 1},
-                            {5, 3},
-                            {10, 1},
-                            {11, 1},
-                            {13, 3}
-                        };
-                        var dirOneAssignments = new List<Tuple<int, int>>
-                        {
-                            {1, 0},
-                            {2, 2},
-                            {5, 2},
-                            {10, 0},
-                            {13, 2},
-                            {14, 0}
-                        };
-                        var dirTwoAssignments = new List<Tuple<int, int>>
-                        {
-                            {1, 3},
-                            {5, 1},
-                            {7, 1},
-                            {8, 1},
-                            {10, 3},
-                            {14, 3}
-                        };
-                        var dirThreeAssignments = new List<Tuple<int, int>>
-                        {
-                            {4, 2},
-                            {5, 0},
-                            {7, 0},
-                            {8, 0},
-                            {10, 2},
-                            {11, 2}
-                        };
+        //                var dirZeroAssignments = new List<Tuple<int, int>>
+        //                {
+        //                    {2, 3},
+        //                    {4, 1},
+        //                    {5, 3},
+        //                    {10, 1},
+        //                    {11, 1},
+        //                    {13, 3}
+        //                };
+        //                var dirOneAssignments = new List<Tuple<int, int>>
+        //                {
+        //                    {1, 0},
+        //                    {2, 2},
+        //                    {5, 2},
+        //                    {10, 0},
+        //                    {13, 2},
+        //                    {14, 0}
+        //                };
+        //                var dirTwoAssignments = new List<Tuple<int, int>>
+        //                {
+        //                    {1, 3},
+        //                    {5, 1},
+        //                    {7, 1},
+        //                    {8, 1},
+        //                    {10, 3},
+        //                    {14, 3}
+        //                };
+        //                var dirThreeAssignments = new List<Tuple<int, int>>
+        //                {
+        //                    {4, 2},
+        //                    {5, 0},
+        //                    {7, 0},
+        //                    {8, 0},
+        //                    {10, 2},
+        //                    {11, 2}
+        //                };
 
-                        dir = dirZeroAssignments.Contains(nodeValueDirPair) ? 0 : 
-                            (dirOneAssignments.Contains(nodeValueDirPair) ? 1 :
-                            (dirTwoAssignments.Contains(nodeValueDirPair) ? 2 :
-                            (dirThreeAssignments.Contains(nodeValueDirPair) ? 3 : dir)));
+        //                dir = dirZeroAssignments.Contains(nodeValueDirPair) ? 0 : 
+        //                    (dirOneAssignments.Contains(nodeValueDirPair) ? 1 :
+        //                    (dirTwoAssignments.Contains(nodeValueDirPair) ? 2 :
+        //                    (dirThreeAssignments.Contains(nodeValueDirPair) ? 3 : dir)));
 
-                        // Close path
-                        var allXyPairs = minusOneYs.Concat(minusOneXs.Concat(plusOneYs.Concat(plusOneXs))).ToList();
-                        var isCompletedPath = !allXyPairs.Contains(nodeValueDirPair);
-                        var canClosePath = (px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]);
-                        pathFinished = isCompletedPath || canClosePath;
+        //                // Close path
+        //                var allXyPairs = minusOneYs.Concat(minusOneXs.Concat(plusOneYs.Concat(plusOneXs))).ToList();
+        //                var isCompletedPath = !allXyPairs.Contains(nodeValueDirPair);
+        //                var canClosePath = (px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]);
+        //                pathFinished = isCompletedPath || canClosePath;
 
-                        // Discarding 'hole' type paths and paths shorter than pathOmit
-                        var isHoleOrShortPath = holePath || (thisPath.Count < pathOmit);
-                        if (isCompletedPath || (canClosePath && isHoleOrShortPath))
-                        {
-                            paths.Remove(thisPath);
-                        }
+        //                // Discarding 'hole' type paths and paths shorter than pathOmit
+        //                var isHoleOrShortPath = holePath || (thisPath.Count < pathOmit);
+        //                if (isCompletedPath || (canClosePath && isHoleOrShortPath))
+        //                {
+        //                    paths.Remove(thisPath);
+        //                }
+        //            }
+        //        }
+        //    }
 
-                        //// Close path
-                        //if ((px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]))
-                        //{
-                        //    pathFinished = true;
-                        //    // Discarding 'hole' type paths and paths shorter than pathOmit
-                        //    if (holePath || (thisPath.Count < pathOmit))
-                        //    {
-                        //        paths.Remove(thisPath);
-                        //    }
-                        //}
-                    }
-                }
-            }
-
-            return paths;
-        }
+        //    return paths;
+        //}
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
         private static List<List<double[]>> InterNodes(List<List<int[]>> paths)
