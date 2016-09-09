@@ -263,97 +263,145 @@ namespace ImageTracerNet
                         };
                         px += minusOneXs.Contains(nodeValueDirPair) ? -1 : (plusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
 
+                        //Action closePath = () =>
+                        //{
+                        //    pathFinished = true;
+                        //    paths.Remove(thisPath);
+                        //};
+
+                        // This is a list that is distinct from all the x/y plus/minus combined.
+                        //var endPaths = new List<Tuple<int, int>>
+                        //{
+                        //    {1, 1},
+                        //    {1, 2},
+                        //    {2, 0},
+                        //    {2, 1},
+                        //    {3, 1},
+                        //    {3, 3},
+                        //    {4, 0},
+                        //    {4, 3},
+                        //    {6, 0},
+                        //    {6, 2},
+                        //    {7, 2},
+                        //    {7, 3},
+                        //    {8, 2},
+                        //    {8, 3},
+                        //    {9, 0},
+                        //    {9, 2},
+                        //    {11, 0},
+                        //    {11, 3},
+                        //    {12, 1},
+                        //    {12, 3},
+                        //    {13, 0},
+                        //    {13, 1},
+                        //    {14, 1},
+                        //    {14, 2}
+                        //};
+
+                        var allInOne = minusOneYs.Concat(minusOneXs.Concat(plusOneYs.Concat(plusOneXs))).ToList();
+                        //var worked = true;
+                        //foreach (var xy in allInOne)
+                        //{
+                        //    worked &= !endPaths.Contains(xy);
+                        //}
+                        //var combined = endPaths.Intersect(allInOne).ToList();
+                        //var together = endPaths.Concat(allInOne).ToList();
+                        //var distinct = together.Distinct().Count() == together.Count();
+
+                        //var worked2 = true;
+                        //for (var k = 1; k < 15; ++k)
+                        //{
+                        //    for (var l = 0; l < 4; ++l)
+                        //    {
+                        //        worked2 &= together.Contains(new Tuple<int, int>(k, l));
+                        //    }
+                        //}
+
+                        if (!allInOne.Contains(nodeValueDirPair))
+                        {
+                            pathFinished = true;
+                            paths.Remove(thisPath);
+                        }
+
                         // Node types
                         if (nodeValue == 1)
                         {
                             if (dir == 0)
                             {
-                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
                             {
-                                //px--;
                                 dir = 2;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 2)
                         {
                             if (dir == 3)
                             {
-                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
                             {
-                                //py--;
                                 dir = 1;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 3)
                         {
                             if (dir == 0)
                             {
-                                //px++;
                             }
                             else if (dir == 2)
                             {
-                                //px--;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 4)
                         {
                             if (dir == 1)
                             {
-                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
                             {
-                                //py++;
                                 dir = 3;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 5)
                         {
                             if (dir == 0)
                             {
-                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 1)
                             {
-                                //px--;
                                 dir = 2;
                             }
                             else if (dir == 2)
                             {
-                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
                             {
-                                //px++;
                                 dir = 0;
                             }
                         }
@@ -361,90 +409,78 @@ namespace ImageTracerNet
                         {
                             if (dir == 1)
                             {
-                                //py--;
                             }
                             else if (dir == 3)
                             {
-                                //py++;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 7)
                         {
                             if (dir == 0)
                             {
-                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 1)
                             {
-                                //px--;
                                 dir = 2;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 8)
                         {
                             if (dir == 0)
                             {
-                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 1)
                             {
-                                //px--;
                                 dir = 2;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 9)
                         {
                             if (dir == 1)
                             {
-                                //py--;
                             }
                             else if (dir == 3)
                             {
-                                //py++;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 10)
                         {
                             if (dir == 0)
                             {
-                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 1)
                             {
-                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
                             {
-                                //py++;
                                 dir = 3;
                             }
                             else if (dir == 3)
                             {
-                                //px--;
                                 dir = 2;
                             }
                         }
@@ -452,70 +488,62 @@ namespace ImageTracerNet
                         {
                             if (dir == 1)
                             {
-                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
                             {
-                                //py++;
                                 dir = 3;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 12)
                         {
                             if (dir == 0)
                             {
-                                //px++;
                             }
                             else if (dir == 2)
                             {
-                                //px--;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 13)
                         {
                             if (dir == 2)
                             {
-                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
                             {
-                                //px++;
                                 dir = 0;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
                         else if (nodeValue == 14)
                         {
                             if (dir == 0)
                             {
-                                //py--;
                                 dir = 1;
                             }
                             else if (dir == 3)
                             {
-                                //px--;
                                 dir = 2;
                             }
                             else
                             {
-                                pathFinished = true;
-                                paths.Remove(thisPath);
+                                //pathFinished = true;
+                                //paths.Remove(thisPath);
                             }
                         }
 
