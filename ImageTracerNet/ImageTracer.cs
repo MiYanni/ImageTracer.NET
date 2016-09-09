@@ -207,6 +207,7 @@ namespace ImageTracerNet
                         pathPoint[2] = nodeValue;
                         thisPath.Add(pathPoint);
 
+                        // Node types
                         var nonZeroNodes = new Dictionary<int, int[]>
                         {
                             [5] = new []{13, 13, 7, 7},
@@ -263,41 +264,6 @@ namespace ImageTracerNet
                         };
                         px += minusOneXs.Contains(nodeValueDirPair) ? -1 : (plusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
 
-                        // This is a list that is distinct from all the x/y plus/minus combined.
-                        //var endPaths = new List<Tuple<int, int>>
-                        //{
-                        //    {1, 1},
-                        //    {1, 2},
-                        //    {2, 0},
-                        //    {2, 1},
-                        //    {3, 1},
-                        //    {3, 3},
-                        //    {4, 0},
-                        //    {4, 3},
-                        //    {6, 0},
-                        //    {6, 2},
-                        //    {7, 2},
-                        //    {7, 3},
-                        //    {8, 2},
-                        //    {8, 3},
-                        //    {9, 0},
-                        //    {9, 2},
-                        //    {11, 0},
-                        //    {11, 3},
-                        //    {12, 1},
-                        //    {12, 3},
-                        //    {13, 0},
-                        //    {13, 1},
-                        //    {14, 1},
-                        //    {14, 2}
-                        //};
-
-                        var allXyPairs = minusOneYs.Concat(minusOneXs.Concat(plusOneYs.Concat(plusOneXs))).ToList();
-                        if (!allXyPairs.Contains(nodeValueDirPair))
-                        {
-                            pathFinished = true;
-                            paths.Remove(thisPath);
-                        }
                         var dirZeroAssignments = new List<Tuple<int, int>>
                         {
                             {2, 3},
@@ -340,219 +306,32 @@ namespace ImageTracerNet
                             (dirTwoAssignments.Contains(nodeValueDirPair) ? 2 :
                             (dirThreeAssignments.Contains(nodeValueDirPair) ? 3 : dir)));
 
-                        // Node types
-                        //if (nodeValue == 1)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //        dir = 1;
-                        //    }
-                        //    else if (dir == 3)
-                        //    {
-                        //        dir = 2;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 2)
-                        //{
-                        //    if (dir == 3)
-                        //    {
-                        //        dir = 0;
-                        //    }
-                        //    else if (dir == 2)
-                        //    {
-                        //        dir = 1;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 3)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //    }
-                        //    else if (dir == 2)
-                        //    {
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 4)
-                        //{
-                        //    if (dir == 1)
-                        //    {
-                        //        dir = 0;
-                        //    }
-                        //    else if (dir == 2)
-                        //    {
-                        //        dir = 3;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 5)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //        dir = 3;
-                        //    }
-                        //    else if (dir == 1)
-                        //    {
-                        //        dir = 2;
-                        //    }
-                        //    else if (dir == 2)
-                        //    {
-                        //        dir = 1;
-                        //    }
-                        //    else if (dir == 3)
-                        //    {
-                        //        dir = 0;
-                        //    }
-                        //}
-                        //else if (nodeValue == 6)
-                        //{
-                        //    if (dir == 1)
-                        //    {
-                        //    }
-                        //    else if (dir == 3)
-                        //    {
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 7)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //        dir = 3;
-                        //    }
-                        //    else if (dir == 1)
-                        //    {
-                        //        dir = 2;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 8)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //        dir = 3;
-                        //    }
-                        //    else if (dir == 1)
-                        //    {
-                        //        dir = 2;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 9)
-                        //{
-                        //    if (dir == 1)
-                        //    {
-                        //    }
-                        //    else if (dir == 3)
-                        //    {
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 10)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //        dir = 1;
-                        //    }
-                        //    else if (dir == 1)
-                        //    {
-                        //        dir = 0;
-                        //    }
-                        //    else if (dir == 2)
-                        //    {
-                        //        dir = 3;
-                        //    }
-                        //    else if (dir == 3)
-                        //    {
-                        //        dir = 2;
-                        //    }
-                        //}
-                        //else if (nodeValue == 11)
-                        //{
-                        //    if (dir == 1)
-                        //    {
-                        //        dir = 0;
-                        //    }
-                        //    else if (dir == 2)
-                        //    {
-                        //        dir = 3;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 12)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //    }
-                        //    else if (dir == 2)
-                        //    {
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 13)
-                        //{
-                        //    if (dir == 2)
-                        //    {
-                        //        dir = 1;
-                        //    }
-                        //    else if (dir == 3)
-                        //    {
-                        //        dir = 0;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-                        //else if (nodeValue == 14)
-                        //{
-                        //    if (dir == 0)
-                        //    {
-                        //        dir = 1;
-                        //    }
-                        //    else if (dir == 3)
-                        //    {
-                        //        dir = 2;
-                        //    }
-                        //    else
-                        //    {
-                        //    }
-                        //}
-
                         // Close path
-                        if ((px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]))
+                        var allXyPairs = minusOneYs.Concat(minusOneXs.Concat(plusOneYs.Concat(plusOneXs))).ToList();
+                        var isCompletedPath = !allXyPairs.Contains(nodeValueDirPair);
+                        var canClosePath = (px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]);
+                        pathFinished = isCompletedPath || canClosePath;
+
+                        // Discarding 'hole' type paths and paths shorter than pathOmit
+                        var isHoleOrShortPath = holePath || (thisPath.Count < pathOmit);
+                        if (isCompletedPath || (canClosePath && isHoleOrShortPath))
                         {
-                            pathFinished = true;
-                            // Discarding 'hole' type paths and paths shorter than pathomit
-                            if (holePath || (thisPath.Count < pathOmit))
-                            {
-                                paths.Remove(thisPath);
-                            }
+                            paths.Remove(thisPath);
                         }
-                    }// End of Path points loop
-                }// End of i loop
-            }// End of j loop
+
+                        //// Close path
+                        //if ((px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]))
+                        //{
+                        //    pathFinished = true;
+                        //    // Discarding 'hole' type paths and paths shorter than pathOmit
+                        //    if (holePath || (thisPath.Count < pathOmit))
+                        //    {
+                        //        paths.Remove(thisPath);
+                        //    }
+                        //}
+                    }
+                }
+            }
 
             return paths;
         }
