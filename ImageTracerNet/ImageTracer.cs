@@ -226,7 +226,6 @@ namespace ImageTracerNet
                             {13, 2},
                             {14, 0}
                         };
-
                         var plusOneYs = new List<Tuple<int, int>>
                         {
                             {4, 2},
@@ -238,8 +237,31 @@ namespace ImageTracerNet
                             {10, 2},
                             {11, 2}
                         };
-
                         py += minusOneYs.Contains(nodeValueDirPair) ? -1 : (plusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
+
+                        var minusOneXs = new List<Tuple<int, int>>
+                        {
+                            {1, 3},
+                            {3, 2},
+                            {5, 1},
+                            {7, 1},
+                            {8, 1},
+                            {10, 3},
+                            {12, 2},
+                            {14, 3}
+                        };
+                        var plusOneXs = new List<Tuple<int, int>>
+                        {
+                            {2, 3},
+                            {3, 0},
+                            {4, 1},
+                            {5, 3},
+                            {10, 1},
+                            {11, 1},
+                            {12, 0},
+                            {13, 3}
+                        };
+                        px += minusOneXs.Contains(nodeValueDirPair) ? -1 : (plusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
 
                         // Node types
                         if (nodeValue == 1)
@@ -251,7 +273,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 3)
                             {
-                                px--;
+                                //px--;
                                 dir = 2;
                             }
                             else
@@ -264,7 +286,7 @@ namespace ImageTracerNet
                         {
                             if (dir == 3)
                             {
-                                px++;
+                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
@@ -282,11 +304,11 @@ namespace ImageTracerNet
                         {
                             if (dir == 0)
                             {
-                                px++;
+                                //px++;
                             }
                             else if (dir == 2)
                             {
-                                px--;
+                                //px--;
                             }
                             else
                             {
@@ -298,7 +320,7 @@ namespace ImageTracerNet
                         {
                             if (dir == 1)
                             {
-                                px++;
+                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
@@ -321,7 +343,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 1)
                             {
-                                px--;
+                                //px--;
                                 dir = 2;
                             }
                             else if (dir == 2)
@@ -331,7 +353,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 3)
                             {
-                                px++;
+                                //px++;
                                 dir = 0;
                             }
                         }
@@ -360,7 +382,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 1)
                             {
-                                px--;
+                                //px--;
                                 dir = 2;
                             }
                             else
@@ -378,7 +400,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 1)
                             {
-                                px--;
+                                //px--;
                                 dir = 2;
                             }
                             else
@@ -412,7 +434,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 1)
                             {
-                                px++;
+                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
@@ -422,7 +444,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 3)
                             {
-                                px--;
+                                //px--;
                                 dir = 2;
                             }
                         }
@@ -430,7 +452,7 @@ namespace ImageTracerNet
                         {
                             if (dir == 1)
                             {
-                                px++;
+                                //px++;
                                 dir = 0;
                             }
                             else if (dir == 2)
@@ -448,11 +470,11 @@ namespace ImageTracerNet
                         {
                             if (dir == 0)
                             {
-                                px++;
+                                //px++;
                             }
                             else if (dir == 2)
                             {
-                                px--;
+                                //px--;
                             }
                             else
                             {
@@ -469,7 +491,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 3)
                             {
-                                px++;
+                                //px++;
                                 dir = 0;
                             }
                             else
@@ -487,7 +509,7 @@ namespace ImageTracerNet
                             }
                             else if (dir == 3)
                             {
-                                px--;
+                                //px--;
                                 dir = 2;
                             }
                             else
