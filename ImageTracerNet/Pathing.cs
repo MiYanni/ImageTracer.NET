@@ -8,6 +8,12 @@ namespace ImageTracerNet
 {
     internal static class Pathing
     {
+        private static readonly int[] InitialOneNodes = { 4, 11 };
+        private static readonly int[] InitialThreeNodes = { 2, 6, 9, 10, 13 };
+
+        private static readonly int[] HoleNodes = { 7, 11, 13, 14 };
+        private const int NonHoleNode = 4;
+
         private static readonly Dictionary<int, int[]> NonZeroNodes = new Dictionary<int, int[]>
         {
             [5] = new[] { 13, 13, 7, 7 },
@@ -123,13 +129,8 @@ namespace ImageTracerNet
                     if ((initialNodeValue == 0) || (initialNodeValue == 15)) continue;
 
                     // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
-                    var initialOneNodes = new[] { 4, 11 };
-                    var initialThreeNodes = new[] { 2, 6, 9, 10, 13 };
-                    var dir = initialOneNodes.Contains(initialNodeValue) ? 1 : (initialThreeNodes.Contains(initialNodeValue) ? 3 : 0);
-
-                    var holeNodes = new[] { 7, 11, 13, 14 };
-                    const int nonHoleNode = 4;
-                    holePath = holeNodes.Contains(initialNodeValue) || (nonHoleNode != initialNodeValue && holePath);
+                    var dir = InitialOneNodes.Contains(initialNodeValue) ? 1 : (InitialThreeNodes.Contains(initialNodeValue) ? 3 : 0);
+                    holePath = HoleNodes.Contains(initialNodeValue) || (NonHoleNode != initialNodeValue && holePath);
 
                     // Init
                     var px = i;
