@@ -165,16 +165,18 @@ namespace ImageTracerNet
             var paths = new List<List<int[]>>();
             var w = arr[0].Length;
             var h = arr.Length;
-            var dir = 0;
+            //var dir = 0;
             var holepath = false;
 
             for (var j = 0; j < h; j++)
             {
                 for (var i = 0; i < w; i++)
                 {
+                    var nodeValue = arr[j][i];
+
                     // Follow path
                     // MJY: Logically, arr[j][i] cannot equal 0
-                    if ((arr[j][i] == 0) || (arr[j][i] == 15)) continue;
+                    if ((nodeValue == 0) || (nodeValue == 15)) continue;
 
                     // Init
                     var px = i;
@@ -182,21 +184,35 @@ namespace ImageTracerNet
                     var thispath = new List<int[]>();
                     paths.Add(thispath);
                     var pathfinished = false;
+
                     // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
-                    if (arr[py][px] == 1) { dir = 0; }
-                    if (arr[py][px] == 2) { dir = 3; }
-                    if (arr[py][px] == 3) { dir = 0; }
-                    if (arr[py][px] == 4) { dir = 1; holepath = false; }
-                    if (arr[py][px] == 5) { dir = 0; }
-                    if (arr[py][px] == 6) { dir = 3; }
-                    if (arr[py][px] == 7) { dir = 0; holepath = true; }
-                    if (arr[py][px] == 8) { dir = 0; }
-                    if (arr[py][px] == 9) { dir = 3; }
-                    if (arr[py][px] == 10) { dir = 3; }
-                    if (arr[py][px] == 11) { dir = 1; holepath = true; }
-                    if (arr[py][px] == 12) { dir = 0; }
-                    if (arr[py][px] == 13) { dir = 3; holepath = true; }
-                    if (arr[py][px] == 14) { dir = 0; holepath = true; }
+                    //var zeroNodes = new []{1, 3, 5, 7, 8, 12, 14};
+                    var oneNodes = new[] {4, 11};
+                    var threeNodes = new[] {2, 6, 9, 10, 13};
+                    var dir = oneNodes.Contains(nodeValue) ? 1 : (threeNodes.Contains(nodeValue) ? 3 : 0);
+
+                    var holeNodes = new[] {7, 11, 13, 14};
+                    const int nonHoleNode = 4;
+                    holepath = holeNodes.Contains(nodeValue) || (nonHoleNode != nodeValue && holepath);
+
+                    //if (arr[py][px] == 1) { dir = 0; }
+                    //if (arr[py][px] == 3) { dir = 0; }
+                    //if (arr[py][px] == 5) { dir = 0; }
+                    //if (arr[py][px] == 7) { dir = 0; holepath = true; }
+                    //if (arr[py][px] == 8) { dir = 0; }
+                    //if (arr[py][px] == 12) { dir = 0; }
+                    //if (arr[py][px] == 14) { dir = 0; holepath = true; }
+
+                    //if (arr[py][px] == 4) { dir = 1; holepath = false; }
+                    //if (arr[py][px] == 11) { dir = 1; holepath = true; }
+
+                    //if (arr[py][px] == 2) { dir = 3; }
+                    //if (arr[py][px] == 6) { dir = 3; }
+                    //if (arr[py][px] == 9) { dir = 3; }
+                    //if (arr[py][px] == 10) { dir = 3; }
+                    //if (arr[py][px] == 13) { dir = 3; holepath = true; }
+
+
                     // Path points loop
                     while (!pathfinished)
                     {
@@ -213,7 +229,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py--; dir = 1;
+                                py--;
+                                dir = 1;
                             }
                             else if (dir == 3)
                             {
@@ -231,7 +248,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 3)
                             {
-                                px++; dir = 0;
+                                px++;
+                                dir = 0;
                             }
                             else if (dir == 2)
                             {
@@ -266,7 +284,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 1)
                             {
-                                px++; dir = 0;
+                                px++;
+                                dir = 0;
                             }
                             else if (dir == 2)
                             {
@@ -283,19 +302,27 @@ namespace ImageTracerNet
                         {
                             if (dir == 0)
                             {
-                                arr[py][px] = 13; py++; dir = 3;
+                                arr[py][px] = 13;
+                                py++;
+                                dir = 3;
                             }
                             else if (dir == 1)
                             {
-                                arr[py][px] = 13; px--; dir = 2;
+                                arr[py][px] = 13;
+                                px--;
+                                dir = 2;
                             }
                             else if (dir == 2)
                             {
-                                arr[py][px] = 7; py--; dir = 1;
+                                arr[py][px] = 7;
+                                py--;
+                                dir = 1;
                             }
                             else if (dir == 3)
                             {
-                                arr[py][px] = 7; px++; dir = 0;
+                                arr[py][px] = 7;
+                                px++;
+                                dir = 0;
                             }
                         }
                         else if (arr[py][px] == 6)
@@ -320,7 +347,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py++; dir = 3;
+                                py++;
+                                dir = 3;
                             }
                             else if (dir == 1)
                             {
@@ -338,7 +366,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py++; dir = 3;
+                                py++;
+                                dir = 3;
                             }
                             else if (dir == 1)
                             {
@@ -372,19 +401,27 @@ namespace ImageTracerNet
                         {
                             if (dir == 0)
                             {
-                                arr[py][px] = 11; py--; dir = 1;
+                                arr[py][px] = 11;
+                                py--;
+                                dir = 1;
                             }
                             else if (dir == 1)
                             {
-                                arr[py][px] = 14; px++; dir = 0;
+                                arr[py][px] = 14;
+                                px++;
+                                dir = 0;
                             }
                             else if (dir == 2)
                             {
-                                arr[py][px] = 14; py++; dir = 3;
+                                arr[py][px] = 14;
+                                py++;
+                                dir = 3;
                             }
                             else if (dir == 3)
                             {
-                                arr[py][px] = 11; px--; dir = 2;
+                                arr[py][px] = 11;
+                                px--;
+                                dir = 2;
                             }
                         }
                         else if (arr[py][px] == 11)
@@ -392,7 +429,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 1)
                             {
-                                px++; dir = 0;
+                                px++;
+                                dir = 0;
                             }
                             else if (dir == 2)
                             {
@@ -427,7 +465,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 2)
                             {
-                                py--; dir = 1;
+                                py--;
+                                dir = 1;
                             }
                             else if (dir == 3)
                             {
@@ -445,7 +484,8 @@ namespace ImageTracerNet
                             arr[py][px] = 0;
                             if (dir == 0)
                             {
-                                py--; dir = 1;
+                                py--;
+                                dir = 1;
                             }
                             else if (dir == 3)
                             {
