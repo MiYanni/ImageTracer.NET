@@ -91,7 +91,7 @@ namespace ImageTracerNet
             // 3. Batch pathscan
             var bps = rawLayers.Select(layer => Pathing.Scan(layer, options.Tracing.PathOmit)).ToList();
             // 4. Batch interpollation
-            var bis = BatchInterNodes(bps);
+            var bis = bps.Select(InterNodes).ToList();
             // 5. Batch tracing
             ii.Layers = BatchTraceLayers(bis, options.Tracing.LTres, options.Tracing.QTres);
             return ii;
@@ -204,17 +204,6 @@ namespace ImageTracerNet
             }// End of paths loop
 
             return ins;
-        }
-
-        // 4. Batch interpollation
-        private static TriListDoubleArray BatchInterNodes(TriListIntArray bpaths)
-        {
-            var binternodes = new TriListDoubleArray();
-            for (var k = 0; k < bpaths.Count; k++)
-            {
-                binternodes.Add(InterNodes(bpaths[k]));
-            }
-            return binternodes;
         }
 
         // 5. tracepath() : recursively trying to fit straight and quadratic spline segments on the 8 direction internode path
