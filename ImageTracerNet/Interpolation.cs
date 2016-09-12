@@ -6,7 +6,6 @@ namespace ImageTracerNet
 {
     internal static class Interpolation
     {
-        
         private static readonly Dictionary<Tuple<int, int>, Heading> Directions = new Dictionary<Tuple<int, int>, Heading>
         {
             {-1, -1, Heading.SouthEast},
@@ -57,53 +56,7 @@ namespace ImageTracerNet
                     // line segment direction to the next point
                     var pointComparison = new Tuple<int, int>(thisPoint[0].ToDirectionKey(nextPoint[0]), thisPoint[1].ToDirectionKey(nextPoint[1]));
                     thisPoint[2] = (double) Directions[pointComparison];
-
-                    //if (thisPoint[0] < nextPoint[0])
-                    //{
-                    //    if (thisPoint[1] < nextPoint[1])
-                    //    {
-                    //        thisPoint[2] = (double)Heading.SouthEast;
-                    //    }// SouthEast
-                    //    else if (thisPoint[1] > nextPoint[1])
-                    //    {
-                    //        thisPoint[2] = (double)Heading.NorthEast;
-                    //    } // NE
-                    //    else
-                    //    {
-                    //        thisPoint[2] = (double)Heading.East;
-                    //    } // E
-                    //}
-                    //else if (thisPoint[0] > nextPoint[0])
-                    //{
-                    //    if (thisPoint[1] < nextPoint[1])
-                    //    {
-                    //        thisPoint[2] = (double)Heading.SouthWest;
-                    //    }// SW
-                    //    else if (thisPoint[1] > nextPoint[1])
-                    //    {
-                    //        thisPoint[2] = (double)Heading.NorthWest;
-                    //    } // NW
-                    //    else
-                    //    {
-                    //        thisPoint[2] = (double)Heading.West;
-                    //    }// N
-                    //}
-                    //else
-                    //{
-                    //    if (thisPoint[1] < nextPoint[1])
-                    //    {
-                    //        thisPoint[2] = (double)Heading.South;
-                    //    }// S
-                    //    else if (thisPoint[1] > nextPoint[1])
-                    //    {
-                    //        thisPoint[2] = (double)Heading.North;
-                    //    } // N
-                    //    else
-                    //    {
-                    //        thisPoint[2] = (double)Heading.Center;
-                    //    }// center, this should not happen
-                    //}
-                }// End of pathpoints loop
+                }
             }
 
             return ins;
