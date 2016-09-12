@@ -93,7 +93,8 @@ namespace ImageTracerNet
             // 4. Batch interpollation
             var bis = bps.Select(InterNodes).ToList();
             // 5. Batch tracing
-            ii.Layers = BatchTraceLayers(bis, options.Tracing.LTres, options.Tracing.QTres);
+            ii.Layers = bis.Select(l => l.Select(p => TracePath(p, options.Tracing.LTres, options.Tracing.QTres)).ToList()).ToList();
+            
             return ii;
         }
 
@@ -372,28 +373,6 @@ namespace ImageTracerNet
             segment = FitSeq(path, ltreshold, qtreshold, seqstart, splitpoint);
             segment.AddRange(FitSeq(path, ltreshold, qtreshold, splitpoint, seqend));
             return segment;
-        }
-
-        // 5. Batch tracing paths
-        private static List<List<double[]>> BatchTracePaths(List<List<double[]>> internodepaths, double ltres, double qtres)
-        {
-            var btracedpaths = new List<List<double[]>>();
-            for (var k = 0; k < internodepaths.Count; k++)
-            {
-                btracedpaths.Add(TracePath(internodepaths[k], ltres, qtres));
-            }
-            return btracedpaths;
-        }
-
-        // 5. Batch tracing layers
-        private static TriListDoubleArray BatchTraceLayers(TriListDoubleArray binternodes, double ltres, double qtres)
-        {
-            var btbis = new TriListDoubleArray();
-            for (var k = 0; k < binternodes.Count; k++)
-            {
-                btbis.Add(BatchTracePaths(binternodes[k], ltres, qtres));
-            }
-            return btbis;
         }
 
         ////////////////////////////////////////////////////////////
