@@ -91,7 +91,7 @@ namespace ImageTracerNet
             // 3. Batch pathscan
             var bps = rawLayers.Select(layer => Pathing.Scan(layer, options.Tracing.PathOmit)).ToList();
             // 4. Batch interpollation
-            var bis = bps.Select(InterNodes).ToList();
+            var bis = bps.Select(Interpolation.Convert).ToList();
             // 5. Batch tracing
             ii.Layers = bis.Select(l => l.Select(p => TracePath(p, options.Tracing.LTres, options.Tracing.QTres)).ToList()).ToList();
             
@@ -153,85 +153,89 @@ namespace ImageTracerNet
             return layers;
         }
 
-        // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
-        private static List<List<double[]>> InterNodes(List<List<PathPoint>> paths)
-        {
-            var ins = new List<List<double[]>>();
+        //// 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
+        //private static List<List<double[]>> InterNodes(List<List<PathPoint>> paths)
+        //{
+        //    var ins = new List<List<double[]>>();
 
-            // paths loop
-            foreach (var path in paths)
-            {
-                var thisInp = new List<double[]>();
-                ins.Add(thisInp);
-                var pathLength = path.Count;
-                // pathpoints loop
-                for (var pointIndex = 0; pointIndex < pathLength; pointIndex++)
-                {
-                    var pp1 = path[pointIndex];
-                    // interpolate between two path points
-                    var pp2 = path[(pointIndex + 1) % pathLength];
-                    var pp3 = path[(pointIndex + 2) % pathLength];
+        //    // paths loop
+        //    foreach (var path in paths)
+        //    {
+        //        var thisInp = new List<double[]>();
+        //        ins.Add(thisInp);
+        //        var pathLength = path.Count;
+        //        // pathpoints loop
+        //        for (var pointIndex = 0; pointIndex < pathLength; pointIndex++)
+        //        {
+        //            var pp1 = path[pointIndex];
+        //            // interpolate between two path points
+        //            var pp2 = path[(pointIndex + 1) % pathLength];
+        //            var pp3 = path[(pointIndex + 2) % pathLength];
 
-                    var thisPoint = new double[3];
-                    thisPoint[0] = (pp1.X + pp2.X) / 2.0;
-                    thisPoint[1] = (pp1.Y + pp2.Y) / 2.0;
-                    thisInp.Add(thisPoint);
+        //            var thisPoint = new double[3];
+        //            thisPoint[0] = (pp1.X + pp2.X) / 2.0;
+        //            thisPoint[1] = (pp1.Y + pp2.Y) / 2.0;
+        //            thisInp.Add(thisPoint);
 
-                    var nextPoint = new double[2];
-                    nextPoint[0] = (pp2.X + pp3.X) / 2.0;
-                    nextPoint[1] = (pp2.Y + pp3.Y) / 2.0;
+        //            var nextPoint = new double[2];
+        //            nextPoint[0] = (pp2.X + pp3.X) / 2.0;
+        //            nextPoint[1] = (pp2.Y + pp3.Y) / 2.0;
 
-                    // line segment direction to the next point
-                    if (thisPoint[0] < nextPoint[0])
-                    {
-                        if (thisPoint[1] < nextPoint[1])
-                        {
-                            thisPoint[2] = 1.0;
-                        }// SouthEast
-                        else if (thisPoint[1] > nextPoint[1])
-                        {
-                            thisPoint[2] = 7.0;
-                        } // NE
-                        else
-                        {
-                            thisPoint[2] = 0.0;
-                        } // E
-                    }
-                    else if (thisPoint[0] > nextPoint[0])
-                    {
-                        if (thisPoint[1] < nextPoint[1])
-                        {
-                            thisPoint[2] = 3.0;
-                        }// SW
-                        else if (thisPoint[1] > nextPoint[1])
-                        {
-                            thisPoint[2] = 5.0;
-                        } // NW
-                        else
-                        {
-                            thisPoint[2] = 4.0;
-                        }// N
-                    }
-                    else
-                    {
-                        if (thisPoint[1] < nextPoint[1])
-                        {
-                            thisPoint[2] = 2.0;
-                        }// S
-                        else if (thisPoint[1] > nextPoint[1])
-                        {
-                            thisPoint[2] = 6.0;
-                        } // N
-                        else
-                        {
-                            thisPoint[2] = 8.0;
-                        }// center, this should not happen
-                    }
-                }// End of pathpoints loop
-            }
+        //            //var xDelta = thisPoint[0] - nextPoint[0];
 
-            return ins;
-        }
+        //            // line segment direction to the next point
+        //            //thisPoint[2] = 
+
+        //            if (thisPoint[0] < nextPoint[0])
+        //            {
+        //                if (thisPoint[1] < nextPoint[1])
+        //                {
+        //                    thisPoint[2] = (double)Heading.SouthEast;
+        //                }// SouthEast
+        //                else if (thisPoint[1] > nextPoint[1])
+        //                {
+        //                    thisPoint[2] = (double)Heading.NorthEast;
+        //                } // NE
+        //                else
+        //                {
+        //                    thisPoint[2] = (double)Heading.East;
+        //                } // E
+        //            }
+        //            else if (thisPoint[0] > nextPoint[0])
+        //            {
+        //                if (thisPoint[1] < nextPoint[1])
+        //                {
+        //                    thisPoint[2] = (double)Heading.SouthWest;
+        //                }// SW
+        //                else if (thisPoint[1] > nextPoint[1])
+        //                {
+        //                    thisPoint[2] = (double)Heading.NorthWest;
+        //                } // NW
+        //                else
+        //                {
+        //                    thisPoint[2] = (double)Heading.West;
+        //                }// N
+        //            }
+        //            else
+        //            {
+        //                if (thisPoint[1] < nextPoint[1])
+        //                {
+        //                    thisPoint[2] = (double)Heading.South;
+        //                }// S
+        //                else if (thisPoint[1] > nextPoint[1])
+        //                {
+        //                    thisPoint[2] = (double)Heading.North;
+        //                } // N
+        //                else
+        //                {
+        //                    thisPoint[2] = (double)Heading.Center;
+        //                }// center, this should not happen
+        //            }
+        //        }// End of pathpoints loop
+        //    }
+
+        //    return ins;
+        //}
 
         // 5. tracepath() : recursively trying to fit straight and quadratic spline segments on the 8 direction internode path
 

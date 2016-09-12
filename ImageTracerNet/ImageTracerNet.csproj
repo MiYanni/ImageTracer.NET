@@ -46,11 +46,13 @@
     <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\ColorExtensions.cs" />
-    <Compile Include="Extensions\ListExtensions.cs" />
+    <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\MathExtensions.cs" />
+    <Compile Include="Heading.cs" />
     <Compile Include="ImageData.cs" />
     <Compile Include="ImageTracer.cs" />
     <Compile Include="IndexedImage.cs" />
+    <Compile Include="Interpolation.cs" />
     <Compile Include="OptionTypes\Blur.cs" />
     <Compile Include="OptionTypes\ColorQuantization.cs" />
     <Compile Include="Options.cs" />
