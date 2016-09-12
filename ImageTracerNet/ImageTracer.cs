@@ -156,52 +156,76 @@ namespace ImageTracerNet
         private static List<List<double[]>> InterNodes(List<List<int[]>> paths)
         {
             var ins = new List<List<double[]>>();
-            double[] nextpoint = new double[2];
 
             // paths loop
-            for (var pacnt = 0; pacnt < paths.Count; pacnt++)
+            foreach (var path in paths)
             {
-                ins.Add(new List<double[]>());
-                var thisinp = ins[ins.Count - 1];
-                var palen = paths[pacnt].Count;
+                var thisInp = new List<double[]>();
+                ins.Add(thisInp);
+                var pathLength = path.Count;
                 // pathpoints loop
-                for (var pcnt = 0; pcnt < palen; pcnt++)
+                for (var pointIndex = 0; pointIndex < pathLength; pointIndex++)
                 {
+                    var thisPoint = new double[3];
+                    thisInp.Add(thisPoint);
                     // interpolate between two path points
-                    var nextidx = (pcnt + 1) % palen; var nextidx2 = (pcnt + 2) % palen;
-                    thisinp.Add(new double[3]);
-                    var thispoint = thisinp[thisinp.Count - 1];
-                    var pp1 = paths[pacnt][pcnt];
-                    var pp2 = paths[pacnt][nextidx];
-                    var pp3 = paths[pacnt][nextidx2];
-                    thispoint[0] = (pp1[0] + pp2[0]) / 2.0;
-                    thispoint[1] = (pp1[1] + pp2[1]) / 2.0;
-                    nextpoint[0] = (pp2[0] + pp3[0]) / 2.0;
-                    nextpoint[1] = (pp2[1] + pp3[1]) / 2.0;
+                    var pp1 = path[pointIndex];
+                    var pp2 = path[(pointIndex + 1) % pathLength];
+                    var pp3 = path[(pointIndex + 2) % pathLength];
+                    thisPoint[0] = (pp1[0] + pp2[0]) / 2.0;
+                    thisPoint[1] = (pp1[1] + pp2[1]) / 2.0;
+                    var nextPoint = new double[2];
+                    nextPoint[0] = (pp2[0] + pp3[0]) / 2.0;
+                    nextPoint[1] = (pp2[1] + pp3[1]) / 2.0;
 
                     // line segment direction to the next point
-                    if (thispoint[0] < nextpoint[0])
+                    if (thisPoint[0] < nextPoint[0])
                     {
-                        if (thispoint[1] < nextpoint[1]) { thispoint[2] = 1.0; }// SouthEast
-                        else if (thispoint[1] > nextpoint[1]) { thispoint[2] = 7.0; }// NE
-                        else { thispoint[2] = 0.0; } // E
+                        if (thisPoint[1] < nextPoint[1])
+                        {
+                            thisPoint[2] = 1.0;
+                        }// SouthEast
+                        else if (thisPoint[1] > nextPoint[1])
+                        {
+                            thisPoint[2] = 7.0;
+                        } // NE
+                        else
+                        {
+                            thisPoint[2] = 0.0;
+                        } // E
                     }
-                    else if (thispoint[0] > nextpoint[0])
+                    else if (thisPoint[0] > nextPoint[0])
                     {
-                        if (thispoint[1] < nextpoint[1]) { thispoint[2] = 3.0; }// SW
-                        else if (thispoint[1] > nextpoint[1]) { thispoint[2] = 5.0; }// NW
-                        else { thispoint[2] = 4.0; }// N
+                        if (thisPoint[1] < nextPoint[1])
+                        {
+                            thisPoint[2] = 3.0;
+                        }// SW
+                        else if (thisPoint[1] > nextPoint[1])
+                        {
+                            thisPoint[2] = 5.0;
+                        } // NW
+                        else
+                        {
+                            thisPoint[2] = 4.0;
+                        }// N
                     }
                     else
                     {
-                        if (thispoint[1] < nextpoint[1]) { thispoint[2] = 2.0; }// S
-                        else if (thispoint[1] > nextpoint[1]) { thispoint[2] = 6.0; }// N
-                        else { thispoint[2] = 8.0; }// center, this should not happen
+                        if (thisPoint[1] < nextPoint[1])
+                        {
+                            thisPoint[2] = 2.0;
+                        }// S
+                        else if (thisPoint[1] > nextPoint[1])
+                        {
+                            thisPoint[2] = 6.0;
+                        } // N
+                        else
+                        {
+                            thisPoint[2] = 8.0;
+                        }// center, this should not happen
                     }
-
                 }// End of pathpoints loop
-
-            }// End of paths loop
+            }
 
             return ins;
         }
