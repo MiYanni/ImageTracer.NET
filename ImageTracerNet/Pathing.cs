@@ -111,9 +111,9 @@ namespace ImageTracerNet
         // ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        public static List<List<int[]>> Scan(int[][] arr, int pathOmit)
+        public static List<List<PathPoint>> Scan(int[][] arr, int pathOmit)
         {
-            var paths = new List<List<int[]>>();
+            var paths = new List<List<PathPoint>>();
             var w = arr[0].Length;
             var h = arr.Length;
             var holePath = false;
@@ -135,7 +135,7 @@ namespace ImageTracerNet
                     // Init
                     var px = i;
                     var py = j;
-                    var thisPath = new List<int[]>();
+                    var thisPath = new List<PathPoint>();
                     paths.Add(thisPath);
                     var pathFinished = false;
 
@@ -145,7 +145,7 @@ namespace ImageTracerNet
                         var nodeValue = arr[py][px];
 
                         // New path point
-                        thisPath.Add(new[] { px - 1, py - 1, nodeValue });
+                        thisPath.Add(new PathPoint { X = px - 1, Y = py - 1, EdgeNode = nodeValue });
 
                         // Node types
                         arr[py][px] = NonZeroNodes.ContainsKey(nodeValue) ? NonZeroNodes[nodeValue][dir] : 0;
@@ -161,7 +161,7 @@ namespace ImageTracerNet
                         // Close path
                         var allXyPairs = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
                         var isCompletedPath = !allXyPairs.Contains(nodeValueDirPair);
-                        var canClosePath = (px - 1 == thisPath[0][0]) && (py - 1 == thisPath[0][1]);
+                        var canClosePath = (px - 1 == thisPath[0].X) && (py - 1 == thisPath[0].Y);
                         pathFinished = isCompletedPath || canClosePath;
 
                         // Discarding 'hole' type paths and paths shorter than pathOmit

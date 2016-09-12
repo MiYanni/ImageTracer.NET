@@ -153,7 +153,7 @@ namespace ImageTracerNet
         }
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
-        private static List<List<double[]>> InterNodes(List<List<int[]>> paths)
+        private static List<List<double[]>> InterNodes(List<List<PathPoint>> paths)
         {
             var ins = new List<List<double[]>>();
 
@@ -166,17 +166,19 @@ namespace ImageTracerNet
                 // pathpoints loop
                 for (var pointIndex = 0; pointIndex < pathLength; pointIndex++)
                 {
-                    var thisPoint = new double[3];
-                    thisInp.Add(thisPoint);
-                    // interpolate between two path points
                     var pp1 = path[pointIndex];
+                    // interpolate between two path points
                     var pp2 = path[(pointIndex + 1) % pathLength];
                     var pp3 = path[(pointIndex + 2) % pathLength];
-                    thisPoint[0] = (pp1[0] + pp2[0]) / 2.0;
-                    thisPoint[1] = (pp1[1] + pp2[1]) / 2.0;
+
+                    var thisPoint = new double[3];
+                    thisPoint[0] = (pp1.X + pp2.X) / 2.0;
+                    thisPoint[1] = (pp1.Y + pp2.Y) / 2.0;
+                    thisInp.Add(thisPoint);
+
                     var nextPoint = new double[2];
-                    nextPoint[0] = (pp2[0] + pp3[0]) / 2.0;
-                    nextPoint[1] = (pp2[1] + pp3[1]) / 2.0;
+                    nextPoint[0] = (pp2.X + pp3.X) / 2.0;
+                    nextPoint[1] = (pp2.Y + pp3.Y) / 2.0;
 
                     // line segment direction to the next point
                     if (thisPoint[0] < nextPoint[0])
