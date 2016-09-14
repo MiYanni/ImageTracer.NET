@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
 
@@ -56,39 +54,105 @@ namespace ImageTracerNet
             } : null;
         }
 
+        //private static Func<int, Point<double>> CreateSplineMethod(List<InterpolationPoint> path, int sequenceStartIndex, int sequenceEndIndex, int sequenceLength, int errorIndex)
+        //{
+        //    // Static Term Calculations
+        //    Func<double, double> t1Calc = t => (1.0 - t)*(1.0 - t);
+        //    Func<double, double> t2Calc = t => 2.0*(1.0 - t)*t;
+        //    Func<double, double> t3Calc = t => Math.Pow(t, 2);
+
+        //    // Static Point Calculations
+        //    Func<double, double, double, double, double> midPointCalc =
+        //        (i, start, end, error) => (t1Calc(i)*start + t3Calc(i)*end - error) / -t2Calc(i);
+
+        //    Func<double, double, double, double, double> finalPointCalc =
+        //        (i, start, mid, end) => t1Calc(i)*start + t2Calc(i)*mid + t3Calc(i)*end;
+
+        //    Func<double, Point<double>, Point<double>, Point<double>, Func<double, double, double, double, double>, Point<double>> createPoint =
+        //        (i, p1, p2, p3, func) => new Point<double>
+        //        {
+        //            X = func(i, p1.X, p2.X, p3.X),
+        //            Y = func(i, p1.Y, p2.Y, p3.Y)
+        //        };
+
+        //    // Create the resulting closure using path data.
+        //    var startPoint = path[sequenceStartIndex];
+        //    var endPoint = path[sequenceEndIndex];
+        //    var errorPoint = path[errorIndex];
+
+        //    Func<int, double> indexCalc = i => (i - sequenceStartIndex) / (double)sequenceLength;
+        //    var midPoint = createPoint(indexCalc(errorIndex), startPoint, endPoint, errorPoint, midPointCalc);
+
+        //    return i => createPoint(indexCalc(i), startPoint, midPoint, endPoint, finalPointCalc);
+        //}
+
+
         // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
         // helpers and projecting to get control point
-        private static double[] FitSpline(List<InterpolationPoint> path, Tracing tracingOptions, int seqStart, int seqEnd, int seqLength, ref int errorPoint)
+        private static double[] FitSpline(List<InterpolationPoint> path, Tracing tracingOptions, int sequenceStartIndex, int sequenceEndIndex, int sequenceLength, ref int errorIndex)
         {
-            var pathLength = path.Count;
-            var t = (errorPoint - seqStart) / (double)seqLength;
-            var t1 = (1.0 - t) * (1.0 - t);
-            var t2 = 2.0 * (1.0 - t) * t;
-            var t3 = t * t;
-            var cpx = (t1 * path[seqStart].X + t3 * path[seqEnd].X - path[errorPoint].X) / -t2;
-            var cpy = (t1 * path[seqStart].Y + t3 * path[seqEnd].Y - path[errorPoint].Y) / -t2;
+
+            //Func<int, int, int, double> tCalc = (current, start, length) => (current - start) / (double)length;
+            //Func<double, double> t1Calc = t => (1.0 - t)*(1.0 - t);
+            //Func<double, double> t2Calc = t => 2.0 * (1.0 - t) * t;
+            //Func<double, double> t3Calc = t => t * t;
+
+            //Func<double, double, double, double, double> partialPointDistance = 
+            //    (t, start, end, error) => (t1Calc(t)*start + t3Calc(t)* end - error) / -t2Calc(t);
+
+            //var partial = tCalc(errorPoint, seqStart, seqLength);
+            //var cpx = partialPointDistance(partial, path[seqStart].X, path[seqEnd].X, path[errorPoint].X);
+            //var cpy = partialPointDistance(partial, path[seqStart].Y, path[seqEnd].Y, path[errorPoint].Y);
+
+
+            // Static Term Calculations
+            Func<double, double> t1Calc = t => (1.0 - t) * (1.0 - t);
+            Func<double, double> t2Calc = t => 2.0 * (1.0 - t) * t;
+            Func<double, double> t3Calc = t => Math.Pow(t, 2);
+
+            // Static Point Calculations
+            Func<double, double, double, double, double> midPointCalc =
+                (i, start, end, error) => (t1Calc(i) * start + t3Calc(i) * end - error) / -t2Calc(i);
+
+            Func<double, double, double, double, double> finalPointCalc =
+                (i, start, mid, end) => t1Calc(i) * start + t2Calc(i) * mid + t3Calc(i) * end;
+
+            Func<double, Point<double>, Point<double>, Point<double>, Func<double, double, double, double, double>, Point<double>> createPoint =
+                (i, p1, p2, p3, func) => new Point<double>
+                {
+                    X = func(i, p1.X, p2.X, p3.X),
+                    Y = func(i, p1.Y, p2.Y, p3.Y)
+                };
+
+            // Create the spline closure using path data.
+            var startPoint = path[sequenceStartIndex];
+            var endPoint = path[sequenceEndIndex];
+            var errorPoint = path[errorIndex];
+
+            Func<int, double> indexCalc = i => (i - sequenceStartIndex) / (double)sequenceLength;
+            var midPoint = createPoint(indexCalc(errorIndex), startPoint, endPoint, errorPoint, midPointCalc);
+            Func<int, Point<double>> splineFunction = i => createPoint(indexCalc(i), startPoint, midPoint, endPoint, finalPointCalc);
+
+            //var splineFunction = CreateSplineMethod(path, sequenceStartIndex, sequenceEndIndex, sequenceLength, errorIndex);
             Func<int, double> distanceFunction = i =>
             {
-                t = (i - seqStart) / (double)seqLength;
-                t1 = (1.0 - t) * (1.0 - t);
-                t2 = 2.0 * (1.0 - t) * t;
-                t3 = t * t;
-                var px = t1 * path[seqStart].X + t2 * cpx + t3 * path[seqEnd].X;
-                var py = t1 * path[seqStart].Y + t2 * cpy + t3 * path[seqEnd].Y;
-
-                return (path[i].X - px) * (path[i].X - px) + (path[i].Y - py) * (path[i].Y - py);
+                //var full = (i - seqStart) / (double)seqLength;
+                //var px = t1 * path[seqStart].X + t2 * cpx + t3 * path[seqEnd].X;
+                //var py = t1 * path[seqStart].Y + t2 * cpy + t3 * path[seqEnd].Y;
+                var point = splineFunction(i);
+                return Math.Pow(path[i].X - point.X, 2) + Math.Pow(path[i].Y - point.Y, 2);
             };
             // Check every point
-            var isSpline = Fit(distanceFunction, tracingOptions.QTres, seqStart + 1, i => i != seqEnd, i => (i + 1) % pathLength, ref errorPoint);
+            var isSpline = Fit(distanceFunction, tracingOptions.QTres, sequenceStartIndex + 1, i => i != sequenceEndIndex, i => (i + 1) % path.Count, ref errorIndex);
             return isSpline ? new[]
             {
                 2.0,
-                path[seqStart].X,
-                path[seqStart].Y,
-                cpx,
-                cpy,
-                path[seqEnd].X,
-                path[seqEnd].Y
+                startPoint.X,
+                startPoint.Y,
+                midPoint.X,
+                midPoint.Y,
+                endPoint.X,
+                endPoint.Y
             } : null;
         }
 
@@ -98,7 +162,7 @@ namespace ImageTracerNet
         {
             var segment = new List<double[]>();
             var pathLength = path.Count;
-            // return if invalid seqend
+            // return if invalid seqEnd
             if ((seqEnd > pathLength) || (seqEnd < 0))
             {
                 return segment;

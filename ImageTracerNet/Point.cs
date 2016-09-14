@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ImageTracerNet
 {
-    internal abstract class Point<T>
+    internal class Point<T>
     {
         public T X { get; set; }
         public T Y { get; set; }
