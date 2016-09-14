@@ -53,6 +53,7 @@
     <Compile Include="ImageTracer.cs" />
     <Compile Include="IndexedImage.cs" />
     <Compile Include="Interpolation.cs" />
+    <Compile Include="InterpolationPoint.cs" />
     <Compile Include="OptionTypes\Blur.cs" />
     <Compile Include="OptionTypes\ColorQuantization.cs" />
     <Compile Include="Options.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="Pathing.cs" />
     <Compile Include="PathPoint.cs" />
     <Compile Include="PixelGroup.cs" />
+    <Compile Include="Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

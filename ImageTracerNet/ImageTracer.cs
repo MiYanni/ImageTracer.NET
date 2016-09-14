@@ -172,7 +172,7 @@ namespace ImageTracerNet
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        private static List<double[]> TracePath(List<double[]> path, double ltreshold, double qtreshold)
+        private static List<double[]> TracePath(List<InterpolationPoint> path, double ltreshold, double qtreshold)
         {
             var pathIndex = 0;
             var smp = new List<double[]>();
@@ -182,15 +182,15 @@ namespace ImageTracerNet
             while (pathIndex < pathLength)
             {
                 // 5.1. Find sequences of points with only 2 segment types
-                var segmentType1 = path[pathIndex][2];
-                var segmentType2 = -1.0;
+                var segmentType1 = path[pathIndex].Direction;
+                Heading? segmentType2 = null;
                 var seqEnd = pathIndex + 1;
 
-                while ((path[seqEnd][2].AreEqual(segmentType1) || path[seqEnd][2].AreEqual(segmentType2) || segmentType2.AreEqual(-1)) && (seqEnd < pathLength - 1))
+                while ((path[seqEnd].Direction == segmentType1 || path[seqEnd].Direction == segmentType2 || segmentType2 == null) && (seqEnd < pathLength - 1))
                 {
-                    if (path[seqEnd][2].AreNotEqual(segmentType1) && segmentType2.AreEqual(-1))
+                    if (path[seqEnd].Direction != segmentType1 && segmentType2 == null)
                     {
-                        segmentType2 = path[seqEnd][2];
+                        segmentType2 = path[seqEnd].Direction;
                     }
                     seqEnd++;
                 }
@@ -210,7 +210,7 @@ namespace ImageTracerNet
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
-        private static List<double[]> FitSeq(List<double[]> path, double ltreshold, double qtreshold, int seqstart, int seqEnd)
+        private static List<double[]> FitSeq(List<InterpolationPoint> path, double ltreshold, double qtreshold, int seqStart, int seqEnd)
         {
             var segment = new List<double[]>();
             double[] thisSegment;
@@ -222,32 +222,33 @@ namespace ImageTracerNet
                 return segment;
             }
 
-            var errorpoint = seqstart;
+            var errorpoint = seqStart;
             var curvepass = true;
             double px;
             double py;
             double dist2;
             double errorval = 0;
-            double tl = seqEnd - seqstart;
+            double tl = seqEnd - seqStart;
             if (tl < 0)
             {
                 tl += pathLength;
             }
-            var vx = (path[seqEnd][0] - path[seqstart][0]) / tl;
-            var vy = (path[seqEnd][1] - path[seqstart][1]) / tl;
+            var vx = (path[seqEnd].X - path[seqStart].X) / tl;
+            var vy = (path[seqEnd].Y - path[seqStart].Y) / tl;
 
             // 5.2. Fit a straight line on the sequence
-            var pcnt = (seqstart + 1) % pathLength;
+            var pcnt = (seqStart + 1) % pathLength;
             while (pcnt != seqEnd)
             {
-                double pl = pcnt - seqstart;
+                double pl = pcnt - seqStart;
                 if (pl < 0)
                 {
                     pl += pathLength;
                 }
-                px = path[seqstart][0] + vx * pl;
-                py = path[seqstart][1] + vy * pl;
-                dist2 = (path[pcnt][0] - px) * (path[pcnt][0] - px) + (path[pcnt][1] - py) * (path[pcnt][1] - py);
+                px = path[seqStart].X + vx * pl;
+                py = path[seqStart].Y + vy * pl;
+                dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
+
                 if (dist2 > ltreshold)
                 {
                     curvepass = false;
@@ -256,6 +257,7 @@ namespace ImageTracerNet
                 {
                     errorpoint = pcnt; errorval = dist2;
                 }
+
                 pcnt = (pcnt + 1) % pathLength;
             }
 
@@ -265,10 +267,10 @@ namespace ImageTracerNet
                 segment.Add(new double[7]);
                 thisSegment = segment[segment.Count - 1];
                 thisSegment[0] = 1.0;
-                thisSegment[1] = path[seqstart][0];
-                thisSegment[2] = path[seqstart][1];
-                thisSegment[3] = path[seqEnd][0];
-                thisSegment[4] = path[seqEnd][1];
+                thisSegment[1] = path[seqStart].X;
+                thisSegment[2] = path[seqStart].Y;
+                thisSegment[3] = path[seqEnd].X;
+                thisSegment[4] = path[seqEnd].Y;
                 thisSegment[5] = 0.0;
                 thisSegment[6] = 0.0;
                 return segment;
@@ -281,26 +283,25 @@ namespace ImageTracerNet
 
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
             // helpers and projecting to get control point
-            var t = (fitpoint - seqstart) / tl;
+            var t = (fitpoint - seqStart) / tl;
             var t1 = (1.0 - t) * (1.0 - t);
             var t2 = 2.0 * (1.0 - t) * t;
             var t3 = t * t;
-            var cpx = (t1 * path[seqstart][0] + t3 * path[seqEnd][0] - path[fitpoint][0]) / -t2;
-            var cpy = (t1 * path[seqstart][1] + t3 * path[seqEnd][1] - path[fitpoint][1]) / -t2;
+            var cpx = (t1 * path[seqStart].X + t3 * path[seqEnd].X - path[fitpoint].X) / -t2;
+            var cpy = (t1 * path[seqStart].Y + t3 * path[seqEnd].Y - path[fitpoint].Y) / -t2;
 
             // Check every point
-            pcnt = seqstart + 1;
+            pcnt = seqStart + 1;
             while (pcnt != seqEnd)
             {
-
-                t = (pcnt - seqstart) / tl;
+                t = (pcnt - seqStart) / tl;
                 t1 = (1.0 - t) * (1.0 - t);
                 t2 = 2.0 * (1.0 - t) * t;
                 t3 = t * t;
-                px = t1 * path[seqstart][0] + t2 * cpx + t3 * path[seqEnd][0];
-                py = t1 * path[seqstart][1] + t2 * cpy + t3 * path[seqEnd][1];
+                px = t1 * path[seqStart].X + t2 * cpx + t3 * path[seqEnd].X;
+                py = t1 * path[seqStart].Y + t2 * cpy + t3 * path[seqEnd].Y;
 
-                dist2 = (path[pcnt][0] - px) * (path[pcnt][0] - px) + (path[pcnt][1] - py) * (path[pcnt][1] - py);
+                dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
 
                 if (dist2 > qtreshold)
                 {
@@ -310,6 +311,7 @@ namespace ImageTracerNet
                 {
                     errorpoint = pcnt; errorval = dist2;
                 }
+
                 pcnt = (pcnt + 1) % pathLength;
             }
 
@@ -319,12 +321,12 @@ namespace ImageTracerNet
                 segment.Add(new double[7]);
                 thisSegment = segment[segment.Count - 1];
                 thisSegment[0] = 2.0;
-                thisSegment[1] = path[seqstart][0];
-                thisSegment[2] = path[seqstart][1];
+                thisSegment[1] = path[seqStart].X;
+                thisSegment[2] = path[seqStart].Y;
                 thisSegment[3] = cpx;
                 thisSegment[4] = cpy;
-                thisSegment[5] = path[seqEnd][0];
-                thisSegment[6] = path[seqEnd][1];
+                thisSegment[5] = path[seqEnd].X;
+                thisSegment[6] = path[seqEnd].Y;
                 return segment;
             }
 
@@ -333,7 +335,7 @@ namespace ImageTracerNet
             var splitPoint = (fitpoint + errorpoint) / 2;
 
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-            segment = FitSeq(path, ltreshold, qtreshold, seqstart, splitPoint);
+            segment = FitSeq(path, ltreshold, qtreshold, seqStart, splitPoint);
             segment.AddRange(FitSeq(path, ltreshold, qtreshold, splitPoint, seqEnd));
             return segment;
         }

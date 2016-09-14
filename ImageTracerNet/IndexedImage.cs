@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
@@ -20,7 +21,7 @@ namespace ImageTracerNet
         // array[palettelength][4] RGBA color palette
         public byte[][] Palette { get;  }
         // tracedata
-        public TriListDoubleArray Layers { set; get; }
+        public List<List<List<double[]>>> Layers { set; get; }
 
         public IndexedImage(int[][] array, byte[][] palette)
         {

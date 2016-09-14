@@ -1,9 +1,7 @@
 ﻿namespace ImageTracerNet
 {
-    internal class PathPoint
+    internal class PathPoint : Point<int>
     {
-        public int X { get; set; }
-        public int Y { get; set; }
         public int EdgeNode { get; set; }
     }
 }
