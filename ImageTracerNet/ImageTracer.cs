@@ -248,43 +248,6 @@ namespace ImageTracerNet
                 0.0,
                 0.0
             };
-
-            //var curvePass = true;
-            //double errorVal = 0;
-            //errorPoint = seqStart;
-            //for (var i = (seqStart + 1)%pathLength; i != seqEnd; i = (i + 1) % pathLength)
-            //{
-            //    var pl = i - seqStart;
-            //    pl += pl < 0 ? pathLength : 0;
-            //    var px = path[seqStart].X + vx * pl;
-            //    var py = path[seqStart].Y + vy * pl;
-
-            //    var dist2 = (path[i].X - px) * (path[i].X - px) + (path[i].Y - py) * (path[i].Y - py);
-
-            //    if (dist2 > tracingOptions.LTres)
-            //    {
-            //        curvePass = false;
-            //    }
-
-            //    if (dist2 > errorVal)
-            //    {
-            //        errorPoint = i;
-            //        errorVal = dist2;
-            //    }
-            //}
-
-            //if (!curvePass) return null;
-
-            //return new[]
-            //{
-            //    1.0,
-            //    path[seqStart].X,
-            //    path[seqStart].Y,
-            //    path[seqEnd].X,
-            //    path[seqEnd].Y,
-            //    0.0,
-            //    0.0
-            //};
         }
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
@@ -299,60 +262,6 @@ namespace ImageTracerNet
                 return segment;
             }
 
-            //var errorPoint = seqStart;
-            var curvePass = true;
-            double px;
-            double py;
-            double dist2;
-            double errorVal = 0;
-
-            double tl = seqEnd - seqStart;
-            tl += tl < 0 ? pathLength : 0;
-
-            //var vx = (path[seqEnd].X - path[seqStart].X) / tl;
-            //var vy = (path[seqEnd].Y - path[seqStart].Y) / tl;
-
-            //// 5.2. Fit a straight line on the sequence
-            //var pcnt = (seqStart + 1) % pathLength;
-            //while (pcnt != seqEnd)
-            //{
-            //    double pl = pcnt - seqStart;
-            //    if (pl < 0)
-            //    {
-            //        pl += pathLength;
-            //    }
-            //    px = path[seqStart].X + vx * pl;
-            //    py = path[seqStart].Y + vy * pl;
-            //    dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
-
-            //    if (dist2 > tracingOptions.LTres)
-            //    {
-            //        curvePass = false;
-            //    }
-            //    if (dist2 > errorVal)
-            //    {
-            //        errorPoint = pcnt;
-            //        errorVal = dist2;
-            //    }
-
-            //    pcnt = (pcnt + 1) % pathLength;
-            //}
-
-            //// return straight line if fits
-            //if (curvePass)
-            //{
-            //    var thisSegment = new double[7];
-            //    thisSegment[0] = 1.0;
-            //    thisSegment[1] = path[seqStart].X;
-            //    thisSegment[2] = path[seqStart].Y;
-            //    thisSegment[3] = path[seqEnd].X;
-            //    thisSegment[4] = path[seqEnd].Y;
-            //    thisSegment[5] = 0.0;
-            //    thisSegment[6] = 0.0;
-            //    segment.Add(thisSegment);
-            //    return segment;
-            //}
-
             int errorPoint;
             var lineResult = FitLine(path, tracingOptions, seqStart, seqEnd, out errorPoint);
             if (lineResult != null)
@@ -361,10 +270,13 @@ namespace ImageTracerNet
                 return segment;
             }
 
+            double tl = seqEnd - seqStart;
+            tl += tl < 0 ? pathLength : 0;
+
             // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
             var fitpoint = errorPoint;
-            curvePass = true;
-            errorVal = 0;
+            var curvePass = true;
+            double errorVal = 0;
 
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
             // helpers and projecting to get control point
@@ -383,10 +295,10 @@ namespace ImageTracerNet
                 t1 = (1.0 - t) * (1.0 - t);
                 t2 = 2.0 * (1.0 - t) * t;
                 t3 = t * t;
-                px = t1 * path[seqStart].X + t2 * cpx + t3 * path[seqEnd].X;
-                py = t1 * path[seqStart].Y + t2 * cpy + t3 * path[seqEnd].Y;
+                var px = t1 * path[seqStart].X + t2 * cpx + t3 * path[seqEnd].X;
+                var py = t1 * path[seqStart].Y + t2 * cpy + t3 * path[seqEnd].Y;
 
-                dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
+                var dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
 
                 if (dist2 > tracingOptions.QTres)
                 {
