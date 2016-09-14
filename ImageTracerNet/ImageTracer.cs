@@ -109,6 +109,7 @@ namespace ImageTracerNet
         // Edge node types ( ▓:light or 1; ░:dark or 0 )
 
         // 12  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
+
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         private static int[][][] Layering(IndexedImage ii)
@@ -173,28 +174,35 @@ namespace ImageTracerNet
 
         private static List<double[]> TracePath(List<double[]> path, double ltreshold, double qtreshold)
         {
-            int pcnt = 0;
+            var pathIndex = 0;
             var smp = new List<double[]>();
             //Double [] thissegment;
-            var pathlength = path.Count;
+            var pathLength = path.Count;
 
-            while (pcnt < pathlength)
+            while (pathIndex < pathLength)
             {
                 // 5.1. Find sequences of points with only 2 segment types
-                var segtype1 = path[pcnt][2]; double segtype2 = -1; var seqend = pcnt + 1;
-                while ((path[seqend][2].AreEqual(segtype1) || path[seqend][2].AreEqual(segtype2) || segtype2.AreEqual(-1)) && (seqend < pathlength - 1))
+                var segmentType1 = path[pathIndex][2];
+                var segmentType2 = -1.0;
+                var seqEnd = pathIndex + 1;
+
+                while ((path[seqEnd][2].AreEqual(segmentType1) || path[seqEnd][2].AreEqual(segmentType2) || segmentType2.AreEqual(-1)) && (seqEnd < pathLength - 1))
                 {
-                    if (path[seqend][2].AreNotEqual(segtype1) && segtype2.AreEqual(-1)) { segtype2 = path[seqend][2]; }
-                    seqend++;
+                    if (path[seqEnd][2].AreNotEqual(segmentType1) && segmentType2.AreEqual(-1))
+                    {
+                        segmentType2 = path[seqEnd][2];
+                    }
+                    seqEnd++;
                 }
-                if (seqend == pathlength - 1) { seqend = 0; }
+
+                seqEnd = seqEnd == pathLength - 1 ? 0 : seqEnd;
 
                 // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-                smp.AddRange(FitSeq(path, ltreshold, qtreshold, pcnt, seqend));
+                smp.AddRange(FitSeq(path, ltreshold, qtreshold, pathIndex, seqEnd));
                 // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
 
                 // forward pcnt;
-                if (seqend > 0) { pcnt = seqend; } else { pcnt = pathlength; }
+                pathIndex = seqEnd > 0 ? seqEnd : pathLength;
 
             }// End of pcnt loop
             return smp;
@@ -202,96 +210,131 @@ namespace ImageTracerNet
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
-        private static List<double[]> FitSeq(List<double[]> path, double ltreshold, double qtreshold, int seqstart, int seqend)
+        private static List<double[]> FitSeq(List<double[]> path, double ltreshold, double qtreshold, int seqstart, int seqEnd)
         {
             var segment = new List<double[]>();
-            double[] thissegment;
-            var pathlength = path.Count;
+            double[] thisSegment;
+            var pathLength = path.Count;
 
             // return if invalid seqend
-            if ((seqend > pathlength) || (seqend < 0)) { return segment; }
+            if ((seqEnd > pathLength) || (seqEnd < 0))
+            {
+                return segment;
+            }
 
             var errorpoint = seqstart;
             var curvepass = true;
-            double px, py, dist2, errorval = 0;
-            double tl = seqend - seqstart; if (tl < 0) { tl += pathlength; }
-            double vx = (path[seqend][0] - path[seqstart][0]) / tl,
-                    vy = (path[seqend][1] - path[seqstart][1]) / tl;
+            double px;
+            double py;
+            double dist2;
+            double errorval = 0;
+            double tl = seqEnd - seqstart;
+            if (tl < 0)
+            {
+                tl += pathLength;
+            }
+            var vx = (path[seqEnd][0] - path[seqstart][0]) / tl;
+            var vy = (path[seqEnd][1] - path[seqstart][1]) / tl;
 
             // 5.2. Fit a straight line on the sequence
-            var pcnt = (seqstart + 1) % pathlength;
-            while (pcnt != seqend)
+            var pcnt = (seqstart + 1) % pathLength;
+            while (pcnt != seqEnd)
             {
-                double pl = pcnt - seqstart; if (pl < 0) { pl += pathlength; }
-                px = path[seqstart][0] + vx * pl; py = path[seqstart][1] + vy * pl;
+                double pl = pcnt - seqstart;
+                if (pl < 0)
+                {
+                    pl += pathLength;
+                }
+                px = path[seqstart][0] + vx * pl;
+                py = path[seqstart][1] + vy * pl;
                 dist2 = (path[pcnt][0] - px) * (path[pcnt][0] - px) + (path[pcnt][1] - py) * (path[pcnt][1] - py);
-                if (dist2 > ltreshold) { curvepass = false; }
-                if (dist2 > errorval) { errorpoint = pcnt; errorval = dist2; }
-                pcnt = (pcnt + 1) % pathlength;
+                if (dist2 > ltreshold)
+                {
+                    curvepass = false;
+                }
+                if (dist2 > errorval)
+                {
+                    errorpoint = pcnt; errorval = dist2;
+                }
+                pcnt = (pcnt + 1) % pathLength;
             }
 
             // return straight line if fits
             if (curvepass)
             {
                 segment.Add(new double[7]);
-                thissegment = segment[segment.Count - 1];
-                thissegment[0] = 1.0;
-                thissegment[1] = path[seqstart][0];
-                thissegment[2] = path[seqstart][1];
-                thissegment[3] = path[seqend][0];
-                thissegment[4] = path[seqend][1];
-                thissegment[5] = 0.0;
-                thissegment[6] = 0.0;
+                thisSegment = segment[segment.Count - 1];
+                thisSegment[0] = 1.0;
+                thisSegment[1] = path[seqstart][0];
+                thisSegment[2] = path[seqstart][1];
+                thisSegment[3] = path[seqEnd][0];
+                thisSegment[4] = path[seqEnd][1];
+                thisSegment[5] = 0.0;
+                thisSegment[6] = 0.0;
                 return segment;
             }
 
             // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
-            var fitpoint = errorpoint; curvepass = true; errorval = 0;
+            var fitpoint = errorpoint;
+            curvepass = true;
+            errorval = 0;
 
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
             // helpers and projecting to get control point
-            double t = (fitpoint - seqstart) / tl, t1 = (1.0 - t) * (1.0 - t), t2 = 2.0 * (1.0 - t) * t, t3 = t * t;
-            double cpx = (t1 * path[seqstart][0] + t3 * path[seqend][0] - path[fitpoint][0]) / -t2,
-                    cpy = (t1 * path[seqstart][1] + t3 * path[seqend][1] - path[fitpoint][1]) / -t2;
+            var t = (fitpoint - seqstart) / tl;
+            var t1 = (1.0 - t) * (1.0 - t);
+            var t2 = 2.0 * (1.0 - t) * t;
+            var t3 = t * t;
+            var cpx = (t1 * path[seqstart][0] + t3 * path[seqEnd][0] - path[fitpoint][0]) / -t2;
+            var cpy = (t1 * path[seqstart][1] + t3 * path[seqEnd][1] - path[fitpoint][1]) / -t2;
 
             // Check every point
             pcnt = seqstart + 1;
-            while (pcnt != seqend)
+            while (pcnt != seqEnd)
             {
 
-                t = (pcnt - seqstart) / tl; t1 = (1.0 - t) * (1.0 - t); t2 = 2.0 * (1.0 - t) * t; t3 = t * t;
-                px = t1 * path[seqstart][0] + t2 * cpx + t3 * path[seqend][0];
-                py = t1 * path[seqstart][1] + t2 * cpy + t3 * path[seqend][1];
+                t = (pcnt - seqstart) / tl;
+                t1 = (1.0 - t) * (1.0 - t);
+                t2 = 2.0 * (1.0 - t) * t;
+                t3 = t * t;
+                px = t1 * path[seqstart][0] + t2 * cpx + t3 * path[seqEnd][0];
+                py = t1 * path[seqstart][1] + t2 * cpy + t3 * path[seqEnd][1];
 
                 dist2 = (path[pcnt][0] - px) * (path[pcnt][0] - px) + (path[pcnt][1] - py) * (path[pcnt][1] - py);
 
-                if (dist2 > qtreshold) { curvepass = false; }
-                if (dist2 > errorval) { errorpoint = pcnt; errorval = dist2; }
-                pcnt = (pcnt + 1) % pathlength;
+                if (dist2 > qtreshold)
+                {
+                    curvepass = false;
+                }
+                if (dist2 > errorval)
+                {
+                    errorpoint = pcnt; errorval = dist2;
+                }
+                pcnt = (pcnt + 1) % pathLength;
             }
 
             // return spline if fits
             if (curvepass)
             {
                 segment.Add(new double[7]);
-                thissegment = segment[segment.Count - 1];
-                thissegment[0] = 2.0;
-                thissegment[1] = path[seqstart][0];
-                thissegment[2] = path[seqstart][1];
-                thissegment[3] = cpx;
-                thissegment[4] = cpy;
-                thissegment[5] = path[seqend][0];
-                thissegment[6] = path[seqend][1];
+                thisSegment = segment[segment.Count - 1];
+                thisSegment[0] = 2.0;
+                thisSegment[1] = path[seqstart][0];
+                thisSegment[2] = path[seqstart][1];
+                thisSegment[3] = cpx;
+                thisSegment[4] = cpy;
+                thisSegment[5] = path[seqEnd][0];
+                thisSegment[6] = path[seqEnd][1];
                 return segment;
             }
 
             // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error,
             // set splitpoint = (fitting point + errorpoint)/2
-            var splitpoint = (fitpoint + errorpoint) / 2;
+            var splitPoint = (fitpoint + errorpoint) / 2;
 
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-            segment = FitSeq(path, ltreshold, qtreshold, seqstart, splitpoint);
-            segment.AddRange(FitSeq(path, ltreshold, qtreshold, splitpoint, seqend));
+            segment = FitSeq(path, ltreshold, qtreshold, seqstart, splitPoint);
+            segment.AddRange(FitSeq(path, ltreshold, qtreshold, splitPoint, seqEnd));
             return segment;
         }
 
