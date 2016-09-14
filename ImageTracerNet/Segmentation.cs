@@ -132,7 +132,7 @@ namespace ImageTracerNet
                 return (path[i].X - px) * (path[i].X - px) + (path[i].Y - py) * (path[i].Y - py);
             };
 
-            var isSpline = Fit(distanceFunction, tracingOptions.LTres, (seqStart + 1) % pathLength, i => i != seqEnd, i => (i + 1) % pathLength, ref errorPoint);
+            var isSpline = Fit(distanceFunction, tracingOptions.QTres, (seqStart + 1) % pathLength, i => i != seqEnd, i => (i + 1) % pathLength, ref errorPoint);
             return isSpline ? new[]
             {
                 2.0,
@@ -168,68 +168,68 @@ namespace ImageTracerNet
                 return segment;
             }
 
-            //var fitPoint = errorPoint;
-            //var splineResult = FitSpline(path, tracingOptions, seqStart, seqEnd, tl, ref errorPoint);
-            //if (splineResult != null)
-            //{
-            //    segment.Add(splineResult);
-            //    return segment;
-            //}
-
-            // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
             var fitPoint = errorPoint;
-            var curvePass = true;
-            double errorVal = 0;
-
-            // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
-            // helpers and projecting to get control point
-            var t = (fitPoint - seqStart) / (double)tl;
-            var t1 = (1.0 - t) * (1.0 - t);
-            var t2 = 2.0 * (1.0 - t) * t;
-            var t3 = t * t;
-            var cpx = (t1 * path[seqStart].X + t3 * path[seqEnd].X - path[fitPoint].X) / -t2;
-            var cpy = (t1 * path[seqStart].Y + t3 * path[seqEnd].Y - path[fitPoint].Y) / -t2;
-
-            // Check every point
-            var pcnt = seqStart + 1;
-            while (pcnt != seqEnd)
+            var splineResult = FitSpline(path, tracingOptions, seqStart, seqEnd, tl, ref errorPoint);
+            if (splineResult != null)
             {
-                t = (pcnt - seqStart) / (double)tl;
-                t1 = (1.0 - t) * (1.0 - t);
-                t2 = 2.0 * (1.0 - t) * t;
-                t3 = t * t;
-                var px = t1 * path[seqStart].X + t2 * cpx + t3 * path[seqEnd].X;
-                var py = t1 * path[seqStart].Y + t2 * cpy + t3 * path[seqEnd].Y;
-
-                var dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
-
-                if (dist2 > tracingOptions.QTres)
-                {
-                    curvePass = false;
-                }
-                if (dist2 > errorVal)
-                {
-                    errorPoint = pcnt;
-                    errorVal = dist2;
-                }
-
-                pcnt = (pcnt + 1) % pathLength;
-            }
-
-            // return spline if fits
-            if (curvePass)
-            {
-                segment.Add(new double[7]);
-                var thisSegment = segment[segment.Count - 1];
-                thisSegment[0] = 2.0;
-                thisSegment[1] = path[seqStart].X;
-                thisSegment[2] = path[seqStart].Y;
-                thisSegment[3] = cpx;
-                thisSegment[4] = cpy;
-                thisSegment[5] = path[seqEnd].X;
-                thisSegment[6] = path[seqEnd].Y;
+                segment.Add(splineResult);
                 return segment;
             }
+
+            //// 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
+            //var fitPoint = errorPoint;
+            //var curvePass = true;
+            //double errorVal = 0;
+
+            //// 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
+            //// helpers and projecting to get control point
+            //var t = (fitPoint - seqStart) / (double)tl;
+            //var t1 = (1.0 - t) * (1.0 - t);
+            //var t2 = 2.0 * (1.0 - t) * t;
+            //var t3 = t * t;
+            //var cpx = (t1 * path[seqStart].X + t3 * path[seqEnd].X - path[fitPoint].X) / -t2;
+            //var cpy = (t1 * path[seqStart].Y + t3 * path[seqEnd].Y - path[fitPoint].Y) / -t2;
+
+            //// Check every point
+            //var pcnt = seqStart + 1;
+            //while (pcnt != seqEnd)
+            //{
+            //    t = (pcnt - seqStart) / (double)tl;
+            //    t1 = (1.0 - t) * (1.0 - t);
+            //    t2 = 2.0 * (1.0 - t) * t;
+            //    t3 = t * t;
+            //    var px = t1 * path[seqStart].X + t2 * cpx + t3 * path[seqEnd].X;
+            //    var py = t1 * path[seqStart].Y + t2 * cpy + t3 * path[seqEnd].Y;
+
+            //    var dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
+
+            //    if (dist2 > tracingOptions.QTres)
+            //    {
+            //        curvePass = false;
+            //    }
+            //    if (dist2 > errorVal)
+            //    {
+            //        errorPoint = pcnt;
+            //        errorVal = dist2;
+            //    }
+
+            //    pcnt = (pcnt + 1) % pathLength;
+            //}
+
+            //// return spline if fits
+            //if (curvePass)
+            //{
+            //    segment.Add(new double[7]);
+            //    var thisSegment = segment[segment.Count - 1];
+            //    thisSegment[0] = 2.0;
+            //    thisSegment[1] = path[seqStart].X;
+            //    thisSegment[2] = path[seqStart].Y;
+            //    thisSegment[3] = cpx;
+            //    thisSegment[4] = cpy;
+            //    thisSegment[5] = path[seqEnd].X;
+            //    thisSegment[6] = path[seqEnd].Y;
+            //    return segment;
+            //}
 
             // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error,
             var splitPoint = (fitPoint + errorPoint) / 2;
