@@ -5,9 +5,9 @@ namespace ImageTracerNet.OptionTypes
     [Serializable]
     public class Tracing
     {
-        // Threshold!
+        // LineThreshold
         public double LTres { get; set; } = 1f;
-        // Threshold!
+        // QuadraticSplineThreshold!
         public double QTres { get; set; } = 1f;
         public int PathOmit { get; set; } = 8;
     }

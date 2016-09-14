@@ -47,6 +47,7 @@
     <Compile Include="Extensions\BitmapExtensions.cs" />
     <Compile Include="Extensions\ColorExtensions.cs" />
     <Compile Include="Extensions\CollectionExtensions.cs" />
+    <Compile Include="Extensions\EnumerableExtensions.cs" />
     <Compile Include="Extensions\MathExtensions.cs" />
     <Compile Include="Heading.cs" />
     <Compile Include="ImageData.cs" />

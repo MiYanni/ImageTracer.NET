@@ -209,6 +209,85 @@ namespace ImageTracerNet
             return smp;
         }
 
+        private static double[] FitLine(List<InterpolationPoint> path, Tracing tracingOptions, int seqStart, int seqEnd, out int errorPoint)
+        {
+            var pathLength = path.Count;
+            var tl = seqEnd - seqStart;
+            tl += tl < 0 ? pathLength : 0;
+            var vx = (path[seqEnd].X - path[seqStart].X) / tl;
+            var vy = (path[seqEnd].Y - path[seqStart].Y) / tl;
+
+            // 5.2. Fit a straight line on the sequence
+            var pathIndices = EnumerableExtensions.ForAsRange((seqStart + 1) % pathLength, i => i != seqEnd, i => (i + 1) % pathLength);
+            var distancesAndIndices = pathIndices.Select(i =>
+            {
+                var pl = i - seqStart;
+                pl += pl < 0 ? pathLength : 0;
+                var px = path[seqStart].X + vx*pl;
+                var py = path[seqStart].Y + vy*pl;
+
+                return new { Index = i, Distance = (path[i].X - px)*(path[i].X - px) + (path[i].Y - py)*(path[i].Y - py) };
+            }).ToList();
+
+            errorPoint = seqStart;
+            // If this is true, the segment is not a straight line.
+            if (distancesAndIndices.Any(di => di.Distance < tracingOptions.LTres))
+            {
+                errorPoint = distancesAndIndices.Aggregate(new { Index = errorPoint, Distance = (double)0 }, 
+                    (errorDi, nextDi) => nextDi.Distance > errorDi.Distance ? nextDi : errorDi).Index;
+                return null;
+            }
+
+            return new []
+            {
+                1.0,
+                path[seqStart].X,
+                path[seqStart].Y,
+                path[seqEnd].X,
+                path[seqEnd].Y,
+                0.0,
+                0.0
+            };
+
+            //var pathIndex = (seqStart + 1) % pathLength;
+            //while (pathIndex != seqEnd)
+            //{
+            //    var pl = pathIndex - seqStart;
+            //    pl += pl < 0 ? pathLength : 0;
+            //    var px = path[seqStart].X + vx * pl;
+            //    var py = path[seqStart].Y + vy * pl;
+
+            //    var dist2 = (path[pathIndex].X - px) * (path[pathIndex].X - px) + (path[pathIndex].Y - py) * (path[pathIndex].Y - py);
+
+            //    if (dist2 > tracingOptions.LTres)
+            //    {
+            //        curvePass = false;
+            //    }
+
+            //    if (dist2 > errorVal)
+            //    {
+            //        errorPoint = pathIndex;
+            //        errorVal = dist2;
+            //    }
+
+            //    pathIndex = (pathIndex + 1) % pathLength;
+            //}
+
+            // return straight line if fits
+            //if (curvePass)
+            //{
+            //    var thisSegment = new double[7];
+            //    thisSegment[0] = 1.0;
+            //    thisSegment[1] = path[seqStart].X;
+            //    thisSegment[2] = path[seqStart].Y;
+            //    thisSegment[3] = path[seqEnd].X;
+            //    thisSegment[4] = path[seqEnd].Y;
+            //    thisSegment[5] = 0.0;
+            //    thisSegment[6] = 0.0;
+            //    return thisSegment;
+            //}
+        }
+
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
         private static List<double[]> FitSeq(List<InterpolationPoint> path, Tracing tracingOptions, int seqStart, int seqEnd)
@@ -226,12 +305,10 @@ namespace ImageTracerNet
             double px;
             double py;
             double dist2;
-            double errorval = 0;
+            double errorVal = 0;
+
             double tl = seqEnd - seqStart;
-            if (tl < 0)
-            {
-                tl += pathLength;
-            }
+            tl += tl < 0 ? pathLength : 0;
             var vx = (path[seqEnd].X - path[seqStart].X) / tl;
             var vy = (path[seqEnd].Y - path[seqStart].Y) / tl;
 
@@ -252,9 +329,10 @@ namespace ImageTracerNet
                 {
                     curvePass = false;
                 }
-                if (dist2 > errorval)
+                if (dist2 > errorVal)
                 {
-                    errorPoint = pcnt; errorval = dist2;
+                    errorPoint = pcnt;
+                    errorVal = dist2;
                 }
 
                 pcnt = (pcnt + 1) % pathLength;
@@ -263,8 +341,7 @@ namespace ImageTracerNet
             // return straight line if fits
             if (curvePass)
             {
-                segment.Add(new double[7]);
-                var thisSegment = segment[segment.Count - 1];
+                var thisSegment = new double[7];
                 thisSegment[0] = 1.0;
                 thisSegment[1] = path[seqStart].X;
                 thisSegment[2] = path[seqStart].Y;
@@ -272,13 +349,22 @@ namespace ImageTracerNet
                 thisSegment[4] = path[seqEnd].Y;
                 thisSegment[5] = 0.0;
                 thisSegment[6] = 0.0;
+                segment.Add(thisSegment);
                 return segment;
             }
+
+            //int errorPoint;
+            //var lineResult = FitLine(path, tracingOptions, seqStart, seqEnd, out errorPoint);
+            //if (lineResult != null)
+            //{
+            //    segment.Add(lineResult);
+            //    return segment;
+            //}
 
             // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
             var fitpoint = errorPoint;
             curvePass = true;
-            errorval = 0;
+            errorVal = 0;
 
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
             // helpers and projecting to get control point
@@ -306,9 +392,10 @@ namespace ImageTracerNet
                 {
                     curvePass = false;
                 }
-                if (dist2 > errorval)
+                if (dist2 > errorVal)
                 {
-                    errorPoint = pcnt; errorval = dist2;
+                    errorPoint = pcnt;
+                    errorVal = dist2;
                 }
 
                 pcnt = (pcnt + 1) % pathLength;
