@@ -8,6 +8,7 @@ using System.Text;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.Palettes;
 using System.Windows.Media.Imaging;
+using ImageTracerNet.OptionTypes;
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
 using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>; // ArrayList<ArrayList<ArrayList<Double[]>>>
 
@@ -93,7 +94,7 @@ namespace ImageTracerNet
             // 4. Batch interpollation
             var bis = bps.Select(Interpolation.Convert).ToList();
             // 5. Batch tracing
-            ii.Layers = bis.Select(l => l.Select(p => TracePath(p, options.Tracing.LTres, options.Tracing.QTres)).ToList()).ToList();
+            ii.Layers = bis.Select(l => l.Select(p => TracePath(p, options.Tracing)).ToList()).ToList();
             
             return ii;
         }
@@ -172,7 +173,7 @@ namespace ImageTracerNet
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        private static List<double[]> TracePath(List<InterpolationPoint> path, double ltreshold, double qtreshold)
+        private static List<double[]> TracePath(List<InterpolationPoint> path, Tracing tracingOptions)
         {
             var pathIndex = 0;
             var smp = new List<double[]>();
@@ -198,7 +199,7 @@ namespace ImageTracerNet
                 seqEnd = seqEnd == pathLength - 1 ? 0 : seqEnd;
 
                 // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-                smp.AddRange(FitSeq(path, ltreshold, qtreshold, pathIndex, seqEnd));
+                smp.AddRange(FitSeq(path, tracingOptions, pathIndex, seqEnd));
                 // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
 
                 // forward pcnt;
@@ -210,20 +211,18 @@ namespace ImageTracerNet
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
-        private static List<double[]> FitSeq(List<InterpolationPoint> path, double ltreshold, double qtreshold, int seqStart, int seqEnd)
+        private static List<double[]> FitSeq(List<InterpolationPoint> path, Tracing tracingOptions, int seqStart, int seqEnd)
         {
             var segment = new List<double[]>();
-            double[] thisSegment;
             var pathLength = path.Count;
-
             // return if invalid seqend
             if ((seqEnd > pathLength) || (seqEnd < 0))
             {
                 return segment;
             }
 
-            var errorpoint = seqStart;
-            var curvepass = true;
+            var errorPoint = seqStart;
+            var curvePass = true;
             double px;
             double py;
             double dist2;
@@ -249,23 +248,23 @@ namespace ImageTracerNet
                 py = path[seqStart].Y + vy * pl;
                 dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
 
-                if (dist2 > ltreshold)
+                if (dist2 > tracingOptions.LTres)
                 {
-                    curvepass = false;
+                    curvePass = false;
                 }
                 if (dist2 > errorval)
                 {
-                    errorpoint = pcnt; errorval = dist2;
+                    errorPoint = pcnt; errorval = dist2;
                 }
 
                 pcnt = (pcnt + 1) % pathLength;
             }
 
             // return straight line if fits
-            if (curvepass)
+            if (curvePass)
             {
                 segment.Add(new double[7]);
-                thisSegment = segment[segment.Count - 1];
+                var thisSegment = segment[segment.Count - 1];
                 thisSegment[0] = 1.0;
                 thisSegment[1] = path[seqStart].X;
                 thisSegment[2] = path[seqStart].Y;
@@ -277,8 +276,8 @@ namespace ImageTracerNet
             }
 
             // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
-            var fitpoint = errorpoint;
-            curvepass = true;
+            var fitpoint = errorPoint;
+            curvePass = true;
             errorval = 0;
 
             // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
@@ -303,23 +302,23 @@ namespace ImageTracerNet
 
                 dist2 = (path[pcnt].X - px) * (path[pcnt].X - px) + (path[pcnt].Y - py) * (path[pcnt].Y - py);
 
-                if (dist2 > qtreshold)
+                if (dist2 > tracingOptions.QTres)
                 {
-                    curvepass = false;
+                    curvePass = false;
                 }
                 if (dist2 > errorval)
                 {
-                    errorpoint = pcnt; errorval = dist2;
+                    errorPoint = pcnt; errorval = dist2;
                 }
 
                 pcnt = (pcnt + 1) % pathLength;
             }
 
             // return spline if fits
-            if (curvepass)
+            if (curvePass)
             {
                 segment.Add(new double[7]);
-                thisSegment = segment[segment.Count - 1];
+                var thisSegment = segment[segment.Count - 1];
                 thisSegment[0] = 2.0;
                 thisSegment[1] = path[seqStart].X;
                 thisSegment[2] = path[seqStart].Y;
@@ -331,12 +330,11 @@ namespace ImageTracerNet
             }
 
             // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error,
-            // set splitpoint = (fitting point + errorpoint)/2
-            var splitPoint = (fitpoint + errorpoint) / 2;
+            var splitPoint = (fitpoint + errorPoint) / 2;
 
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-            segment = FitSeq(path, ltreshold, qtreshold, seqStart, splitPoint);
-            segment.AddRange(FitSeq(path, ltreshold, qtreshold, splitPoint, seqEnd));
+            segment = FitSeq(path, tracingOptions, seqStart, splitPoint);
+            segment.AddRange(FitSeq(path, tracingOptions, splitPoint, seqEnd));
             return segment;
         }
 
