@@ -20,7 +20,7 @@ namespace ImageTracerNet
                 return new { Index = i, Distance = Math.Pow(interpolatedPoint.X - calculatedPoint.X, 2) + Math.Pow(interpolatedPoint.Y - calculatedPoint.Y, 2) };
             }).ToList();
 
-            // If this is true, the segment is not this line type.
+            // If this is true, the segment is not this segment type.
             if (distancesAndIndices.Any(di => di.Distance > threshold))
             {
                 // Finds the point index with the biggest error.
@@ -133,14 +133,13 @@ namespace ImageTracerNet
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
+        // Returns a segment (a list of those doubles is a segment).
         public static IEnumerable<double[]> Fit(List<InterpolationPoint> path, Tracing tracingOptions, int sequenceStartIndex, int sequenceEndIndex)
         {
-            
             var pathLength = path.Count;
             // return if invalid sequenceEndIndex
             if ((sequenceEndIndex > pathLength) || (sequenceEndIndex < 0))
             {
-                //return new List<double[]>();
                 yield break;
             }
 
@@ -151,7 +150,6 @@ namespace ImageTracerNet
             var lineResult = FitLine(path, tracingOptions.LTres, sequenceStartIndex, sequenceEndIndex, sequenceLength, out errorIndex);
             if (lineResult != null)
             {
-                //return new List<double[]> { lineResult };
                 yield return lineResult;
                 yield break;
             }
@@ -161,28 +159,21 @@ namespace ImageTracerNet
             var splineResult = FitSpline(path, tracingOptions.QTres, sequenceStartIndex, sequenceEndIndex, sequenceLength, ref errorIndex);
             if (splineResult != null)
             {
-                //return new List<double[]> { splineResult };
                 yield return splineResult;
                 yield break;
             }
 
             // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error,
             var splitIndex = (fitIndex + errorIndex) / 2;
-            //var segment = new List<double[]>();
-
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-            //segment = Fit(path, tracingOptions, sequenceStartIndex, splitIndex);
-            foreach (var part in Fit(path, tracingOptions, sequenceStartIndex, splitIndex))
+            foreach (var segmentPart in Fit(path, tracingOptions, sequenceStartIndex, splitIndex))
             {
-                yield return part;
+                yield return segmentPart;
             }
-            foreach (var part in Fit(path, tracingOptions, splitIndex, sequenceEndIndex))
+            foreach (var segmentPart in Fit(path, tracingOptions, splitIndex, sequenceEndIndex))
             {
-                yield return part;
+                yield return segmentPart;
             }
-
-            //segment.AddRange(Fit(path, tracingOptions, splitIndex, sequenceEndIndex));
-            //return segment;
         }
     }
 }
