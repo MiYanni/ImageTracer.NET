@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using ImageTracerNet.Vectorization.Points;
 using NodeDirList = System.Collections.Generic.List<System.Tuple<int, int>>;
-
 using ImageTracerNet.Extensions;
 
 namespace ImageTracerNet.Vectorization

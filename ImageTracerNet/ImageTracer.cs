@@ -19,7 +19,7 @@ namespace ImageTracerNet
 {
     public static class ImageTracer
     {
-        public static string VersionNumber = "1.1.1";
+        public static readonly string VersionNumber = typeof(ImageTracer).Assembly.GetName().Version.ToString();
 
         private static readonly Random Rng = new Random();
 
@@ -258,27 +258,38 @@ namespace ImageTracerNet
         private static string GetSvgString(IndexedImage ii, Options options)
         {
             // SVG start
-            int w = (int)(ii.ImageWidth * options.SvgRendering.Scale), h = (int)(ii.ImageHeight * options.SvgRendering.Scale);
-            var viewboxorviewport = options.SvgRendering.Viewbox.IsNotZero() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
-            var svgstr = new StringBuilder("<svg " + viewboxorviewport + "version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options.SvgRendering.Desc.IsNotZero()) { svgstr.Append("desc=\"Created with ImageTracer.java version " + VersionNumber + "\" "); }
-            svgstr.Append(">");
+            var width = (int)(ii.ImageWidth * options.SvgRendering.Scale);
+            var height = (int)(ii.ImageHeight * options.SvgRendering.Scale);
+
+            var viewBoxOrViewPort = options.SvgRendering.Viewbox.IsNotZero() ? 
+                $"viewBox=\"0 0 {width} {height}\"" : 
+                $"width=\"{width}\" height=\"{height}\"";
+            var svgStringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
+            if (options.SvgRendering.Desc.IsNotZero())
+            {
+                svgStringBuilder.Append($"desc=\"Created with ImageTracer.NET version {VersionNumber}\" ");
+            }
+            svgStringBuilder.Append(">");
 
             // creating Z-index
-            var zindex = new SortedDictionary<double, int[]>(); //TreeMap<Double, Integer[]> zindex = new TreeMap<Double, Integer[]>();
+            var zIndex = new SortedDictionary<double, Tuple<int, int>>();
             // Layer loop
-            for (var k = 0; k < ii.Layers.Count; k++)
+            for (var layerIndex = 0; layerIndex < ii.Layers.Count; layerIndex++)
             {
                 // Path loop
-                for (var pcnt = 0; pcnt < ii.Layers[k].Count; pcnt++)
+                for (var pathIndex = 0; pathIndex < ii.Layers[layerIndex].Count; pathIndex++)
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
-                    var label = ii.Layers[k][pcnt][0][2] * w + ii.Layers[k][pcnt][0][1];
-                    // Creating new list if required
-                    if (!zindex.ContainsKey(label)) { zindex[label] = new int[2]; }
+                    var label = ii.Layers[layerIndex][pathIndex][0][2] * width + ii.Layers[layerIndex][pathIndex][0][1];
+                    //// Creating new list if required
+                    //if (!zIndex.ContainsKey(label))
+                    //{
+                    //    zIndex[label] = new int[2];
+                    //}
                     // Adding layer and path number to list
-                    zindex[label][0] = k;
-                    zindex[label][1] = pcnt;
+                    //zIndex[label][0] = layerIndex;
+                    //zIndex[label][1] = pathIndex;
+                    zIndex[label] = new Tuple<int, int>(layerIndex, pathIndex);
                 }// End of path loop
             }// End of layer loop
 
@@ -286,21 +297,24 @@ namespace ImageTracerNet
 
             // Drawing
             // Z-index loop
-            foreach(var entry in zindex)
+            foreach(var entry in zIndex)
             {
-                var thisdesc = "";
-                if (options.SvgRendering.Desc.IsNotZero()) { thisdesc = "desc=\"l " + entry.Value[0] + " p " + entry.Value[1] + "\" "; } else { thisdesc = ""; }
-                SvgPathString(svgstr,
-                        thisdesc,
-                        ii.Layers[entry.Value[0]][entry.Value[1]],
-                        ToSvgColorString(ii.Palette[entry.Value[0]]),
+                var description = String.Empty;
+                if (options.SvgRendering.Desc.IsNotZero())
+                {
+                    description = $"desc=\"l {entry.Value.Item1} p {entry.Value.Item2}\" ";
+                }
+                SvgPathString(svgStringBuilder,
+                        description,
+                        ii.Layers[entry.Value.Item1][entry.Value.Item2],
+                        ToSvgColorString(ii.Palette[entry.Value.Item1]),
                         options);
             }
 
             // SVG End
-            svgstr.Append("</svg>");
+            svgStringBuilder.Append("</svg>");
 
-            return svgstr.ToString();
+            return svgStringBuilder.ToString();
         }
 
         private static string ToSvgColorString(byte[] c)
