@@ -49,19 +49,13 @@ namespace ImageTracerNet
         }
 
         // 5.2. Fit a straight line on the sequence
-        private static double[] FitLine(List<InterpolationPoint> path, Tracing tracingOptions, int sequenceStartIndex, int sequenceEndIndex, int sequenceLength, out int errorIndex)
+        private static double[] FitLine(IReadOnlyList<InterpolationPoint> path, double threshold, int sequenceStartIndex, int sequenceEndIndex, int sequenceLength, out int errorIndex)
         {
-
-            //var vx = (path[sequenceEndIndex].X - path[sequenceStartIndex].X) / sequenceLength;
-            //var vy = (path[sequenceEndIndex].Y - path[sequenceStartIndex].Y) / sequenceLength;
-            //Func<> createPoint = >
-            //var midPoint = new Point<double>();
             var startPoint = path[sequenceStartIndex];
             var endPoint = path[sequenceEndIndex];
-
             var partialPoint = CreateLinePoint(sequenceLength, startPoint, endPoint, true);
-            var pathLength = path.Count;
 
+            var pathLength = path.Count;
             Func<int, double> pseudoIndexCalc = i =>
             {
                 // I don't know what 'pl' as a variable name means. Is it related to path length?
@@ -70,19 +64,10 @@ namespace ImageTracerNet
                 return pl;
             };
 
-            //Func<int, double> distanceFunction = i =>
-            //{
-            //    var pl = i - sequenceStartIndex;
-            //    pl += pl < 0 ? pathLength : 0;
-            //    var px = path[sequenceStartIndex].X + vx*pl;
-            //    var py = path[sequenceStartIndex].Y + vy*pl;
-
-            //    return (path[i].X - px)*(path[i].X - px) + (path[i].Y - py)*(path[i].Y - py);
-            //};
-
             errorIndex = sequenceStartIndex;
-            var isLine = Fit(i => path[i], i => CreateLinePoint(pseudoIndexCalc(i), startPoint, partialPoint), tracingOptions.LTres, 
+            var isLine = Fit(i => path[i], i => CreateLinePoint(pseudoIndexCalc(i), startPoint, partialPoint), threshold, 
                 (sequenceStartIndex + 1) % pathLength, i => i != sequenceEndIndex, i => (i + 1) % pathLength, ref errorIndex);
+
             return isLine ? new[]
             {
                 1.0,
@@ -121,7 +106,7 @@ namespace ImageTracerNet
 
         // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
         // helpers and projecting to get control point
-        private static double[] FitSpline(List<InterpolationPoint> path, Tracing tracingOptions, int sequenceStartIndex, int sequenceEndIndex, int sequenceLength, ref int errorIndex)
+        private static double[] FitSpline(IReadOnlyList<InterpolationPoint> path, double threshold, int sequenceStartIndex, int sequenceEndIndex, int sequenceLength, ref int errorIndex)
         {
             var startPoint = path[sequenceStartIndex];
             var endPoint = path[sequenceEndIndex];
@@ -129,14 +114,11 @@ namespace ImageTracerNet
 
             Func<int, double> pseudoIndexCalc = i => (i - sequenceStartIndex) / (double)sequenceLength;
             var midPoint = CreateSplinePoint(pseudoIndexCalc(errorIndex), startPoint, endPoint, fitPoint, true);
-            //Func<int, double> distanceFunction = i =>
-            //{
-            //    var point = CreateSplinePoint(pseudoIndexCalc(i), startPoint, midPoint, endPoint);
-            //    return Math.Pow(path[i].X - point.X, 2) + Math.Pow(path[i].Y - point.Y, 2);
-            //};
+
             // Check every point
-            var isSpline = Fit(i => path[i], i => CreateSplinePoint(pseudoIndexCalc(i), startPoint, midPoint, endPoint), tracingOptions.QTres, 
+            var isSpline = Fit(i => path[i], i => CreateSplinePoint(pseudoIndexCalc(i), startPoint, midPoint, endPoint), threshold, 
                 sequenceStartIndex + 1, i => i != sequenceEndIndex, i => (i + 1) % path.Count, ref errorIndex);
+
             return isSpline ? new[]
             {
                 2.0,
@@ -151,43 +133,56 @@ namespace ImageTracerNet
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
-        public static List<double[]> Fit(List<InterpolationPoint> path, Tracing tracingOptions, int seqStart, int seqEnd)
+        public static IEnumerable<double[]> Fit(List<InterpolationPoint> path, Tracing tracingOptions, int sequenceStartIndex, int sequenceEndIndex)
         {
-            var segment = new List<double[]>();
+            
             var pathLength = path.Count;
-            // return if invalid seqEnd
-            if ((seqEnd > pathLength) || (seqEnd < 0))
+            // return if invalid sequenceEndIndex
+            if ((sequenceEndIndex > pathLength) || (sequenceEndIndex < 0))
             {
-                return segment;
+                //return new List<double[]>();
+                yield break;
             }
 
-            var seqLength = seqEnd - seqStart;
-            seqLength += seqLength < 0 ? pathLength : 0;
+            var sequenceLength = sequenceEndIndex - sequenceStartIndex;
+            sequenceLength += sequenceLength < 0 ? pathLength : 0;
 
-            int errorPoint;
-            var lineResult = FitLine(path, tracingOptions, seqStart, seqEnd, seqLength, out errorPoint);
+            int errorIndex;
+            var lineResult = FitLine(path, tracingOptions.LTres, sequenceStartIndex, sequenceEndIndex, sequenceLength, out errorIndex);
             if (lineResult != null)
             {
-                segment.Add(lineResult);
-                return segment;
+                //return new List<double[]> { lineResult };
+                yield return lineResult;
+                yield break;
             }
 
             // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
-            var fitPoint = errorPoint;
-            var splineResult = FitSpline(path, tracingOptions, seqStart, seqEnd, seqLength, ref errorPoint);
+            var fitIndex = errorIndex;
+            var splineResult = FitSpline(path, tracingOptions.QTres, sequenceStartIndex, sequenceEndIndex, sequenceLength, ref errorIndex);
             if (splineResult != null)
             {
-                segment.Add(splineResult);
-                return segment;
+                //return new List<double[]> { splineResult };
+                yield return splineResult;
+                yield break;
             }
 
             // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error,
-            var splitPoint = (fitPoint + errorPoint) / 2;
+            var splitIndex = (fitIndex + errorIndex) / 2;
+            //var segment = new List<double[]>();
 
             // 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-            segment = Fit(path, tracingOptions, seqStart, splitPoint);
-            segment.AddRange(Fit(path, tracingOptions, splitPoint, seqEnd));
-            return segment;
+            //segment = Fit(path, tracingOptions, sequenceStartIndex, splitIndex);
+            foreach (var part in Fit(path, tracingOptions, sequenceStartIndex, splitIndex))
+            {
+                yield return part;
+            }
+            foreach (var part in Fit(path, tracingOptions, splitIndex, sequenceEndIndex))
+            {
+                yield return part;
+            }
+
+            //segment.AddRange(Fit(path, tracingOptions, splitIndex, sequenceEndIndex));
+            //return segment;
         }
     }
 }
