@@ -174,39 +174,41 @@ namespace ImageTracerNet
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        private static int DetermineSequenceEndIndex(IReadOnlyList<InterpolationPoint> path, int pathIndex)
+        private static int DetermineSequenceEndIndex(IReadOnlyList<Heading> directions, int pathIndex)
         {
-            var pointDirections = path.Select(p => p.Direction).ToList();
+            var pathDirection = directions[pathIndex];
+            var lastIndex = directions.Count - 1;
+            //Heading? storedEndDirection = null;
 
-            var pathLength = path.Count;
-            var pathDirection = pointDirections[pathIndex];
-            Heading? storedEndDirection = null;
+            //var sequenceEndIndex = pathIndex + 1;
+            //while (
+            //    (pointDirections[sequenceEndIndex] == pathDirection ||
+            //    pointDirections[sequenceEndIndex] == storedEndDirection ||
+            //    storedEndDirection == null) &&
+            //    (sequenceEndIndex < pathLength - 1))
+            //{
+            //    if (pointDirections[sequenceEndIndex] != pathDirection &&
+            //        storedEndDirection == null)
+            //    {
+            //        storedEndDirection = pointDirections[sequenceEndIndex];
+            //    }
+            //    sequenceEndIndex++;
+            //}
 
             var sequenceEndIndex = pathIndex + 1;
-            while (
-                (pointDirections[sequenceEndIndex] == pathDirection ||
-                pointDirections[sequenceEndIndex] == storedEndDirection ||
-                storedEndDirection == null) &&
-                (sequenceEndIndex < pathLength - 1))
+            Heading? storedDirection = null;
+            for (var i = sequenceEndIndex; i < lastIndex; sequenceEndIndex = ++i)
             {
-                if (pointDirections[sequenceEndIndex] != pathDirection &&
-                    storedEndDirection == null)
+                if (!(storedDirection == null || directions[i] == storedDirection || directions[i] == pathDirection))
                 {
-                    storedEndDirection = pointDirections[sequenceEndIndex];
+                    break;
                 }
-                sequenceEndIndex++;
-            }
 
-            //var end = pathIndex + 1;
-            //Heading? stored = null;
-            //for (var i = end; i < pathLength - 1; ++i)
-            //{
-            //    if (stored == null && pointDirections[i] == stored)
-            //    {
-            //        stored = pointDirections[i];
-            //    }
-            //    if()
-            //}
+                if (directions[i] != pathDirection && storedDirection == null)
+                {
+                    storedDirection = directions[i];
+                }
+            }
 
             //var sequenceEndIndex = pathIndex + 1;
             //for (var e = sequenceEndIndex;
@@ -223,71 +225,76 @@ namespace ImageTracerNet
             //    }
             //}
 
-            return sequenceEndIndex == pathLength - 1 ? 0 : sequenceEndIndex;
+            // If it gets to the end of the list, return zero instead of the index.
+            return sequenceEndIndex == lastIndex ? 0 : sequenceEndIndex;
         }
 
-        private static IEnumerable<Tuple<int, int>> CreateSequences(IReadOnlyList<InterpolationPoint> path)
+        private static IEnumerable<Tuple<int, int>> CreateSequences(IReadOnlyList<Heading> directions)
         {
             var pathIndex = 0;
-            var pathLength = path.Count;
+            //var pathLength = directions.Count;
 
-            while (pathIndex < pathLength)
+            while (pathIndex < directions.Count)
             {
                 // 5.1. Find sequences of points with only 2 segment types
-                var segmentType1 = path[pathIndex].Direction;
-                Heading? segmentType2 = null;
-                var sequenceEndIndex = pathIndex + 1;
-                while ((path[sequenceEndIndex].Direction == segmentType1 || path[sequenceEndIndex].Direction == segmentType2 || segmentType2 == null) &&
-                    (sequenceEndIndex < pathLength - 1))
-                {
-                    if (path[sequenceEndIndex].Direction != segmentType1 && segmentType2 == null)
-                    {
-                        segmentType2 = path[sequenceEndIndex].Direction;
-                    }
-                    sequenceEndIndex++;
-                }
-                sequenceEndIndex = sequenceEndIndex == pathLength - 1 ? 0 : sequenceEndIndex;
-
+                //var segmentType1 = path[pathIndex].Direction;
+                //Heading? segmentType2 = null;
+                //var sequenceEndIndex = pathIndex + 1;
+                //while ((path[sequenceEndIndex].Direction == segmentType1 || path[sequenceEndIndex].Direction == segmentType2 || segmentType2 == null) &&
+                //    (sequenceEndIndex < pathLength - 1))
+                //{
+                //    if (path[sequenceEndIndex].Direction != segmentType1 && segmentType2 == null)
+                //    {
+                //        segmentType2 = path[sequenceEndIndex].Direction;
+                //    }
+                //    sequenceEndIndex++;
+                //}
+                //sequenceEndIndex = sequenceEndIndex == pathLength - 1 ? 0 : sequenceEndIndex;
+                var sequenceEndIndex = DetermineSequenceEndIndex(directions, pathIndex);
                 yield return new Tuple<int, int>(pathIndex, sequenceEndIndex);
-                pathIndex = sequenceEndIndex > 0 ? sequenceEndIndex : pathLength;
+                pathIndex = sequenceEndIndex > 0 ? sequenceEndIndex : directions.Count;
             }
         }
 
         private static IEnumerable<double[]> TracePath(List<InterpolationPoint> path, Tracing tracingOptions)
         {
-            var pathIndex = 0;
-            var pathLength = path.Count;
+            //var pathIndex = 0;
+            //var pathLength = path.Count;
 
-            while (pathIndex < pathLength)
-            {
-                // 5.1. Find sequences of points with only 2 segment types
-                var segmentType1 = path[pathIndex].Direction;
-                Heading? segmentType2 = null;
-                var sequenceEndIndex = pathIndex + 1;
+            //while (pathIndex < pathLength)
+            //{
+            //    // 5.1. Find sequences of points with only 2 segment types
+            //    var segmentType1 = path[pathIndex].Direction;
+            //    Heading? segmentType2 = null;
+            //    var sequenceEndIndex = pathIndex + 1;
 
-                while ((path[sequenceEndIndex].Direction == segmentType1 || path[sequenceEndIndex].Direction == segmentType2 || segmentType2 == null) && 
-                    (sequenceEndIndex < pathLength - 1))
-                {
-                    if (path[sequenceEndIndex].Direction != segmentType1 && segmentType2 == null)
-                    {
-                        segmentType2 = path[sequenceEndIndex].Direction;
-                    }
-                    sequenceEndIndex++;
-                }
+            //    while ((path[sequenceEndIndex].Direction == segmentType1 || path[sequenceEndIndex].Direction == segmentType2 || segmentType2 == null) && 
+            //        (sequenceEndIndex < pathLength - 1))
+            //    {
+            //        if (path[sequenceEndIndex].Direction != segmentType1 && segmentType2 == null)
+            //        {
+            //            segmentType2 = path[sequenceEndIndex].Direction;
+            //        }
+            //        sequenceEndIndex++;
+            //    }
 
-                sequenceEndIndex = sequenceEndIndex == pathLength - 1 ? 0 : sequenceEndIndex;
+            //    sequenceEndIndex = sequenceEndIndex == pathLength - 1 ? 0 : sequenceEndIndex;
 
-                // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
-                foreach (var segment in Segmentation.Fit(path, tracingOptions, pathIndex, sequenceEndIndex))
-                {
-                    yield return segment;
-                }
-                // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
+            //    // 5.2. - 5.6. Split sequence and recursively apply 5.2. - 5.6. to startpoint-splitpoint and splitpoint-endpoint sequences
+            //    foreach (var segment in Segmentation.Fit(path, tracingOptions, pathIndex, sequenceEndIndex))
+            //    {
+            //        yield return segment;
+            //    }
+            //    // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
 
-                // forward pcnt;
-                pathIndex = sequenceEndIndex > 0 ? sequenceEndIndex : pathLength;
+            //    // forward pcnt;
+            //    pathIndex = sequenceEndIndex > 0 ? sequenceEndIndex : pathLength;
 
-            }// End of pcnt loop
+            //}// End of pcnt loop
+
+            var sequences = CreateSequences(path.Select(p => p.Direction).ToList());
+            // Fit the sequences into segments, and return them.
+            return sequences.Select(s => Segmentation.Fit(path, tracingOptions, s.Item1, s.Item2)).SelectMany(s => s);
         }
 
         ////////////////////////////////////////////////////////////
