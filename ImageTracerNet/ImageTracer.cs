@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.Palettes;
 using System.Windows.Media.Imaging;
@@ -172,6 +173,85 @@ namespace ImageTracerNet
         // segment[5] , segment[6] : x3 , y3 for Q curve, should be 0.0 , 0.0 for L line
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
+
+        private static int DetermineSequenceEndIndex(IReadOnlyList<InterpolationPoint> path, int pathIndex)
+        {
+            var pointDirections = path.Select(p => p.Direction).ToList();
+
+            var pathLength = path.Count;
+            var pathDirection = pointDirections[pathIndex];
+            Heading? storedEndDirection = null;
+
+            var sequenceEndIndex = pathIndex + 1;
+            while (
+                (pointDirections[sequenceEndIndex] == pathDirection ||
+                pointDirections[sequenceEndIndex] == storedEndDirection ||
+                storedEndDirection == null) &&
+                (sequenceEndIndex < pathLength - 1))
+            {
+                if (pointDirections[sequenceEndIndex] != pathDirection &&
+                    storedEndDirection == null)
+                {
+                    storedEndDirection = pointDirections[sequenceEndIndex];
+                }
+                sequenceEndIndex++;
+            }
+
+            //var end = pathIndex + 1;
+            //Heading? stored = null;
+            //for (var i = end; i < pathLength - 1; ++i)
+            //{
+            //    if (stored == null && pointDirections[i] == stored)
+            //    {
+            //        stored = pointDirections[i];
+            //    }
+            //    if()
+            //}
+
+            //var sequenceEndIndex = pathIndex + 1;
+            //for (var e = sequenceEndIndex;
+            //    (pointDirections[e] == pathDirection ||
+            //     pointDirections[e] == storedEndDirection ||
+            //     storedEndDirection == null) &&
+            //    (e < pathLength - 1);
+            //    sequenceEndIndex = ++e)
+            //{
+            //    if (pointDirections[e] != pathDirection &&
+            //        storedEndDirection == null)
+            //    {
+            //        storedEndDirection = pointDirections[e];
+            //    }
+            //}
+
+            return sequenceEndIndex == pathLength - 1 ? 0 : sequenceEndIndex;
+        }
+
+        private static IEnumerable<Tuple<int, int>> CreateSequences(IReadOnlyList<InterpolationPoint> path)
+        {
+            var pathIndex = 0;
+            var pathLength = path.Count;
+
+            while (pathIndex < pathLength)
+            {
+                // 5.1. Find sequences of points with only 2 segment types
+                var segmentType1 = path[pathIndex].Direction;
+                Heading? segmentType2 = null;
+                var sequenceEndIndex = pathIndex + 1;
+                while ((path[sequenceEndIndex].Direction == segmentType1 || path[sequenceEndIndex].Direction == segmentType2 || segmentType2 == null) &&
+                    (sequenceEndIndex < pathLength - 1))
+                {
+                    if (path[sequenceEndIndex].Direction != segmentType1 && segmentType2 == null)
+                    {
+                        segmentType2 = path[sequenceEndIndex].Direction;
+                    }
+                    sequenceEndIndex++;
+                }
+                sequenceEndIndex = sequenceEndIndex == pathLength - 1 ? 0 : sequenceEndIndex;
+
+                yield return new Tuple<int, int>(pathIndex, sequenceEndIndex);
+                pathIndex = sequenceEndIndex > 0 ? sequenceEndIndex : pathLength;
+            }
+        }
 
         private static IEnumerable<double[]> TracePath(List<InterpolationPoint> path, Tracing tracingOptions)
         {
