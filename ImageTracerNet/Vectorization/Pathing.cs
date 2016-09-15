@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ImageTracerNet.Extensions;
+using ImageTracerNet.Vectorization.Points;
 using NodeDirList = System.Collections.Generic.List<System.Tuple<int, int>>;
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Vectorization
 {
     internal static class Pathing
     {

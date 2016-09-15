@@ -10,6 +10,8 @@ using ImageTracerNet.Extensions;
 using ImageTracerNet.Palettes;
 using System.Windows.Media.Imaging;
 using ImageTracerNet.OptionTypes;
+using ImageTracerNet.Vectorization;
+using ImageTracerNet.Vectorization.Points;
 using TriListIntArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<int[]>>>; // ArrayList<ArrayList<ArrayList<Integer[]>>>
 using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>; // ArrayList<ArrayList<ArrayList<Double[]>>>
 
@@ -255,7 +257,6 @@ namespace ImageTracerNet
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
         private static string GetSvgString(IndexedImage ii, Options options)
         {
-            //options = checkoptions(options);
             // SVG start
             int w = (int)(ii.ImageWidth * options.SvgRendering.Scale), h = (int)(ii.ImageHeight * options.SvgRendering.Scale);
             var viewboxorviewport = options.SvgRendering.Viewbox.IsNotZero() ? "viewBox=\"0 0 " + w + " " + h + "\" " : "width=\"" + w + "\" height=\"" + h + "\" ";
@@ -300,7 +301,6 @@ namespace ImageTracerNet
             svgstr.Append("</svg>");
 
             return svgstr.ToString();
-
         }
 
         private static string ToSvgColorString(byte[] c)

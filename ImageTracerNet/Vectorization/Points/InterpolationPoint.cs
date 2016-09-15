@@ -1,4 +1,4 @@
-﻿namespace ImageTracerNet
+﻿namespace ImageTracerNet.Vectorization.Points
 {
     internal class InterpolationPoint : Point<double>
     {

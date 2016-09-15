@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
+using ImageTracerNet.Vectorization.Points;
 using LinePointCalculation = System.Func<double, double, double, double>;
 using SplinePointCalculation = System.Func<double, double, double, double, double>;
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Vectorization
 {
     internal static class Segmentation
     {

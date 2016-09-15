@@ -1,4 +1,4 @@
-﻿namespace ImageTracerNet
+﻿namespace ImageTracerNet.Vectorization
 {
     internal enum Heading
     {

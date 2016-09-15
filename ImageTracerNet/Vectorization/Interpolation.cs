@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using ImageTracerNet.Extensions;
+using ImageTracerNet.Vectorization.Points;
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Vectorization
 {
     internal static class Interpolation
     {

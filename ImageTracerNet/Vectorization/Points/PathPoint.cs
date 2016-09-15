@@ -1,4 +1,4 @@
-﻿namespace ImageTracerNet
+﻿namespace ImageTracerNet.Vectorization.Points
 {
     internal class PathPoint : Point<int>
     {
