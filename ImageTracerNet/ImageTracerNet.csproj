@@ -70,6 +70,7 @@
     <Compile Include="Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Segmentation.cs" />
+    <Compile Include="Sequencing.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="References\ImageTracer.java" />
