@@ -195,60 +195,48 @@ namespace ImageTracerNet
         }
 
         // Getting SVG path element string from a traced path
-        private static void SvgPathString(StringBuilder sb, string desc, List<double[]> segments, string colorstr, Options options)
+        private static void SvgPathString(StringBuilder stringBuilder, string desc, IReadOnlyList<double[]> segments, string colorstr, Options options)
         {
-            double scale = options.SvgRendering.Scale, lcpr = options.SvgRendering.LCpr, qcpr = options.SvgRendering.LCpr, roundcoords = Math.Floor(options.SvgRendering.RoundCoords);
+            var scale = options.SvgRendering.Scale;
+            var linearControlPointRadius = options.SvgRendering.LCpr;
+            var quadraticControlPointRadius = options.SvgRendering.LCpr;
+            var roundCoords = Math.Floor(options.SvgRendering.RoundCoords);
             // Path
-            sb.Append("<path ").Append(desc).Append(colorstr).Append("d=\"").Append("M ").Append(segments[0][1] * scale).Append(" ").Append(segments[0][2] * scale).Append(" ");
-
-            if (roundcoords.AreEqual(-1))
+            stringBuilder.Append($"<path {desc}{colorstr}d=\"M {segments[0][1] * scale} {segments[0][2] * scale} ");
+            foreach (var segment in segments)
             {
-                for (var pcnt = 0; pcnt < segments.Count; pcnt++)
+                string segmentAsString;
+                if (roundCoords.AreEqual(-1))
                 {
-                    if (segments[pcnt][0].AreEqual(1.0))
-                    {
-                        sb.Append("L ").Append(segments[pcnt][3] * scale).Append(" ").Append(segments[pcnt][4] * scale).Append(" ");
-                    }
-                    else
-                    {
-                        sb.Append("Q ").Append(segments[pcnt][3] * scale).Append(" ").Append(segments[pcnt][4] * scale).Append(" ").Append(segments[pcnt][5] * scale).Append(" ").Append(segments[pcnt][6] * scale).Append(" ");
-                    }
+                    segmentAsString = segment[0].AreEqual(1.0)
+                        ? $"L {segment[3]*scale} {segment[4]*scale} "
+                        : $"Q {segment[3]*scale} {segment[4]*scale} {segment[5]*scale} {segment[6]*scale} ";
                 }
+                else
+                {
+                    segmentAsString = segment[0].AreEqual(1.0)
+                        ? $"L {RoundToDec(segment[3]*scale, roundCoords)} {RoundToDec(segment[4]*scale, roundCoords)} "
+                        : $"Q {RoundToDec(segment[3]*scale, roundCoords)} {RoundToDec(segment[4]*scale, roundCoords)} {RoundToDec(segment[5]*scale, roundCoords)} {RoundToDec(segment[6]*scale, roundCoords)} ";
+                } // End of roundcoords check
+
+                stringBuilder.Append(segmentAsString);
             }
-            else
-            {
-                for (var pcnt = 0; pcnt < segments.Count; pcnt++)
-                {
-                    if (segments[pcnt][0].AreEqual(1.0))
-                    {
-                        sb.Append("L ").Append(RoundToDec(segments[pcnt][3] * scale, roundcoords)).Append(" ")
-                        .Append(RoundToDec(segments[pcnt][4] * scale, roundcoords)).Append(" ");
-                    }
-                    else
-                    {
-                        sb.Append("Q ").Append(RoundToDec(segments[pcnt][3] * scale, roundcoords)).Append(" ")
-                        .Append(RoundToDec(segments[pcnt][4] * scale, roundcoords)).Append(" ")
-                        .Append(RoundToDec(segments[pcnt][5] * scale, roundcoords)).Append(" ")
-                        .Append(RoundToDec(segments[pcnt][6] * scale, roundcoords)).Append(" ");
-                    }
-                }
-            }// End of roundcoords check
 
-            sb.Append("Z\" />");
+            stringBuilder.Append("Z\" />");
 
             // Rendering control points
-            for (var pcnt = 0; pcnt < segments.Count; pcnt++)
+            foreach (var segment in segments)
             {
-                if ((lcpr > 0) && segments[pcnt][0].AreEqual(1.0))
+                if ((linearControlPointRadius > 0) && segment[0].AreEqual(1.0))
                 {
-                    sb.Append("<circle cx=\"").Append(segments[pcnt][3] * scale).Append("\" cy=\"").Append(segments[pcnt][4] * scale).Append("\" r=\"").Append(lcpr).Append("\" fill=\"white\" stroke-width=\"").Append(lcpr * 0.2).Append("\" stroke=\"black\" />");
+                    stringBuilder.Append($"<circle cx=\"{segment[3] * scale}\" cy=\"{segment[4] * scale}\" r=\"{linearControlPointRadius}\" fill=\"white\" stroke-width=\"{linearControlPointRadius * 0.2}\" stroke=\"black\" />");
                 }
-                if ((qcpr > 0) && segments[pcnt][0].AreEqual(2.0))
+                if ((quadraticControlPointRadius > 0) && segment[0].AreEqual(2.0))
                 {
-                    sb.Append("<circle cx=\"").Append(segments[pcnt][3] * scale).Append("\" cy=\"").Append(segments[pcnt][4] * scale).Append("\" r=\"").Append(qcpr).Append("\" fill=\"cyan\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"black\" />");
-                    sb.Append("<circle cx=\"").Append(segments[pcnt][5] * scale).Append("\" cy=\"").Append(segments[pcnt][6] * scale).Append("\" r=\"").Append(qcpr).Append("\" fill=\"white\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"black\" />");
-                    sb.Append("<line x1=\"").Append(segments[pcnt][1] * scale).Append("\" y1=\"").Append(segments[pcnt][2] * scale).Append("\" x2=\"").Append(segments[pcnt][3] * scale).Append("\" y2=\"").Append(segments[pcnt][4] * scale).Append("\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"cyan\" />");
-                    sb.Append("<line x1=\"").Append(segments[pcnt][3] * scale).Append("\" y1=\"").Append(segments[pcnt][4] * scale).Append("\" x2=\"").Append(segments[pcnt][5] * scale).Append("\" y2=\"").Append(segments[pcnt][6] * scale).Append("\" stroke-width=\"").Append(qcpr * 0.2).Append("\" stroke=\"cyan\" />");
+                    stringBuilder.Append($"<circle cx=\"{segment[3] * scale}\" cy=\"{segment[4] * scale}\" r=\"{quadraticControlPointRadius}\" fill=\"cyan\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"black\" />");
+                    stringBuilder.Append($"<circle cx=\"{segment[5] * scale}\" cy=\"{segment[6] * scale}\" r=\"{quadraticControlPointRadius}\" fill=\"white\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"black\" />");
+                    stringBuilder.Append($"<line x1=\"{segment[1] * scale}\" y1=\"{segment[2] * scale}\" x2=\"{segment[3] * scale}\" y2=\"{segment[4] * scale}\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"cyan\" />");
+                    stringBuilder.Append($"<line x1=\"{segment[3] * scale}\" y1=\"{segment[4] * scale}\" x2=\"{segment[5] * scale}\" y2=\"{segment[6] * scale}\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"cyan\" />");
                 }// End of quadratic control points
             }
         }
@@ -281,14 +269,6 @@ namespace ImageTracerNet
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
                     var label = ii.Layers[layerIndex][pathIndex][0][2] * width + ii.Layers[layerIndex][pathIndex][0][1];
-                    //// Creating new list if required
-                    //if (!zIndex.ContainsKey(label))
-                    //{
-                    //    zIndex[label] = new int[2];
-                    //}
-                    // Adding layer and path number to list
-                    //zIndex[label][0] = layerIndex;
-                    //zIndex[label][1] = pathIndex;
                     zIndex[label] = new Tuple<int, int>(layerIndex, pathIndex);
                 }// End of path loop
             }// End of layer loop
@@ -304,8 +284,8 @@ namespace ImageTracerNet
                 {
                     description = $"desc=\"l {entry.Value.Item1} p {entry.Value.Item2}\" ";
                 }
-                SvgPathString(svgStringBuilder,
-                        description,
+
+                SvgPathString(svgStringBuilder, description,
                         ii.Layers[entry.Value.Item1][entry.Value.Item2],
                         ToSvgColorString(ii.Palette[entry.Value.Item1]),
                         options);
