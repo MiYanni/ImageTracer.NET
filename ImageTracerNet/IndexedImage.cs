@@ -4,7 +4,7 @@ using System.Linq;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Palettes;
-using TriListDoubleArray = System.Collections.Generic.List<System.Collections.Generic.List<System.Collections.Generic.List<double[]>>>;
+using ImageTracerNet.Vectorization.Segments;
 
 namespace ImageTracerNet
 {
@@ -21,7 +21,7 @@ namespace ImageTracerNet
         // array[palettelength][4] RGBA color palette
         public byte[][] Palette { get;  }
         // tracedata
-        public List<List<List<double[]>>> Layers { set; get; }
+        public List<List<List<Segment>>> Layers { set; get; }
 
         public IndexedImage(int[][] array, byte[][] palette)
         {

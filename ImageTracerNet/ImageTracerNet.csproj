@@ -70,9 +70,12 @@
     <Compile Include="PixelGroup.cs" />
     <Compile Include="Vectorization\Points\Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Vectorization\Segments\LineSegment.cs" />
     <Compile Include="Vectorization\Segmentation.cs" />
+    <Compile Include="Vectorization\Segments\Segment.cs" />
     <Compile Include="Vectorization\SequenceIndices.cs" />
     <Compile Include="Vectorization\Sequencing.cs" />
+    <Compile Include="Vectorization\Segments\SplineSegment.cs" />
     <Compile Include="ZPosition.cs" />
   </ItemGroup>
   <ItemGroup>

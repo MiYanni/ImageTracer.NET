@@ -8,6 +8,7 @@ using System.Windows.Media.Imaging;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization;
 using ImageTracerNet.Vectorization.Points;
+using ImageTracerNet.Vectorization.Segments;
 
 namespace ImageTracerNet
 {
@@ -168,7 +169,7 @@ namespace ImageTracerNet
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        private static IEnumerable<double[]> TracePath(List<InterpolationPoint> path, Tracing tracingOptions)
+        private static IEnumerable<Segment> TracePath(List<InterpolationPoint> path, Tracing tracingOptions)
         {
             var sequences = Sequencing.Create(path.Select(p => p.Direction).ToList());
             // Fit the sequences into segments, and return them.

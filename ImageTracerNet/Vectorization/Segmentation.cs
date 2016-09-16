@@ -4,6 +4,7 @@ using System.Linq;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Points;
+using ImageTracerNet.Vectorization.Segments;
 using LinePointCalculation = System.Func<double, double, double, double>;
 using SplinePointCalculation = System.Func<double, double, double, double, double>;
 
@@ -50,7 +51,7 @@ namespace ImageTracerNet.Vectorization
         }
 
         // 5.2. Fit a straight line on the sequence
-        private static double[] FitLine(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, out int errorIndex)
+        private static Segment FitLine(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, out int errorIndex)
         {
             var startPoint = path[sequence.Start];
             var endPoint = path[sequence.End];
@@ -69,16 +70,7 @@ namespace ImageTracerNet.Vectorization
             var isLine = Fit(i => path[i], i => CreateLinePoint(pseudoIndexCalc(i), startPoint, partialPoint), threshold, 
                 (sequence.Start + 1) % pathLength, i => i != sequence.End, i => (i + 1) % pathLength, ref errorIndex);
 
-            return isLine ? new[]
-            {
-                1.0,
-                startPoint.X,
-                startPoint.Y,
-                endPoint.X,
-                endPoint.Y,
-                0.0,
-                0.0
-            } : null;
+            return isLine ? new LineSegment { Start = startPoint, End = endPoint } : null;
         }
 
         private static Point<double> CreateSplinePoint(double pseudoIndex, Point<double> first, Point<double> second, Point<double> third, bool isMidPoint = false)
@@ -107,7 +99,7 @@ namespace ImageTracerNet.Vectorization
 
         // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
         // helpers and projecting to get control point
-        private static double[] FitSpline(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, ref int errorIndex)
+        private static Segment FitSpline(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, ref int errorIndex)
         {
             var startPoint = path[sequence.Start];
             var endPoint = path[sequence.End];
@@ -120,22 +112,13 @@ namespace ImageTracerNet.Vectorization
             var isSpline = Fit(i => path[i], i => CreateSplinePoint(pseudoIndexCalc(i), startPoint, midPoint, endPoint), threshold,
                 sequence.Start + 1, i => i != sequence.End, i => (i + 1) % path.Count, ref errorIndex);
 
-            return isSpline ? new[]
-            {
-                2.0,
-                startPoint.X,
-                startPoint.Y,
-                midPoint.X,
-                midPoint.Y,
-                endPoint.X,
-                endPoint.Y
-            } : null;
+            return isSpline ? new SplineSegment { Start = startPoint, Mid = midPoint, End = endPoint } : null;
         }
 
         // 5.2. - 5.6. recursively fitting a straight or quadratic line segment on this sequence of path nodes,
         // called from tracepath()
         // Returns a segment (a list of those doubles is a segment).
-        public static IEnumerable<double[]> Fit(List<InterpolationPoint> path, Tracing tracingOptions, SequenceIndices sequence)
+        public static IEnumerable<Segment> Fit(IReadOnlyList<InterpolationPoint> path, Tracing tracingOptions, SequenceIndices sequence)
         {
             var pathLength = path.Count;
             // return if invalid sequence.End

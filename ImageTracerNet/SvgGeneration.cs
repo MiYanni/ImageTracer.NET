@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
+using ImageTracerNet.Vectorization.Segments;
+using CoordMethod = System.Func<double, double>;
 
 namespace ImageTracerNet
 {
@@ -35,7 +38,7 @@ namespace ImageTracerNet
                 for (var pathIndex = 0; pathIndex < ii.Layers[layerIndex].Count; pathIndex++)
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
-                    var label = ii.Layers[layerIndex][pathIndex][0][2] * width + ii.Layers[layerIndex][pathIndex][0][1];
+                    var label = ii.Layers[layerIndex][pathIndex][0].Start.Y * width + ii.Layers[layerIndex][pathIndex][0].Start.X;
                     zIndex[label] = new ZPosition { Layer = layerIndex, Path = pathIndex };
                 }
             }
@@ -64,29 +67,33 @@ namespace ImageTracerNet
         }
 
         // Getting SVG path element string from a traced path
-        private static void AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<double[]> segments, string colorString, SvgRendering options)
+        private static void AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<Segment> segments, string colorString, SvgRendering options)
         {
             var scale = options.Scale;
             var linearControlPointRadius = options.LCpr;
             var quadraticControlPointRadius = options.LCpr;
-            var roundCoords = options.RoundCoords;
+            var coordMethod = options.RoundCoords == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, options.RoundCoords);
             // Path
-            stringBuilder.Append($"<path {description}{colorString}d=\"M {segments[0][1] * scale} {segments[0][2] * scale} ");
+            stringBuilder.Append($"<path {description}{colorString}d=\"M {segments[0].Start.X * scale} {segments[0].Start.Y * scale} ");
             foreach (var segment in segments)
             {
-                string segmentAsString;
-                if (roundCoords == -1)
-                {
-                    segmentAsString = segment[0].AreEqual(1.0)
-                        ? $"L {segment[3] * scale} {segment[4] * scale} "
-                        : $"Q {segment[3] * scale} {segment[4] * scale} {segment[5] * scale} {segment[6] * scale} ";
-                }
-                else
-                {
-                    segmentAsString = segment[0].AreEqual(1.0)
-                        ? $"L {Math.Round(segment[3] * scale, roundCoords)} {Math.Round(segment[4] * scale, roundCoords)} "
-                        : $"Q {Math.Round(segment[3] * scale, roundCoords)} {Math.Round(segment[4] * scale, roundCoords)} {Math.Round(segment[5] * scale, roundCoords)} {Math.Round(segment[6] * scale, roundCoords)} ";
-                }
+                var quadraticSegment = segment as SplineSegment;
+                var segmentAsString = quadraticSegment != null
+                    ? $"Q {coordMethod(quadraticSegment.Mid.X * scale)} {coordMethod(quadraticSegment.Mid.Y * scale)} {coordMethod(quadraticSegment.End.X * scale)} {coordMethod(quadraticSegment.End.Y * scale)} "
+                    : $"L {coordMethod(segment.End.X * scale)} {coordMethod(segment.End.Y * scale)} ";
+
+                //if (roundCoords == -1)
+                //{
+                //    segmentAsString = segment[0].AreEqual(1.0)
+                //        ? $"L {segment.End.X * scale} {segment.End.Y * scale} "
+                //        : $"Q {segment[3] * scale} {segment[4] * scale} {quadraticSegment.End.X * scale} {quadraticSegment.End.Y * scale} ";
+                //}
+                //else
+                //{
+                //    segmentAsString = segment[0].AreEqual(1.0)
+                //        ? $"L {Math.Round(segment[3] * scale, roundCoords)} {Math.Round(segment[4] * scale, roundCoords)} "
+                //        : $"Q {Math.Round(segment[3] * scale, roundCoords)} {Math.Round(segment[4] * scale, roundCoords)} {Math.Round(quadraticSegment.End.X * scale, roundCoords)} {Math.Round(quadraticSegment.End.Y * scale, roundCoords)} ";
+                //}
 
                 stringBuilder.Append(segmentAsString);
             }
@@ -94,19 +101,19 @@ namespace ImageTracerNet
             stringBuilder.Append("Z\" />");
 
             // Rendering control points
-            foreach (var segment in segments)
+            var filteredSegments = segments.Where(s => (s is LineSegment && linearControlPointRadius > 0) || (s is SplineSegment && quadraticControlPointRadius > 0));
+            foreach (var segment in filteredSegments)
             {
-                if ((linearControlPointRadius > 0) && segment[0].AreEqual(1.0))
-                {
-                    stringBuilder.Append($"<circle cx=\"{segment[3] * scale}\" cy=\"{segment[4] * scale}\" r=\"{linearControlPointRadius}\" fill=\"white\" stroke-width=\"{linearControlPointRadius * 0.2}\" stroke=\"black\" />");
-                }
-                if ((quadraticControlPointRadius > 0) && segment[0].AreEqual(2.0))
-                {
-                    stringBuilder.Append($"<circle cx=\"{segment[3] * scale}\" cy=\"{segment[4] * scale}\" r=\"{quadraticControlPointRadius}\" fill=\"cyan\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"black\" />");
-                    stringBuilder.Append($"<circle cx=\"{segment[5] * scale}\" cy=\"{segment[6] * scale}\" r=\"{quadraticControlPointRadius}\" fill=\"white\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"black\" />");
-                    stringBuilder.Append($"<line x1=\"{segment[1] * scale}\" y1=\"{segment[2] * scale}\" x2=\"{segment[3] * scale}\" y2=\"{segment[4] * scale}\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"cyan\" />");
-                    stringBuilder.Append($"<line x1=\"{segment[3] * scale}\" y1=\"{segment[4] * scale}\" x2=\"{segment[5] * scale}\" y2=\"{segment[6] * scale}\" stroke-width=\"{quadraticControlPointRadius * 0.2}\" stroke=\"cyan\" />");
-                }
+                var quadraticSegment = segment as SplineSegment;
+
+                var segmentAsString = quadraticSegment != null
+                    ? $"<circle cx=\"{quadraticSegment.Mid.X*scale}\" cy=\"{quadraticSegment.Mid.Y*scale}\" r=\"{quadraticControlPointRadius}\" fill=\"cyan\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
+                      $"<circle cx=\"{quadraticSegment.End.X*scale}\" cy=\"{quadraticSegment.End.Y*scale}\" r=\"{quadraticControlPointRadius}\" fill=\"white\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
+                      $"<line x1=\"{quadraticSegment.Start.X*scale}\" y1=\"{quadraticSegment.Start.Y*scale}\" x2=\"{quadraticSegment.Mid.X*scale}\" y2=\"{quadraticSegment.Mid.Y*scale}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />" +
+                      $"<line x1=\"{quadraticSegment.Mid.X*scale}\" y1=\"{quadraticSegment.Mid.Y*scale}\" x2=\"{quadraticSegment.End.X*scale}\" y2=\"{quadraticSegment.End.Y*scale}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />"
+                    : $"<circle cx=\"{segment.End.X*scale}\" cy=\"{segment.End.Y*scale}\" r=\"{linearControlPointRadius}\" fill=\"white\" stroke-width=\"{linearControlPointRadius*0.2}\" stroke=\"black\" />";
+
+                stringBuilder.Append(segmentAsString);
             }
         }
 
