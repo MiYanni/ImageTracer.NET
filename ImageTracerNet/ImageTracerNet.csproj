@@ -71,6 +71,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Vectorization\Segmentation.cs" />
     <Compile Include="Vectorization\Sequencing.cs" />
+    <Compile Include="ZPosition.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="References\ImageTracer.java" />

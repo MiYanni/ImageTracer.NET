@@ -189,11 +189,6 @@ namespace ImageTracerNet
         //
         ////////////////////////////////////////////////////////////
 
-        //private static double RoundToDec(double val, double places)
-        //{
-        //    return Math.Round(val * Math.Pow(10, places)) / Math.Pow(10, places);
-        //}
-
         // Getting SVG path element string from a traced path
         private static void SvgPathString(StringBuilder stringBuilder, string desc, IReadOnlyList<double[]> segments, string colorstr, Options options)
         {
@@ -260,7 +255,7 @@ namespace ImageTracerNet
             svgStringBuilder.Append(">");
 
             // creating Z-index
-            var zIndex = new SortedDictionary<double, Tuple<int, int>>();
+            var zIndex = new SortedDictionary<double, ZPosition>();
             // Layer loop
             for (var layerIndex = 0; layerIndex < ii.Layers.Count; layerIndex++)
             {
@@ -269,26 +264,25 @@ namespace ImageTracerNet
                 {
                     // Label (Z-index key) is the startpoint of the path, linearized
                     var label = ii.Layers[layerIndex][pathIndex][0][2] * width + ii.Layers[layerIndex][pathIndex][0][1];
-                    zIndex[label] = new Tuple<int, int>(layerIndex, pathIndex);
-                }// End of path loop
-            }// End of layer loop
+                    zIndex[label] = new ZPosition { Layer = layerIndex, Path = pathIndex };
+                }
+            }
 
             // Sorting Z-index is not required, TreeMap is sorted automatically
 
             // Drawing
             // Z-index loop
-            foreach(var entry in zIndex)
+            foreach(var zPosition in zIndex)
             {
+                var zValue = zPosition.Value;
                 var description = String.Empty;
                 if (options.SvgRendering.Desc.IsNotZero())
                 {
-                    description = $"desc=\"l {entry.Value.Item1} p {entry.Value.Item2}\" ";
+                    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
                 }
 
-                SvgPathString(svgStringBuilder, description,
-                        ii.Layers[entry.Value.Item1][entry.Value.Item2],
-                        ToSvgColorString(ii.Palette[entry.Value.Item1]),
-                        options);
+                SvgPathString(svgStringBuilder, description, ii.Layers[zValue.Layer][zValue.Path], 
+                    ToSvgColorString(ii.Palette[zValue.Layer]), options);
             }
 
             // SVG End
