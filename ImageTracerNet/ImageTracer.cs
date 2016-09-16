@@ -282,7 +282,7 @@ namespace ImageTracerNet
                 }
 
                 SvgPathString(svgStringBuilder, description, ii.Layers[zValue.Layer][zValue.Path], 
-                    ToSvgColorString(ii.Palette[zValue.Layer]), options);
+                    ii.Palette[zValue.Layer].ToSvgColorString(), options);
             }
 
             // SVG End
@@ -291,10 +291,9 @@ namespace ImageTracerNet
             return svgStringBuilder.ToString();
         }
 
-        private static string ToSvgColorString(byte[] c)
+        private static string ToSvgColorString(this IReadOnlyList<byte> c)
         {
-            const int shift = 0; // MJY: Try removing all the + 128 on the values. Might fix issues.
-            return "fill=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke=\"rgb(" + (c[0] + shift) + "," + (c[1] + shift) + "," + (c[2] + shift) + ")\" stroke-width=\"1\" opacity=\"" + (c[3] + shift) / 255.0 + "\" ";
+            return $"fill=\"rgb({c[0]},{c[1]},{c[2]})\" stroke=\"rgb({c[0]},{c[1]},{c[2]})\" stroke-width=\"1\" opacity=\"{c[3] / 255.0}\" ";
         }
 
         // Gaussian kernels for blur
