@@ -19,11 +19,11 @@ namespace ImageTracerNet
         public int ArrayWidth { get; }
         public int ArrayHeight { get; }
         // array[palettelength][4] RGBA color palette
-        public byte[][] Palette { get;  }
+        public IReadOnlyList<Color> Palette { get;  }
         // tracedata
         public List<List<List<Segment>>> Layers { set; get; }
 
-        public IndexedImage(int[][] array, byte[][] palette)
+        public IndexedImage(int[][] array, IReadOnlyList<Color> palette)
         {
             _array = array;
             Palette = palette;
@@ -57,7 +57,7 @@ namespace ImageTracerNet
                 : new int[width].Initialize(-1, 0, width - 1));
         }
 
-        public static IndexedImage Create(ImageData imageData, Color[] colorPalette, ColorQuantization colorQuant)
+        public static IndexedImage Create(ImageData imageData, IReadOnlyList<Color> colorPalette, ColorQuantization colorQuant)
         {
             var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
             // Repeat clustering step "cycles" times
@@ -71,7 +71,7 @@ namespace ImageTracerNet
                         var distance = 256 * 4;
                         var paletteIndex = 0;
                         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-                        for (var k = 0; k < colorPalette.Length; k++)
+                        for (var k = 0; k < colorPalette.Count; k++)
                         {
                             var color = colorPalette[k];
                             // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
@@ -88,7 +88,7 @@ namespace ImageTracerNet
                 }
             }
 
-            return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
+            return new IndexedImage(arr, colorPalette);
         }
 
         // THIS IS NOW UNUSED
@@ -150,7 +150,7 @@ namespace ImageTracerNet
                 }
             }
 
-            return new IndexedImage(arr, colorPalette.Select(c => c.ToRgbaByteArray()).ToArray());
+            return new IndexedImage(arr, colorPalette);
         }
     }
 }

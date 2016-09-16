@@ -72,7 +72,7 @@ namespace ImageTracerNet
             //        ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
             //        : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
 
-            var colorPalette = BitmapPalettes.Halftone256.Colors.Select(c => Color.FromArgb(c.A, c.R, c.G, c.B)).ToArray();
+            var colorPalette = BitmapPalettes.Halftone256.Colors.Select(c => Color.FromArgb(c.A, c.R, c.G, c.B)).ToList();
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
@@ -112,7 +112,7 @@ namespace ImageTracerNet
         private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            var layers = new int[ii.Palette.Length][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
+            var layers = new int[ii.Palette.Count][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
 
             // Looping through all pixels and calculating edge node type
             for (var j = 1; j < ii.ArrayHeight - 1; j++)
