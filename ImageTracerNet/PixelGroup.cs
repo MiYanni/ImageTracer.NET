@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace ImageTracerNet
 {
@@ -14,17 +15,17 @@ namespace ImageTracerNet
         public int BottomMid { get; }
         public int BottomRight { get; }
 
-        public PixelGroup(IReadOnlyList<int[]> pixels, int row, int column)
+        public PixelGroup(IReadOnlyList<IndexedColor> pixels, int row, int column, int width)
         {
-            TopLeft = pixels[row - 1][column - 1];
-            TopMid = pixels[row - 1][column];
-            TopRight = pixels[row - 1][column + 1];
-            MidLeft = pixels[row][column - 1];
-            Mid = pixels[row][column];
-            MidRight = pixels[row][column + 1];
-            BottomLeft = pixels[row + 1][column - 1];
-            BottomMid = pixels[row + 1][column];
-            BottomRight = pixels[row + 1][column + 1];
+            TopLeft =       pixels[(row - 1) * width + (column - 1)].PaletteIndex;
+            TopMid =        pixels[(row - 1) * width + column].PaletteIndex;
+            TopRight =      pixels[(row - 1) * width + column + 1].PaletteIndex;
+            MidLeft =       pixels[row * width + (column - 1)].PaletteIndex;
+            Mid =           pixels[row * width + column].PaletteIndex;
+            MidRight =      pixels[row * width + column + 1].PaletteIndex;
+            BottomLeft =    pixels[(row + 1) * width + (column - 1)].PaletteIndex;
+            BottomMid =     pixels[(row + 1) * width + column].PaletteIndex;
+            BottomRight =   pixels[(row + 1) * width + column + 1].PaletteIndex;
         }
     }
 }

@@ -49,6 +49,7 @@
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\EnumerableExtensions.cs" />
     <Compile Include="Extensions\MathExtensions.cs" />
+    <Compile Include="IndexedColor.cs" />
     <Compile Include="SvgGeneration.cs" />
     <Compile Include="Vectorization\Heading.cs" />
     <Compile Include="ImageData.cs" />

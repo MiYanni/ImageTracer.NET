@@ -82,7 +82,7 @@ namespace ImageTracerNet
             }
 
             // 1. Color quantization
-            var ii = IndexedImage.Create(imgd, colorPalette, options.ColorQuantization);
+            var ii = IndexedImage.Create(imgd, colorPalette);
             // 2. Layer separation and edge detection
             var rawLayers = Layering(ii);
             // 3. Batch pathscan
@@ -112,18 +112,17 @@ namespace ImageTracerNet
         private static int[][][] Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            var layers = new int[ii.Palette.Count][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
+            var layers = new int[ii.Palette.Count][][].InitInner(ii.IndicesHeight, ii.IndicesWidth);
 
             // Looping through all pixels and calculating edge node type
-            for (var j = 1; j < ii.ArrayHeight - 1; j++)
+            for (var j = 1; j < ii.IndicesHeight - 1; j++)
             {
-                for (var i = 1; i < ii.ArrayWidth - 1; i++)
+                for (var i = 1; i < ii.IndicesWidth - 1; i++)
                 {
                     // This pixel's indexed color
                     var pg = ii.GetPixelGroup(j, i);
 
-                    // Are neighbor pixel colors the same?
-                    // this pixel's type and looking back on previous pixels
+                    // Are neighbor pixel colors the same? This pixel's type and looking back on previous pixels
                     // X
                     // 1, 3, 5, 7, 9, 11, 13, 15
                     layers[pg.Mid][j + 1][i + 1] = 1 + Convert.ToInt32(pg.MidRight == pg.Mid) * 2 + Convert.ToInt32(pg.BottomRight == pg.Mid) * 4 + Convert.ToInt32(pg.BottomMid == pg.Mid) * 8;

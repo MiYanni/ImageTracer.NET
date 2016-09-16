@@ -126,7 +126,6 @@ namespace ImageTracerNet.Vectorization
                     var initialNodeValue = arr[j][i];
 
                     // Follow path
-                    // MJY: Logically, arr[j][i] cannot equal 0
                     if ((initialNodeValue == 0) || (initialNodeValue == 15)) continue;
 
                     // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
