@@ -189,10 +189,10 @@ namespace ImageTracerNet
         //
         ////////////////////////////////////////////////////////////
 
-        private static double RoundToDec(double val, double places)
-        {
-            return Math.Round(val * Math.Pow(10, places)) / Math.Pow(10, places);
-        }
+        //private static double RoundToDec(double val, double places)
+        //{
+        //    return Math.Round(val * Math.Pow(10, places)) / Math.Pow(10, places);
+        //}
 
         // Getting SVG path element string from a traced path
         private static void SvgPathString(StringBuilder stringBuilder, string desc, IReadOnlyList<double[]> segments, string colorstr, Options options)
@@ -200,13 +200,13 @@ namespace ImageTracerNet
             var scale = options.SvgRendering.Scale;
             var linearControlPointRadius = options.SvgRendering.LCpr;
             var quadraticControlPointRadius = options.SvgRendering.LCpr;
-            var roundCoords = Math.Floor(options.SvgRendering.RoundCoords);
+            var roundCoords = options.SvgRendering.RoundCoords;
             // Path
             stringBuilder.Append($"<path {desc}{colorstr}d=\"M {segments[0][1] * scale} {segments[0][2] * scale} ");
             foreach (var segment in segments)
             {
                 string segmentAsString;
-                if (roundCoords.AreEqual(-1))
+                if (roundCoords == -1)
                 {
                     segmentAsString = segment[0].AreEqual(1.0)
                         ? $"L {segment[3]*scale} {segment[4]*scale} "
@@ -215,8 +215,8 @@ namespace ImageTracerNet
                 else
                 {
                     segmentAsString = segment[0].AreEqual(1.0)
-                        ? $"L {RoundToDec(segment[3]*scale, roundCoords)} {RoundToDec(segment[4]*scale, roundCoords)} "
-                        : $"Q {RoundToDec(segment[3]*scale, roundCoords)} {RoundToDec(segment[4]*scale, roundCoords)} {RoundToDec(segment[5]*scale, roundCoords)} {RoundToDec(segment[6]*scale, roundCoords)} ";
+                        ? $"L {Math.Round(segment[3]*scale, roundCoords)} {Math.Round(segment[4]*scale, roundCoords)} "
+                        : $"Q {Math.Round(segment[3]*scale, roundCoords)} {Math.Round(segment[4]*scale, roundCoords)} {Math.Round(segment[5]*scale, roundCoords)} {Math.Round(segment[6]*scale, roundCoords)} ";
                 } // End of roundcoords check
 
                 stringBuilder.Append(segmentAsString);

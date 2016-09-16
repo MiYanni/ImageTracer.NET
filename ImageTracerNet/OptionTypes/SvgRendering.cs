@@ -7,7 +7,7 @@ namespace ImageTracerNet.OptionTypes
     {
         public double Scale { get; set; } = 1f;
         public double SimplifyTolerance { get; set; } = 0f;
-        public double RoundCoords { get; set; } = 1f;
+        public int RoundCoords { get; set; } = 1;
         public double LCpr { get; set; } = 0f;
         public double QCpr { get; set; } = 0f;
         public double Desc { get; set; } = 1f;
