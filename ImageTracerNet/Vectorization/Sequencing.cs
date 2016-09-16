@@ -29,13 +29,13 @@ namespace ImageTracerNet.Vectorization
             return sequenceEndIndex == lastIndex ? 0 : sequenceEndIndex;
         }
 
-        public static IEnumerable<Tuple<int, int>> Create(IReadOnlyList<Heading> directions)
+        public static IEnumerable<SequenceIndices> Create(IReadOnlyList<Heading> directions)
         {
             int sequenceEndIndex;
             for (var i = 0; i < directions.Count; i = sequenceEndIndex)
             {
                 sequenceEndIndex = DetermineSequenceEndIndex(directions, i);
-                yield return new Tuple<int, int>(i, sequenceEndIndex);
+                yield return new SequenceIndices { Start = i, End = sequenceEndIndex };
 
                 // If the end index is the last index of the list (will be 0 from DetermineSequenceEndIndex), then we have all of the sequences.
                 if (!(sequenceEndIndex > 0))

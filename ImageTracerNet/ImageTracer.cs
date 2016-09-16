@@ -172,7 +172,7 @@ namespace ImageTracerNet
         {
             var sequences = Sequencing.Create(path.Select(p => p.Direction).ToList());
             // Fit the sequences into segments, and return them.
-            return sequences.Select(s => Segmentation.Fit(path, tracingOptions, s.Item1, s.Item2)).SelectMany(s => s);
+            return sequences.Select(s => Segmentation.Fit(path, tracingOptions, s)).SelectMany(s => s);
         }
 
         ////////////////////////////////////////////////////////////
