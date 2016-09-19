@@ -82,7 +82,7 @@ namespace ImageTracerNet
             }
 
             // 1. Color quantization
-            var ii = IndexedImage.Create(imgd, colorPalette, options.ColorQuantization);
+            var ii = IndexedImage.Create(imgd, colorPalette);
             // 2. Layer separation and edge detection
             var rawLayers = Layering(ii);
             // 3. Batch pathscan
