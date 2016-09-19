@@ -72,7 +72,7 @@ namespace ImageTracerNet
             //        ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
             //        : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
 
-            var colorPalette = BitmapPalettes.Halftone256.Colors.Select(c => Color.FromArgb(c.A, c.R, c.G, c.B)).ToList();
+            var colorPalette = BitmapPalettes.Halftone256.Colors.Select(c => new ColorReference(c.A, c.R, c.G, c.B)).ToList();
 
             // Selective Gaussian blur preprocessing
             if (options.Blur.BlurRadius > 0)
