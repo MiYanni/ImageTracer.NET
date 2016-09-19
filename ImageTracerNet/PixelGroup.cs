@@ -14,7 +14,7 @@ namespace ImageTracerNet
         public int BottomMid { get; }
         public int BottomRight { get; }
 
-        public PixelGroup(IReadOnlyList<int[]> pixels, int row, int column)
+        public PixelGroup(IReadOnlyList<ColorReference> pixels, int row, int column)
         {
             TopLeft = pixels[row - 1][column - 1];
             TopMid = pixels[row - 1][column];

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
@@ -44,6 +45,7 @@ namespace ImageTracerNet.Extensions
             return values;
         }
 
+        // Bitmap returns values in BGRA order.
         //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
         public static byte[] ToByteArray(this Bitmap image)
         {
@@ -91,6 +93,22 @@ namespace ImageTracerNet.Extensions
             }
 
             return colors;
+        }
+
+        //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx
+        //http://stackoverflow.com/questions/23530575/pixel-output-incorrect
+        public static IEnumerable<ColorReference> ToColorReferences(this Bitmap image)
+        {
+            var bytes = image.ToByteArray();
+            // Bitmap returns values in BGRA order.
+            for (var i = 0; i < bytes.Length / 4; ++i)
+            {
+                var b = bytes[i * 4];
+                var g = bytes[i * 4 + 1];
+                var r = bytes[i * 4 + 2];
+                var a = bytes[i * 4 + 3];
+                yield return new ColorReference(a, r, g, b);
+            }
         }
 
         //https://msdn.microsoft.com/en-us/library/ms229672(v=vs.90).aspx

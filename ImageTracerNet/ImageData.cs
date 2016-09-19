@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using ImageTracerNet.Extensions;
 
@@ -11,15 +12,16 @@ namespace ImageTracerNet
         public int Height { get; }
         // raw byte data: R G B A R G B A ...
         public byte[] Data { get; }
-        public Color[] Colors { get; }
+        public IReadOnlyList<ColorReference> Colors { get; }
 
-        public ImageData(int width, int height, byte[] data)
+        public ImageData(int width, int height, Bitmap image)
         {
             Width = width;
             Height = height;
-            Data = data;
+            Data = image.ToRgbaByteArray();
             // RGBA to ARGB Color
-            Colors = ColorExtensions.FromRgbaByteArray(Data);
+            //Colors = ColorExtensions.FromRgbaByteArray(Data);
+            Colors = image.ToColorReferences().ToList();
         }
     }
 }

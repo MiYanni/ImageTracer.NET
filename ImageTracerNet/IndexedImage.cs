@@ -15,28 +15,30 @@ namespace ImageTracerNet
         public int ImageWidth { get; }
         public int ImageHeight { get; }
         // array[x][y] of palette colors
-        private readonly int[][] _array;
+        //private readonly int[][] _array;
+        private readonly IReadOnlyList<ColorReference> _colors;
         public int ArrayWidth { get; }
         public int ArrayHeight { get; }
         // array[palettelength][4] RGBA color palette
-        public IReadOnlyList<Color> Palette { get;  }
+        public IReadOnlyList<ColorReference> Palette { get;  }
         // tracedata
         public List<List<List<Segment>>> Layers { set; get; }
 
-        public IndexedImage(int[][] array, IReadOnlyList<Color> palette)
+        public IndexedImage(IReadOnlyList<ColorReference> colors, IReadOnlyList<ColorReference> palette, int imageHeight, int imageWidth)
         {
-            _array = array;
+            //_array = array;
+            _colors = colors;
             Palette = palette;
-            ArrayWidth = _array[0].Length;
-            ArrayHeight = _array.Length;
+            ArrayWidth = imageWidth + 2;
+            ArrayHeight = imageHeight + 2;
             // Indexed color array adds +2 to the original width and height
-            ImageWidth = ArrayWidth - 2;
-            ImageHeight = ArrayHeight - 2;
+            ImageWidth = imageWidth;
+            ImageHeight = imageHeight;
         }
 
-        public PixelGroup GetPixelGroup(int row, int column)
+        public PixelGroup GetPixelGroup(int row, int column, int width)
         {
-            return new PixelGroup(_array, row, column);
+            return new PixelGroup(_colors, row, column, width);
         }
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction
@@ -57,9 +59,11 @@ namespace ImageTracerNet
                 : new int[width].Initialize(-1, 0, width - 1));
         }
 
-        public static IndexedImage Create(ImageData imageData, IReadOnlyList<Color> colorPalette)
+        public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> colorPalette)
         {
-            var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
+            //var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
+
+            var colors = new List<ColorReference>((imageData.Height + 2) * (imageData.Width + 2));
             for (var j = 0; j < imageData.Height; j++)
             {
                 for (var i = 0; i < imageData.Width; i++)
@@ -80,11 +84,12 @@ namespace ImageTracerNet
                         paletteIndex = k;
                     }
 
-                    arr[j + 1][i + 1] = paletteIndex;
+                    //arr[j + 1][i + 1] = paletteIndex;
+                    colors[(j + 1)*(imageData.Width + 2) + (i + 1)] = colorPalette[paletteIndex];
                 }
             }
 
-            return new IndexedImage(arr, colorPalette);
+            return new IndexedImage(colors, colorPalette, imageData.Height, imageData.Width);
         }
 
         // THIS IS NOW UNUSED

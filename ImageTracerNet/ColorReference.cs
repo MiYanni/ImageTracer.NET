@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using ImageTracerNet.Extensions;
 
 namespace ImageTracerNet
 {
@@ -20,5 +21,10 @@ namespace ImageTracerNet
         public byte R => _color.R;
         public byte G => _color.G;
         public byte B => _color.B;
+
+        public int CalculateRectilinearDistance(ColorReference other)
+        {
+            return _color.CalculateRectilinearDistance(other._color);
+        }
     }
 }
