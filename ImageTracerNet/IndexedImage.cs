@@ -49,16 +49,7 @@ namespace ImageTracerNet
         // -1  0  0  0  0 -1
         // -1  0  0  0  0 -1
         // -1 -1 -1 -1 -1 -1
-        //private static int[][] CreateIndexedColorArray(int height, int width)
-        //{
-        //    height += 2;
-        //    width += 2;
-        //    return new int[height][].Initialize(i =>
-        //    i == 0 || i == height - 1
-        //        ? new int[width].Initialize(-1)
-        //        : new int[width].Initialize(-1, 0, width - 1));
-        //}
-        private static ColorReference[][] CreateColorArray(int height, int width)
+        private static IEnumerable<ColorReference[]> CreateColorArray(int height, int width)
         {
             height += 2;
             width += 2;
@@ -87,19 +78,9 @@ namespace ImageTracerNet
 
         public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> colorPalette)
         {
-            var imageAsPaletteColors = imageData.Colors.Select(c => FindClosest(c, colorPalette)).ToList();
-            var test = CreateColorArray(imageData.Height, imageData.Width);
-            var imageStack = new Queue<ColorReference>(imageAsPaletteColors);
-            var colors = test.SelectMany(c => c).Select(c => c ?? imageStack.Dequeue()).ToList();
-
-            //var colors = Enumerable.Repeat<ColorReference>(null, (imageData.Height + 2) * (imageData.Width + 2)).ToList();
-            //for (var j = 0; j < imageData.Height; j++)
-            //{
-            //    for (var i = 0; i < imageData.Width; i++)
-            //    {
-            //        colors[(j + 1) * (imageData.Width + 2) + (i + 1)] = imageAsPaletteColors[j * imageData.Width + i];
-            //    }
-            //}
+            var imageColorQueue = new Queue<ColorReference>(imageData.Colors.Select(c => FindClosest(c, colorPalette)));
+            var padded2DMatrix = CreateColorArray(imageData.Height, imageData.Width);
+            var colors = padded2DMatrix.SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
 
             return new IndexedImage(colors, colorPalette, imageData.Height, imageData.Width);
         }
