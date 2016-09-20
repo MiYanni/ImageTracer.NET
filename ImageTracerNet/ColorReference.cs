@@ -26,5 +26,8 @@ namespace ImageTracerNet
         {
             return _color.CalculateRectilinearDistance(other._color);
         }
+
+        private ColorReference() { }
+        public static ColorReference Empty { get; } = new ColorReference();
     }
 }

@@ -58,6 +58,15 @@ namespace ImageTracerNet
         //        ? new int[width].Initialize(-1)
         //        : new int[width].Initialize(-1, 0, width - 1));
         //}
+        private static ColorReference[][] CreateColorArray(int height, int width)
+        {
+            height += 2;
+            width += 2;
+            return new ColorReference[height][].Initialize(i =>
+            i == 0 || i == height - 1
+                ? new ColorReference[width].Initialize(j => ColorReference.Empty)
+                : new ColorReference[width].Initialize(j => ColorReference.Empty, 0, width - 1));
+        }
 
         // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
         // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
@@ -79,35 +88,16 @@ namespace ImageTracerNet
         public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> colorPalette)
         {
             var imageAsPaletteColors = imageData.Colors.Select(c => FindClosest(c, colorPalette)).ToList();
-            var colors = Enumerable.Repeat<ColorReference>(null, (imageData.Height + 2) * (imageData.Width + 2)).ToList();
-            for (var j = 0; j < imageData.Height; j++)
-            {
-                for (var i = 0; i < imageData.Width; i++)
-                {
-                    colors[(j + 1) * (imageData.Width + 2) + (i + 1)] = imageAsPaletteColors[j * imageData.Width + i];
-                }
-            }
+            var test = CreateColorArray(imageData.Height, imageData.Width);
+            var imageStack = new Queue<ColorReference>(imageAsPaletteColors);
+            var colors = test.SelectMany(c => c).Select(c => c ?? imageStack.Dequeue()).ToList();
 
             //var colors = Enumerable.Repeat<ColorReference>(null, (imageData.Height + 2) * (imageData.Width + 2)).ToList();
             //for (var j = 0; j < imageData.Height; j++)
             //{
             //    for (var i = 0; i < imageData.Width; i++)
             //    {
-            //        var pixel = imageData.Colors[j * imageData.Width + i];
-            //        var distance = 256 * 4;
-            //        var paletteColor = colorPalette.First();
-            //        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-            //        foreach (var color in colorPalette)
-            //        {
-            //            // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-            //            var newDistance = color.CalculateRectilinearDistance(pixel);
-            //            if (newDistance >= distance) continue;
-
-            //            distance = newDistance;
-            //            paletteColor = color;
-            //        }
-
-            //        colors[(j + 1) * (imageData.Width + 2) + (i + 1)] = paletteColor;
+            //        colors[(j + 1) * (imageData.Width + 2) + (i + 1)] = imageAsPaletteColors[j * imageData.Width + i];
             //    }
             //}
 
