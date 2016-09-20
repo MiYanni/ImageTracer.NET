@@ -63,7 +63,8 @@ namespace ImageTracerNet
         {
             //var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
 
-            var colors = new List<ColorReference>((imageData.Height + 2) * (imageData.Width + 2));
+            //var colors = new List<ColorReference>((imageData.Height + 2) * (imageData.Width + 2));
+            var colors = Enumerable.Repeat<ColorReference>(null, (imageData.Height + 2)*(imageData.Width + 2)).ToList();
             for (var j = 0; j < imageData.Height; j++)
             {
                 for (var i = 0; i < imageData.Width; i++)

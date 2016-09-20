@@ -104,7 +104,7 @@ namespace ImageTracerNet
             }
         }
 
-        private static string ToSvgColorString(this Color c)
+        private static string ToSvgColorString(this ColorReference c)
         {
             return $"fill=\"rgb({c.R},{c.G},{c.B})\" stroke=\"rgb({c.R},{c.G},{c.B})\" stroke-width=\"1\" opacity=\"{c.A / 255.0}\" ";
         }

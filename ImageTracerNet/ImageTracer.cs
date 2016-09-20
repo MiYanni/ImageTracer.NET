@@ -86,7 +86,7 @@ namespace ImageTracerNet
             // 2. Layer separation and edge detection
             var rawLayers = Layering(ii);
             // 3. Batch pathscan
-            var bps = rawLayers.Select(layer => Pathing.Scan(layer, options.Tracing.PathOmit)).ToList();
+            var bps = rawLayers.Select(layer => Pathing.Scan(layer.Value, options.Tracing.PathOmit)).ToList();
             // 4. Batch interpollation
             var bis = bps.Select(Interpolation.Convert).ToList();
             // 5. Batch tracing
@@ -109,18 +109,19 @@ namespace ImageTracerNet
 
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        private static int[][][] Layering(IndexedImage ii)
+        private static Dictionary<ColorReference, int[][]> Layering(IndexedImage ii)
         {
             // Creating layers for each indexed color in arr
-            var layers = new int[ii.Palette.Count][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
-
+            //var layers = new int[ii.Palette.Count][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
+            var layers = ii.Palette.ToDictionary(p => p, p => new int[ii.ArrayHeight][].InitInner(ii.ArrayWidth));
+            
             // Looping through all pixels and calculating edge node type
             for (var j = 1; j < ii.ArrayHeight - 1; j++)
             {
                 for (var i = 1; i < ii.ArrayWidth - 1; i++)
                 {
                     // This pixel's indexed color
-                    var pg = ii.GetPixelGroup(j, i);
+                    var pg = ii.GetPixelGroup(j, i, ii.ArrayWidth);
 
                     // Are neighbor pixel colors the same?
                     // this pixel's type and looking back on previous pixels
