@@ -115,38 +115,41 @@ namespace ImageTracerNet
             var layers = ii.Palette.ToDictionary(p => p, p => new int[ii.PaddedHeight][].InitInner(ii.PaddedWidth));
             
             // Looping through all pixels and calculating edge node type
-            for (var j = 1; j < ii.PaddedHeight - 1; j++)
+            //for (var j = 1; j < ii.PaddedHeight - 1; j++)
+            //{
+            //    for (var i = 1; i < ii.PaddedWidth - 1; i++)
+            //    {
+            foreach (var cg in ii.ColorGroups)
             {
-                for (var i = 1; i < ii.PaddedWidth - 1; i++)
-                {
-                    // This pixel's indexed color
-                    var cg = ii.GetColorGroup(j, i);
+                // This pixel's indexed color
+                //var cg = ii.GetColorGroup(j, i);
 
-                    // Are neighbor pixel colors the same?
-                    // this pixel's type and looking back on previous pixels
-                    // X
-                    // 1, 3, 5, 7, 9, 11, 13, 15
-                    layers[cg.Mid][j + 1][i + 1] = 1 + Convert.ToInt32(cg.MidRight == cg.Mid) * 2 + Convert.ToInt32(cg.BottomRight == cg.Mid) * 4 + Convert.ToInt32(cg.BottomMid == cg.Mid) * 8;
-                    if (cg.MidLeft != cg.Mid)
-                    {
-                        // A
-                        // 2, 6, 10, 14
-                        layers[cg.Mid][j + 1][i] = 2 + Convert.ToInt32(cg.BottomMid == cg.Mid) * 4 + Convert.ToInt32(cg.BottomLeft == cg.Mid) * 8;
-                    }
-                    if (cg.TopMid != cg.Mid)
-                    {
-                        // B
-                        // 8, 10, 12, 14
-                        layers[cg.Mid][j][i + 1] = 8 + Convert.ToInt32(cg.TopRight == cg.Mid) * 2 + Convert.ToInt32(cg.MidRight == cg.Mid) * 4;
-                    }
-                    if (cg.TopLeft != cg.Mid)
-                    {
-                        // C
-                        // 4, 6, 12, 14
-                        layers[cg.Mid][j][i] = 4 + Convert.ToInt32(cg.TopMid == cg.Mid) * 2 + Convert.ToInt32(cg.MidLeft == cg.Mid) * 8;
-                    }
+                // Are neighbor pixel colors the same?
+                // this pixel's type and looking back on previous pixels
+                // X
+                // 1, 3, 5, 7, 9, 11, 13, 15
+                layers[cg.Mid][cg.X + 1][cg.Y + 1] = 1 + Convert.ToInt32(cg.MidRight == cg.Mid) * 2 + Convert.ToInt32(cg.BottomRight == cg.Mid) * 4 + Convert.ToInt32(cg.BottomMid == cg.Mid) * 8;
+                if (cg.MidLeft != cg.Mid)
+                {
+                    // A
+                    // 2, 6, 10, 14
+                    layers[cg.Mid][cg.X + 1][cg.Y] = 2 + Convert.ToInt32(cg.BottomMid == cg.Mid) * 4 + Convert.ToInt32(cg.BottomLeft == cg.Mid) * 8;
+                }
+                if (cg.TopMid != cg.Mid)
+                {
+                    // B
+                    // 8, 10, 12, 14
+                    layers[cg.Mid][cg.X][cg.Y + 1] = 8 + Convert.ToInt32(cg.TopRight == cg.Mid) * 2 + Convert.ToInt32(cg.MidRight == cg.Mid) * 4;
+                }
+                if (cg.TopLeft != cg.Mid)
+                {
+                    // C
+                    // 4, 6, 12, 14
+                    layers[cg.Mid][cg.X][cg.Y] = 4 + Convert.ToInt32(cg.TopMid == cg.Mid) * 2 + Convert.ToInt32(cg.MidLeft == cg.Mid) * 8;
                 }
             }
+            //    }
+            //}
 
             return layers;
         }

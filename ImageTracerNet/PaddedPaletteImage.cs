@@ -10,7 +10,8 @@ namespace ImageTracerNet
     internal class PaddedPaletteImage
     {
         // array[x][y] of palette colors
-        private readonly IReadOnlyList<ColorReference> _colors;
+        //private readonly IReadOnlyList<ColorReference> _colors;
+        public IReadOnlyList<ColorGroup> ColorGroups { get; }
         public int ImageWidth { get; }
         public int ImageHeight { get; }
         // Indexed color array adds +2 to the original width and height
@@ -27,13 +28,14 @@ namespace ImageTracerNet
             ImageWidth = imageData.Width;
             ImageHeight = imageData.Height;
 
-            _colors = ConvertToPaddedPaletteColors(imageData.Colors);
+            ColorGroups = ConvertToPaddedPaletteColorGroups(imageData.Colors).ToList();
+            //_colors = ConvertToPaddedPaletteColors(imageData.Colors);
         }
 
-        public ColorGroup GetColorGroup(int row, int column)
-        {
-            return new ColorGroup(_colors, row, column, PaddedWidth);
-        }
+        //public ColorGroup GetColorGroup(int row, int column)
+        //{
+        //    return new ColorGroup(_colors, row, column, PaddedWidth);
+        //}
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction
         // Imagine the -1's being ColorReference.Empty and the 0's being null.
@@ -52,10 +54,17 @@ namespace ImageTracerNet
                 : new ColorReference[PaddedWidth].Initialize(j => ColorReference.Empty, 0, PaddedWidth - 1));
         }
 
-        private List<ColorReference> ConvertToPaddedPaletteColors(IEnumerable<ColorReference> colors)
+        private IEnumerable<ColorGroup> ConvertToPaddedPaletteColorGroups(IEnumerable<ColorReference> colors)
         {
             var imageColorQueue = new Queue<ColorReference>(colors.Select(c => c.FindClosest(Palette)));
-            return CreatePaddedColorMatrix().SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
+            var colorMatrix = CreatePaddedColorMatrix().SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
+            for (var row = 1; row < PaddedHeight - 1; row++)
+            {
+                for (var column = 1; column < PaddedWidth - 1; column++)
+                {
+                    yield return new ColorGroup(colorMatrix, row, column, PaddedWidth);
+                }
+            }
         }
 
         // THIS IS NOW UNUSED
