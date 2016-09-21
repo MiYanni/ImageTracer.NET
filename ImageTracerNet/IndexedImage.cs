@@ -42,6 +42,7 @@ namespace ImageTracerNet
         }
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction
+        // Imagine the -1's being ColorReference.Empty and the 0's being null.
         // Example: 4x4 image becomes a 6x6 matrix:
         // -1 -1 -1 -1 -1 -1
         // -1  0  0  0  0 -1
@@ -49,7 +50,7 @@ namespace ImageTracerNet
         // -1  0  0  0  0 -1
         // -1  0  0  0  0 -1
         // -1 -1 -1 -1 -1 -1
-        private static IEnumerable<ColorReference[]> CreateColorArray(int height, int width)
+        private static IEnumerable<ColorReference[]> CreatePaddedColorMatrix(int height, int width)
         {
             height += 2;
             width += 2;
@@ -59,30 +60,30 @@ namespace ImageTracerNet
                 : new ColorReference[width].Initialize(j => ColorReference.Empty, 0, width - 1));
         }
 
-        // find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-        // In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-        private static ColorReference FindClosest(ColorReference imageColor, IReadOnlyList<ColorReference> palette)
+        //// find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
+        //// In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
+        //private static ColorReference FindClosest(ColorReference imageColor, IReadOnlyList<ColorReference> palette)
+        //{
+        //    var distance = 256 * 4;
+        //    var paletteColor = palette.First();
+        //    foreach (var color in palette)
+        //    {
+        //        var newDistance = color.CalculateRectilinearDistance(imageColor);
+        //        if (newDistance >= distance) continue;
+
+        //        distance = newDistance;
+        //        paletteColor = color;
+        //    }
+        //    return paletteColor;
+        //}
+
+        public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> palette)
         {
-            var distance = 256 * 4;
-            var paletteColor = palette.First();
-            foreach (var color in palette)
-            {
-                var newDistance = color.CalculateRectilinearDistance(imageColor);
-                if (newDistance >= distance) continue;
+            var imageColorQueue = new Queue<ColorReference>(imageData.Colors.Select(c => c.FindClosest(palette)));
+            var paddedColorMatrix = CreatePaddedColorMatrix(imageData.Height, imageData.Width);
+            var colors = paddedColorMatrix.SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
 
-                distance = newDistance;
-                paletteColor = color;
-            }
-            return paletteColor;
-        }
-
-        public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> colorPalette)
-        {
-            var imageColorQueue = new Queue<ColorReference>(imageData.Colors.Select(c => FindClosest(c, colorPalette)));
-            var padded2DMatrix = CreateColorArray(imageData.Height, imageData.Width);
-            var colors = padded2DMatrix.SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
-
-            return new IndexedImage(colors, colorPalette, imageData.Height, imageData.Width);
+            return new IndexedImage(colors, palette, imageData.Height, imageData.Width);
         }
 
         // THIS IS NOW UNUSED
