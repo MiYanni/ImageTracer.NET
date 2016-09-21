@@ -115,15 +115,8 @@ namespace ImageTracerNet
             var layers = ii.Palette.ToDictionary(p => p, p => new int[ii.PaddedHeight][].InitInner(ii.PaddedWidth));
             
             // Looping through all pixels and calculating edge node type
-            //for (var j = 1; j < ii.PaddedHeight - 1; j++)
-            //{
-            //    for (var i = 1; i < ii.PaddedWidth - 1; i++)
-            //    {
             foreach (var cg in ii.ColorGroups)
             {
-                // This pixel's indexed color
-                //var cg = ii.GetColorGroup(j, i);
-
                 // Are neighbor pixel colors the same?
                 // this pixel's type and looking back on previous pixels
                 // X
@@ -148,8 +141,6 @@ namespace ImageTracerNet
                     layers[cg.Mid][cg.X][cg.Y] = 4 + Convert.ToInt32(cg.TopMid == cg.Mid) * 2 + Convert.ToInt32(cg.MidLeft == cg.Mid) * 8;
                 }
             }
-            //    }
-            //}
 
             return layers;
         }
