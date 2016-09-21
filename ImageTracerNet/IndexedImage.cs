@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using ImageTracerNet.Extensions;
-using ImageTracerNet.OptionTypes;
-using ImageTracerNet.Palettes;
 using ImageTracerNet.Vectorization.Segments;
 
 namespace ImageTracerNet
@@ -24,16 +21,28 @@ namespace ImageTracerNet
         // tracedata
         public List<List<List<Segment>>> Layers { set; get; }
 
-        public IndexedImage(IReadOnlyList<ColorReference> colors, IReadOnlyList<ColorReference> palette, int imageHeight, int imageWidth)
+        //public IndexedImage(IReadOnlyList<ColorReference> colors, IReadOnlyList<ColorReference> palette, int imageHeight, int imageWidth)
+        //{
+        //    //_array = array;
+        //    _colors = colors;
+        //    Palette = palette;
+        //    ArrayWidth = imageWidth + 2;
+        //    ArrayHeight = imageHeight + 2;
+        //    // Indexed color array adds +2 to the original width and height
+        //    ImageWidth = imageWidth;
+        //    ImageHeight = imageHeight;
+        //}
+
+        public IndexedImage(ImageData imageData, IReadOnlyList<ColorReference> palette)
         {
-            //_array = array;
-            _colors = colors;
             Palette = palette;
-            ArrayWidth = imageWidth + 2;
-            ArrayHeight = imageHeight + 2;
+            ImageWidth = imageData.Width;
+            ImageHeight = imageData.Height;
             // Indexed color array adds +2 to the original width and height
-            ImageWidth = imageWidth;
-            ImageHeight = imageHeight;
+            ArrayWidth = ImageWidth + 2;
+            ArrayHeight = ImageHeight + 2;
+
+            _colors = ConvertToPaddedPaletteColors(imageData.Colors);
         }
 
         public PixelGroup GetPixelGroup(int row, int column, int width)
@@ -50,41 +59,30 @@ namespace ImageTracerNet
         // -1  0  0  0  0 -1
         // -1  0  0  0  0 -1
         // -1 -1 -1 -1 -1 -1
-        private static IEnumerable<ColorReference[]> CreatePaddedColorMatrix(int height, int width)
+        private IEnumerable<ColorReference[]> CreatePaddedColorMatrix()
         {
-            height += 2;
-            width += 2;
-            return new ColorReference[height][].Initialize(i =>
-            i == 0 || i == height - 1
-                ? new ColorReference[width].Initialize(j => ColorReference.Empty)
-                : new ColorReference[width].Initialize(j => ColorReference.Empty, 0, width - 1));
+            //height += 2;
+            //width += 2;
+            return new ColorReference[ArrayHeight][].Initialize(i =>
+            i == 0 || i == ArrayHeight - 1
+                ? new ColorReference[ArrayWidth].Initialize(j => ColorReference.Empty)
+                : new ColorReference[ArrayWidth].Initialize(j => ColorReference.Empty, 0, ArrayWidth - 1));
         }
 
-        //// find closest color from palette by measuring (rectilinear) color distance between this pixel and all palette colors
-        //// In my experience, https://en.wikipedia.org/wiki/Rectilinear_distance works better than https://en.wikipedia.org/wiki/Euclidean_distance
-        //private static ColorReference FindClosest(ColorReference imageColor, IReadOnlyList<ColorReference> palette)
+        private List<ColorReference> ConvertToPaddedPaletteColors(IEnumerable<ColorReference> colors)
+        {
+            var imageColorQueue = new Queue<ColorReference>(colors.Select(c => c.FindClosest(Palette)));
+            return CreatePaddedColorMatrix().SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
+        }
+
+        //public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> palette)
         //{
-        //    var distance = 256 * 4;
-        //    var paletteColor = palette.First();
-        //    foreach (var color in palette)
-        //    {
-        //        var newDistance = color.CalculateRectilinearDistance(imageColor);
-        //        if (newDistance >= distance) continue;
+        //    var imageColorQueue = new Queue<ColorReference>(imageData.Colors.Select(c => c.FindClosest(palette)));
+        //    var paddedColorMatrix = CreatePaddedColorMatrix(imageData.Height, imageData.Width);
+        //    var colors = paddedColorMatrix.SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
 
-        //        distance = newDistance;
-        //        paletteColor = color;
-        //    }
-        //    return paletteColor;
+        //    return new IndexedImage(colors, palette, imageData.Height, imageData.Width);
         //}
-
-        public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> palette)
-        {
-            var imageColorQueue = new Queue<ColorReference>(imageData.Colors.Select(c => c.FindClosest(palette)));
-            var paddedColorMatrix = CreatePaddedColorMatrix(imageData.Height, imageData.Width);
-            var colors = paddedColorMatrix.SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
-
-            return new IndexedImage(colors, palette, imageData.Height, imageData.Width);
-        }
 
         // THIS IS NOW UNUSED
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
