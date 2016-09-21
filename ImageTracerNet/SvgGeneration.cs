@@ -14,7 +14,7 @@ namespace ImageTracerNet
     {
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
-        public static string ToSvgString(this IndexedImage ii, SvgRendering options)
+        public static string ToSvgString(this PaddedPaletteImage ii, SvgRendering options)
         {
             // SVG start
             var width = (int)(ii.ImageWidth * options.Scale);

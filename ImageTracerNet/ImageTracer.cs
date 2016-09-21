@@ -33,13 +33,13 @@ namespace ImageTracerNet
             return ImageDataToSvg(image, LoadImageData(image), options, palette);
         }
 
-        // Loading an image from a file, tracing when loaded, then returning IndexedImage with tracedata in layers
-        internal static IndexedImage ImageToTraceData(string filename, Options options, byte[][] palette) 
+        // Loading an image from a file, tracing when loaded, then returning PaddedPaletteImage with tracedata in layers
+        internal static PaddedPaletteImage ImageToTraceData(string filename, Options options, byte[][] palette) 
         {
             return ImageToTraceData(new Bitmap(filename), options, palette);
         }
 
-        internal static IndexedImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
+        internal static PaddedPaletteImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
         {
             return ImageDataToTraceData(image, LoadImageData(image), options, palette);
         }
@@ -59,8 +59,8 @@ namespace ImageTracerNet
             return ImageDataToTraceData(image, imgd, options, palette).ToSvgString(options.SvgRendering);
         }
 
-        // Tracing ImageData, then returning IndexedImage with tracedata in layers
-        private static IndexedImage ImageDataToTraceData(Bitmap image, ImageData imgd, Options options, byte[][] palette)
+        // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
+        private static PaddedPaletteImage ImageDataToTraceData(Bitmap image, ImageData imgd, Options options, byte[][] palette)
         {
             //var paletteRowsColumns = (int)Math.Sqrt(options.ColorQuantization.NumberOfColors);
             // Use custom palette if pal is defined or sample or generate custom length palette
@@ -82,7 +82,7 @@ namespace ImageTracerNet
             //}
 
             // 1. Color quantization
-            var ii = new IndexedImage(imgd, colorPalette);
+            var ii = new PaddedPaletteImage(imgd, colorPalette);
             // 2. Layer separation and edge detection
             var rawLayers = Layering(ii);
             // 3. Batch pathscan
@@ -109,42 +109,41 @@ namespace ImageTracerNet
 
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        private static Dictionary<ColorReference, int[][]> Layering(IndexedImage ii)
+        private static Dictionary<ColorReference, int[][]> Layering(PaddedPaletteImage ii)
         {
             // Creating layers for each indexed color in arr
-            //var layers = new int[ii.Palette.Count][][].InitInner(ii.ArrayHeight, ii.ArrayWidth);
-            var layers = ii.Palette.ToDictionary(p => p, p => new int[ii.ArrayHeight][].InitInner(ii.ArrayWidth));
+            var layers = ii.Palette.ToDictionary(p => p, p => new int[ii.PaddedHeight][].InitInner(ii.PaddedWidth));
             
             // Looping through all pixels and calculating edge node type
-            for (var j = 1; j < ii.ArrayHeight - 1; j++)
+            for (var j = 1; j < ii.PaddedHeight - 1; j++)
             {
-                for (var i = 1; i < ii.ArrayWidth - 1; i++)
+                for (var i = 1; i < ii.PaddedWidth - 1; i++)
                 {
                     // This pixel's indexed color
-                    var pg = ii.GetPixelGroup(j, i, ii.ArrayWidth);
+                    var cg = ii.GetColorGroup(j, i);
 
                     // Are neighbor pixel colors the same?
                     // this pixel's type and looking back on previous pixels
                     // X
                     // 1, 3, 5, 7, 9, 11, 13, 15
-                    layers[pg.Mid][j + 1][i + 1] = 1 + Convert.ToInt32(pg.MidRight == pg.Mid) * 2 + Convert.ToInt32(pg.BottomRight == pg.Mid) * 4 + Convert.ToInt32(pg.BottomMid == pg.Mid) * 8;
-                    if (pg.MidLeft != pg.Mid)
+                    layers[cg.Mid][j + 1][i + 1] = 1 + Convert.ToInt32(cg.MidRight == cg.Mid) * 2 + Convert.ToInt32(cg.BottomRight == cg.Mid) * 4 + Convert.ToInt32(cg.BottomMid == cg.Mid) * 8;
+                    if (cg.MidLeft != cg.Mid)
                     {
                         // A
                         // 2, 6, 10, 14
-                        layers[pg.Mid][j + 1][i] = 2 + Convert.ToInt32(pg.BottomMid == pg.Mid) * 4 + Convert.ToInt32(pg.BottomLeft == pg.Mid) * 8;
+                        layers[cg.Mid][j + 1][i] = 2 + Convert.ToInt32(cg.BottomMid == cg.Mid) * 4 + Convert.ToInt32(cg.BottomLeft == cg.Mid) * 8;
                     }
-                    if (pg.TopMid != pg.Mid)
+                    if (cg.TopMid != cg.Mid)
                     {
                         // B
                         // 8, 10, 12, 14
-                        layers[pg.Mid][j][i + 1] = 8 + Convert.ToInt32(pg.TopRight == pg.Mid) * 2 + Convert.ToInt32(pg.MidRight == pg.Mid) * 4;
+                        layers[cg.Mid][j][i + 1] = 8 + Convert.ToInt32(cg.TopRight == cg.Mid) * 2 + Convert.ToInt32(cg.MidRight == cg.Mid) * 4;
                     }
-                    if (pg.TopLeft != pg.Mid)
+                    if (cg.TopLeft != cg.Mid)
                     {
                         // C
                         // 4, 6, 12, 14
-                        layers[pg.Mid][j][i] = 4 + Convert.ToInt32(pg.TopMid == pg.Mid) * 2 + Convert.ToInt32(pg.MidLeft == pg.Mid) * 8;
+                        layers[cg.Mid][j][i] = 4 + Convert.ToInt32(cg.TopMid == cg.Mid) * 2 + Convert.ToInt32(cg.MidLeft == cg.Mid) * 8;
                     }
                 }
             }

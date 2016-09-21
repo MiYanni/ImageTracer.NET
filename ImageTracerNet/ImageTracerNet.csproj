@@ -54,7 +54,7 @@
     <Compile Include="Vectorization\Heading.cs" />
     <Compile Include="ImageData.cs" />
     <Compile Include="ImageTracer.cs" />
-    <Compile Include="IndexedImage.cs" />
+    <Compile Include="PaddedPaletteImage.cs" />
     <Compile Include="Vectorization\Interpolation.cs" />
     <Compile Include="Vectorization\Points\InterpolationPoint.cs" />
     <Compile Include="OptionTypes\Blur.cs" />
@@ -68,7 +68,7 @@
     <Compile Include="Palettes\SmartPalette.cs" />
     <Compile Include="Vectorization\Pathing.cs" />
     <Compile Include="Vectorization\Points\PathPoint.cs" />
-    <Compile Include="PixelGroup.cs" />
+    <Compile Include="ColorGroup.cs" />
     <Compile Include="Vectorization\Points\Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Vectorization\Segments\LineSegment.cs" />

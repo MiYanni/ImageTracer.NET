@@ -7,47 +7,32 @@ namespace ImageTracerNet
 {
     //https://en.wikipedia.org/wiki/Indexed_color
     // Container for the color-indexed image before and tracedata after vectorizing
-    internal class IndexedImage
+    internal class PaddedPaletteImage
     {
+        // array[x][y] of palette colors
+        private readonly IReadOnlyList<ColorReference> _colors;
         public int ImageWidth { get; }
         public int ImageHeight { get; }
-        // array[x][y] of palette colors
-        //private readonly int[][] _array;
-        private readonly IReadOnlyList<ColorReference> _colors;
-        public int ArrayWidth { get; }
-        public int ArrayHeight { get; }
+        // Indexed color array adds +2 to the original width and height
+        public int PaddedWidth => ImageWidth + 2;
+        public int PaddedHeight => ImageHeight + 2;
         // array[palettelength][4] RGBA color palette
-        public IReadOnlyList<ColorReference> Palette { get;  }
+        public IReadOnlyList<ColorReference> Palette { get; }
         // tracedata
         public List<List<List<Segment>>> Layers { set; get; }
 
-        //public IndexedImage(IReadOnlyList<ColorReference> colors, IReadOnlyList<ColorReference> palette, int imageHeight, int imageWidth)
-        //{
-        //    //_array = array;
-        //    _colors = colors;
-        //    Palette = palette;
-        //    ArrayWidth = imageWidth + 2;
-        //    ArrayHeight = imageHeight + 2;
-        //    // Indexed color array adds +2 to the original width and height
-        //    ImageWidth = imageWidth;
-        //    ImageHeight = imageHeight;
-        //}
-
-        public IndexedImage(ImageData imageData, IReadOnlyList<ColorReference> palette)
+        public PaddedPaletteImage(ImageData imageData, IReadOnlyList<ColorReference> palette)
         {
             Palette = palette;
             ImageWidth = imageData.Width;
             ImageHeight = imageData.Height;
-            // Indexed color array adds +2 to the original width and height
-            ArrayWidth = ImageWidth + 2;
-            ArrayHeight = ImageHeight + 2;
 
             _colors = ConvertToPaddedPaletteColors(imageData.Colors);
         }
 
-        public PixelGroup GetPixelGroup(int row, int column, int width)
+        public ColorGroup GetColorGroup(int row, int column)
         {
-            return new PixelGroup(_colors, row, column, width);
+            return new ColorGroup(_colors, row, column, PaddedWidth);
         }
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction
@@ -61,12 +46,10 @@ namespace ImageTracerNet
         // -1 -1 -1 -1 -1 -1
         private IEnumerable<ColorReference[]> CreatePaddedColorMatrix()
         {
-            //height += 2;
-            //width += 2;
-            return new ColorReference[ArrayHeight][].Initialize(i =>
-            i == 0 || i == ArrayHeight - 1
-                ? new ColorReference[ArrayWidth].Initialize(j => ColorReference.Empty)
-                : new ColorReference[ArrayWidth].Initialize(j => ColorReference.Empty, 0, ArrayWidth - 1));
+            return new ColorReference[PaddedHeight][].Initialize(i =>
+            i == 0 || i == PaddedHeight - 1
+                ? new ColorReference[PaddedWidth].Initialize(j => ColorReference.Empty)
+                : new ColorReference[PaddedWidth].Initialize(j => ColorReference.Empty, 0, PaddedWidth - 1));
         }
 
         private List<ColorReference> ConvertToPaddedPaletteColors(IEnumerable<ColorReference> colors)
@@ -75,20 +58,11 @@ namespace ImageTracerNet
             return CreatePaddedColorMatrix().SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
         }
 
-        //public static IndexedImage Create(ImageData imageData, IReadOnlyList<ColorReference> palette)
-        //{
-        //    var imageColorQueue = new Queue<ColorReference>(imageData.Colors.Select(c => c.FindClosest(palette)));
-        //    var paddedColorMatrix = CreatePaddedColorMatrix(imageData.Height, imageData.Width);
-        //    var colors = paddedColorMatrix.SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
-
-        //    return new IndexedImage(colors, palette, imageData.Height, imageData.Width);
-        //}
-
         // THIS IS NOW UNUSED
         // 1. Color quantization repeated "cycles" times, based on K-means clustering
         // https://en.wikipedia.org/wiki/Color_quantization
         // https://en.wikipedia.org/wiki/K-means_clustering
-        //private static IndexedImage ColorQuantization(ImageData imageData, Color[] colorPalette, Options options)
+        //private static PaddedPaletteImage ColorQuantization(ImageData imageData, Color[] colorPalette, Options options)
         //{
         //    var arr = CreateIndexedColorArray(imageData.Height, imageData.Width);
         //    // Repeat clustering step "cycles" times
@@ -143,7 +117,7 @@ namespace ImageTracerNet
         //        }
         //    }
 
-        //    return new IndexedImage(arr, colorPalette);
+        //    return new PaddedPaletteImage(arr, colorPalette);
         //}
     }
 }
