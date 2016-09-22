@@ -1,6 +1,6 @@
 ﻿// ReSharper disable InconsistentNaming
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Vectorization
 {
 
     // Edge node types ( ▓:light or 1; ░:dark or 0 )

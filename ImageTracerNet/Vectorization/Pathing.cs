@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using ImageTracerNet.Vectorization.Points;
-using NodeDirList = System.Collections.Generic.List<System.Tuple<ImageTracerNet.EdgeNode, int>>;
+using NodeDirList = System.Collections.Generic.List<System.Tuple<ImageTracerNet.Vectorization.EdgeNode, int>>;
 using ImageTracerNet.Extensions;
-using static ImageTracerNet.EdgeNode;
+using static ImageTracerNet.Vectorization.EdgeNode;
 
 namespace ImageTracerNet.Vectorization
 {
