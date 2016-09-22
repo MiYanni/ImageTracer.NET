@@ -49,7 +49,7 @@ namespace ImageTracerNet
 
         private IEnumerable<ColorGroup> ConvertToPaddedPaletteColorGroups(IEnumerable<ColorReference> colors)
         {
-            var imageColorQueue = new Queue<ColorReference>(colors.Select(c => c.FindClosest(Palette)));
+            var imageColorQueue = new Queue<ColorReference>(colors.AsParallel().AsOrdered().Select(c => c.FindClosest(Palette)));
             var colorMatrix = CreatePaddedColorMatrix().SelectMany(c => c).Select(c => c ?? imageColorQueue.Dequeue()).ToList();
             for (var row = 1; row < PaddedHeight - 1; row++)
             {
