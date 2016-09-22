@@ -64,19 +64,21 @@ namespace ImageTracerNet.Extensions
 
         public static T[] Initialize<T>(this T[] array, Func<int, T> initializer)
         {
-            for (var i = 0; i < array.Length; ++i)
-            {
-                array[i] = initializer(i);
-            }
+            //for (var i = 0; i < array.Length; ++i)
+            //{
+            //    array[i] = initializer(i);
+            //}
+            Parallel.For(0, array.Length, i => array[i] = initializer(i));
             return array;
         }
 
         public static T[] Initialize<T>(this T[] array, Func<int, T> initializer, params int[] indices)
         {
-            foreach (var index in indices)
-            {
-                array[index] = initializer(index);
-            }
+            //foreach (var index in indices)
+            //{
+            //    array[index] = initializer(index);
+            //}
+            Parallel.ForEach(indices, i => array[i] = initializer(i));
             return array;
         }
     }
