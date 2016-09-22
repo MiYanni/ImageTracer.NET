@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using ImageTracerNet.Extensions;
 using System.Windows.Media.Imaging;
-using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization;
-using ImageTracerNet.Vectorization.Points;
-using ImageTracerNet.Vectorization.Segments;
 
 namespace ImageTracerNet
 {
@@ -90,40 +85,9 @@ namespace ImageTracerNet
             // 4. Batch interpollation
             var bis = bps.Select(Interpolation.Convert).ToList();
             // 5. Batch tracing
-            ii.Layers = bis.Select(l => l.Select(p => TracePath(p, options.Tracing).ToList()).ToList()).ToList();
+            ii.Layers = bis.Select(l => l.Select(p => Pathing.Trace(p, options.Tracing).ToList()).ToList()).ToList();
             
             return ii;
-        }
-
-        ////////////////////////////////////////////////////////////
-        //
-        //  Vectorizing functions
-        //
-        ////////////////////////////////////////////////////////////
-
-        // 5. tracepath() : recursively trying to fit straight and quadratic spline segments on the 8 direction internode path
-
-        // 5.1. Find sequences of points with only 2 segment types
-        // 5.2. Fit a straight line on the sequence
-        // 5.3. If the straight line fails (an error>ltreshold), find the point with the biggest error
-        // 5.4. Fit a quadratic spline through errorpoint (project this to get controlpoint), then measure errors on every point in the sequence
-        // 5.5. If the spline fails (an error>qtreshold), find the point with the biggest error, set splitpoint = (fitting point + errorpoint)/2
-        // 5.6. Split sequence and recursively apply 5.2. - 5.7. to startpoint-splitpoint and splitpoint-endpoint sequences
-        // 5.7. TODO? If splitpoint-endpoint is a spline, try to add new points from the next sequence
-
-        // This returns an SVG Path segment as a double[7] where
-        // segment[0] ==1.0 linear  ==2.0 quadratic interpolation
-        // segment[1] , segment[2] : x1 , y1
-        // segment[3] , segment[4] : x2 , y2 ; middle point of Q curve, endpoint of L line
-        // segment[5] , segment[6] : x3 , y3 for Q curve, should be 0.0 , 0.0 for L line
-        //
-        // path type is discarded, no check for path.size < 3 , which should not happen
-
-        private static IEnumerable<Segment> TracePath(List<InterpolationPoint> path, Tracing tracingOptions)
-        {
-            var sequences = Sequencing.Create(path.Select(p => p.Direction).ToList());
-            // Fit the sequences into segments, and return them.
-            return sequences.Select(s => Segmentation.Fit(path, tracingOptions, s)).SelectMany(s => s);
         }
 
         ////////////////////////////////////////////////////////////
