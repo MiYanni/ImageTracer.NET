@@ -80,6 +80,7 @@
     <Compile Include="Vectorization\Sequencing.cs" />
     <Compile Include="Vectorization\Segments\SplineSegment.cs" />
     <Compile Include="Svg\ZPosition.cs" />
+    <Compile Include="Vectorization\WalkDirection.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="References\ImageTracer.java" />

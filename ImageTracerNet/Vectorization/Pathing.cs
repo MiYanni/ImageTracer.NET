@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using ImageTracerNet.Vectorization.Points;
-using NodeDirList = System.Collections.Generic.List<System.Tuple<ImageTracerNet.Vectorization.EdgeNode, int>>;
+using NodeDirList = System.Collections.Generic.List<System.Tuple<ImageTracerNet.Vectorization.EdgeNode, ImageTracerNet.Vectorization.WalkDirection>>;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Segments;
 using static ImageTracerNet.Vectorization.EdgeNode;
+using static ImageTracerNet.Vectorization.WalkDirection;
 
 namespace ImageTracerNet.Vectorization
 {
@@ -27,89 +28,85 @@ namespace ImageTracerNet.Vectorization
 
         private static readonly NodeDirList MinusOneYs = new NodeDirList
         {
-            {LDDD, 0},
-            {DLDD, 2},
-            {LDDL, 2},
-            {DLDL, 1},
-            {LDLD, 1},
-            {DLLD, 0},
-            {LDLL, 2},
-            {DLLL, 0}
+            {LDDD, Right},
+            {DLDD, Left},
+            {LDDL, Left},
+            {DLDL, Up},
+            {LDLD, Up},
+            {DLLD, Right},
+            {LDLL, Left},
+            {DLLL, Right}
         };
         private static readonly NodeDirList PlusOneYs = new NodeDirList
         {
-            {DDDL, 2},
-            {LDDL, 0},
-            {DLDL, 3},
-            {LLDL, 0},
-            {DDLD, 0},
-            {LDLD, 3},
-            {DLLD, 2},
-            {LLLD, 2}
+            {DDDL, Left},
+            {LDDL, Right},
+            {DLDL, Down},
+            {LLDL, Right},
+            {DDLD, Right},
+            {LDLD, Down},
+            {DLLD, Left},
+            {LLLD, Left}
         };
 
         private static readonly NodeDirList MinusOneXs = new NodeDirList
         {
-            {LDDD, 3},
-            {LLDD, 2},
-            {LDDL, 1},
-            {LLDL, 1},
-            {DDLD, 1},
-            {DLLD, 3},
-            {DDLL, 2},
-            {DLLL, 3}
+            {LDDD, Down},
+            {LLDD, Left},
+            {LDDL, Up},
+            {LLDL, Up},
+            {DDLD, Up},
+            {DLLD, Down},
+            {DDLL, Left},
+            {DLLL, Down}
         };
         private static readonly NodeDirList PlusOneXs = new NodeDirList
         {
-            {DLDD, 3},
-            {LLDD, 0},
-            {DDDL, 1},
-            {LDDL, 3},
-            {DLLD, 1},
-            {LLLD, 1},
-            {DDLL, 0},
-            {LDLL, 3}
+            {DLDD, Down},
+            {LLDD, Right},
+            {DDDL, Up},
+            {LDDL, Down},
+            {DLLD, Up},
+            {LLLD, Up},
+            {DDLL, Right},
+            {LDLL, Down}
         };
 
-        // 0 >
-        private static readonly NodeDirList DirZeroAssignments = new NodeDirList
+        private static readonly NodeDirList RightAssignments = new NodeDirList
         {
-            {DLDD, 3},
-            {DDDL, 1},
-            {LDDL, 3},
-            {DLLD, 1},
-            {LLLD, 1},
-            {LDLL, 3}
+            {DLDD, Down},
+            {DDDL, Up},
+            {LDDL, Down},
+            {DLLD, Up},
+            {LLLD, Up},
+            {LDLL, Down}
         };
-        // 1 ^
-        private static readonly NodeDirList DirOneAssignments = new NodeDirList
+        private static readonly NodeDirList UpAssignments = new NodeDirList
         {
-            {LDDD, 0},
-            {DLDD, 2},
-            {LDDL, 2},
-            {DLLD, 0},
-            {LDLL, 2},
-            {DLLL, 0}
+            {LDDD, Right},
+            {DLDD, Left},
+            {LDDL, Left},
+            {DLLD, Right},
+            {LDLL, Left},
+            {DLLL, Right}
         };
-        // 2 <
-        private static readonly NodeDirList DirTwoAssignments = new NodeDirList
+        private static readonly NodeDirList LeftAssignments = new NodeDirList
         {
-            {LDDD, 3},
-            {LDDL, 1},
-            {LLDL, 1},
-            {DDLD, 1},
-            {DLLD, 3},
-            {DLLL, 3}
+            {LDDD, Down},
+            {LDDL, Up},
+            {LLDL, Up},
+            {DDLD, Up},
+            {DLLD, Down},
+            {DLLL, Down}
         };
-        // 3 v
-        private static readonly NodeDirList DirThreeAssignments = new NodeDirList
+        private static readonly NodeDirList DownAssignments = new NodeDirList
         {
-            {DDDL, 2},
-            {LDDL, 0},
-            {LLDL, 0},
-            {DDLD, 0},
-            {DLLD, 2},
-            {LLLD, 2}
+            {DDDL, Left},
+            {LDDL, Right},
+            {LLDL, Right},
+            {DDLD, Right},
+            {DLLD, Left},
+            {LLLD, Left}
         };
 
         // 3. Walking through an edge node array, discarding edge node types 0 and 15 and creating paths from the rest.
@@ -137,7 +134,7 @@ namespace ImageTracerNet.Vectorization
                     if ((initialNodeValue == DDDD) || (initialNodeValue == LLLL)) continue;
 
                     // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
-                    var dir = InitialOneNodes.Contains(initialNodeValue) ? 1 : (InitialThreeNodes.Contains(initialNodeValue) ? 3 : 0);
+                    var dir = InitialOneNodes.Contains(initialNodeValue) ? Up : (InitialThreeNodes.Contains(initialNodeValue) ? Down : Right);
                     holePath = HoleNodes.Contains(initialNodeValue) || (NonHoleNode != initialNodeValue && holePath);
 
                     // Init
@@ -156,15 +153,15 @@ namespace ImageTracerNet.Vectorization
                         thisPath.Add(new PathPoint { X = px - 1, Y = py - 1, EdgeNode = nodeValue });
 
                         // Node types
-                        arr[py][px] = NonZeroNodes.ContainsKey(nodeValue) ? NonZeroNodes[nodeValue][dir] : DDDD;
+                        arr[py][px] = NonZeroNodes.ContainsKey(nodeValue) ? NonZeroNodes[nodeValue][(int)dir] : DDDD;
 
-                        var nodeValueDirPair = new Tuple<EdgeNode, int>(nodeValue, dir);
+                        var nodeValueDirPair = new Tuple<EdgeNode, WalkDirection>(nodeValue, dir);
                         py += MinusOneYs.Contains(nodeValueDirPair) ? -1 : (PlusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
                         px += MinusOneXs.Contains(nodeValueDirPair) ? -1 : (PlusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
-                        dir = DirZeroAssignments.Contains(nodeValueDirPair) ? 0 :
-                            (DirOneAssignments.Contains(nodeValueDirPair) ? 1 :
-                            (DirTwoAssignments.Contains(nodeValueDirPair) ? 2 :
-                            (DirThreeAssignments.Contains(nodeValueDirPair) ? 3 : dir)));
+                        dir = RightAssignments.Contains(nodeValueDirPair) ? Right :
+                            (UpAssignments.Contains(nodeValueDirPair) ? Up :
+                            (LeftAssignments.Contains(nodeValueDirPair) ? Left :
+                            (DownAssignments.Contains(nodeValueDirPair) ? Down : dir)));
 
                         // Close path
                         var allXyPairs = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
