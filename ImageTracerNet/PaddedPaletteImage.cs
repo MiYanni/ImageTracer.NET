@@ -10,8 +10,7 @@ namespace ImageTracerNet
     internal class PaddedPaletteImage
     {
         // array[x][y] of palette colors
-        //private readonly IReadOnlyList<ColorReference> _colors;
-        public IReadOnlyList<ColorGroup> ColorGroups { get; }
+        public IEnumerable<ColorGroup> ColorGroups { get; }
         public int ImageWidth { get; }
         public int ImageHeight { get; }
         // Indexed color array adds +2 to the original width and height
@@ -28,14 +27,8 @@ namespace ImageTracerNet
             ImageWidth = imageData.Width;
             ImageHeight = imageData.Height;
 
-            ColorGroups = ConvertToPaddedPaletteColorGroups(imageData.Colors).ToList();
-            //_colors = ConvertToPaddedPaletteColors(imageData.Colors);
+            ColorGroups = ConvertToPaddedPaletteColorGroups(imageData.Colors);
         }
-
-        //public ColorGroup GetColorGroup(int row, int column)
-        //{
-        //    return new ColorGroup(_colors, row, column, PaddedWidth);
-        //}
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction
         // Imagine the -1's being ColorReference.Empty and the 0's being null.

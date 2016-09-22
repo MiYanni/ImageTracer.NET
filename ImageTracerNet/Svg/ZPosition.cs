@@ -1,4 +1,4 @@
-﻿namespace ImageTracerNet
+﻿namespace ImageTracerNet.Svg
 {
     internal class ZPosition
     {

@@ -51,7 +51,7 @@
     <Compile Include="Extensions\CollectionExtensions.cs" />
     <Compile Include="Extensions\EnumerableExtensions.cs" />
     <Compile Include="Extensions\MathExtensions.cs" />
-    <Compile Include="SvgGeneration.cs" />
+    <Compile Include="Svg\SvgGeneration.cs" />
     <Compile Include="Vectorization\Heading.cs" />
     <Compile Include="ImageData.cs" />
     <Compile Include="ImageTracer.cs" />
@@ -79,7 +79,7 @@
     <Compile Include="Vectorization\SequenceIndices.cs" />
     <Compile Include="Vectorization\Sequencing.cs" />
     <Compile Include="Vectorization\Segments\SplineSegment.cs" />
-    <Compile Include="ZPosition.cs" />
+    <Compile Include="Svg\ZPosition.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="References\ImageTracer.java" />

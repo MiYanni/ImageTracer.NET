@@ -3,6 +3,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using ImageTracerNet.Extensions;
 using System.Windows.Media.Imaging;
+using ImageTracerNet.Svg;
 using ImageTracerNet.Vectorization;
 
 namespace ImageTracerNet

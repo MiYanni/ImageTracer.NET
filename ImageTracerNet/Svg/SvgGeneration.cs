@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using ImageTracerNet.Extensions;
@@ -8,7 +7,7 @@ using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Segments;
 using CoordMethod = System.Func<double, double>;
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Svg
 {
     internal static class SvgGeneration
     {
