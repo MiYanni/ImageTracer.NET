@@ -2,6 +2,6 @@
 {
     internal class PathPoint : Point<int>
     {
-        public int EdgeNode { get; set; }
+        public EdgeNode EdgeNode { get; set; }
     }
 }

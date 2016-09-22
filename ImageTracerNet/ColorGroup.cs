@@ -5,7 +5,6 @@ namespace ImageTracerNet
 {
     internal class ColorGroup : Point<int>
     {
-        //public Point<int> Position { get; }
         public ColorReference TopLeft { get; }
         public ColorReference TopMid { get; }
         public ColorReference TopRight { get; }
@@ -20,7 +19,6 @@ namespace ImageTracerNet
         {
             X = row;
             Y = column;
-            //Position = new Point<int> {X = row, Y = column};
             TopLeft =       colors[(row - 1) * width + (column - 1)];
             TopMid =        colors[(row - 1) * width + column];
             TopRight =      colors[(row - 1) * width + column + 1];
