@@ -21,13 +21,13 @@ namespace ImageTracerNet
         // tracedata
         public List<List<List<Segment>>> Layers { set; get; }
 
-        public PaddedPaletteImage(ImageData imageData, IReadOnlyList<ColorReference> palette)
+        public PaddedPaletteImage(IEnumerable<ColorReference> colors, int height, int width, IReadOnlyList<ColorReference> palette)
         {
             Palette = palette;
-            ImageWidth = imageData.Width;
-            ImageHeight = imageData.Height;
+            ImageWidth = width;
+            ImageHeight = height;
 
-            ColorGroups = ConvertToPaddedPaletteColorGroups(imageData.Colors);
+            ColorGroups = ConvertToPaddedPaletteColorGroups(colors);
         }
 
         // Creating indexed color array arr which has a boundary filled with -1 in every direction

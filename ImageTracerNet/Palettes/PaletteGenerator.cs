@@ -51,15 +51,15 @@ namespace ImageTracerNet.Palettes
             return new Color[numberOfColors].Initialize(i => i < colorQNumTotal ? rgbCube.ElementAt(i) : ColorExtensions.RandomColor());
         }
 
-        private static readonly Random Rng = new Random();
-        // This palette randomly samples the image
-        public static Color[] SamplePalette(int numberOfColors, ImageData imageData)
-        {
-            return new Color[numberOfColors].Initialize(() =>
-            {
-                var index = (int)(Math.Floor(Rng.NextDouble() * imageData.Data.Length / 4) * 4);
-                return Color.FromArgb(imageData.Data[index + 3], imageData.Data[index], imageData.Data[index + 1], imageData.Data[index + 2]);
-            });
-        }
+        //private static readonly Random Rng = new Random();
+        //// This palette randomly samples the image
+        //public static Color[] SamplePalette(int numberOfColors, ImageData imageData)
+        //{
+        //    return new Color[numberOfColors].Initialize(() =>
+        //    {
+        //        var index = (int)(Math.Floor(Rng.NextDouble() * imageData.Data.Length / 4) * 4);
+        //        return Color.FromArgb(imageData.Data[index + 3], imageData.Data[index], imageData.Data[index + 1], imageData.Data[index + 2]);
+        //    });
+        //}
     }
 }

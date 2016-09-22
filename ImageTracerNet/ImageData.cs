@@ -11,16 +11,15 @@ namespace ImageTracerNet
         public int Width { get; }
         public int Height { get; }
         // raw byte data: R G B A R G B A ...
-        public byte[] Data { get; }
+        //public byte[] Data { get; }
         public IReadOnlyList<ColorReference> Colors { get; }
 
         public ImageData(int width, int height, Bitmap image)
         {
             Width = width;
             Height = height;
-            Data = image.ToRgbaByteArray();
+            //Data = image.ToRgbaByteArray();
             // RGBA to ARGB Color
-            //Colors = ColorExtensions.FromRgbaByteArray(Data);
             Colors = image.ToColorReferences().ToList();
         }
     }

@@ -70,7 +70,7 @@ namespace ImageTracerTester
                     }// End of parameternames loop
 
                     // Loading image, tracing, rendering SVG, saving SVG file
-                    File.WriteAllText(outfilename, ImageTracer.ImageToSvg(args[0], options, null));
+                    File.WriteAllText(outfilename, ImageTracer.ImageToSvg(args[0], options));
 
                 }// End of parameter parsing and processing
 

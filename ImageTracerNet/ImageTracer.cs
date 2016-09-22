@@ -1,8 +1,10 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using ImageTracerNet.Extensions;
 using System.Windows.Media.Imaging;
+using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Svg;
 using ImageTracerNet.Vectorization;
 
@@ -12,6 +14,8 @@ namespace ImageTracerNet
     {
         public static readonly string VersionNumber = typeof(ImageTracer).Assembly.GetName().Version.ToString();
 
+        private static readonly List<ColorReference> Palette = BitmapPalettes.Halftone256.Colors.Select(c => new ColorReference(c.A, c.R, c.G, c.B)).ToList();
+
         ////////////////////////////////////////////////////////////
         //
         //  User friendly functions
@@ -19,57 +23,36 @@ namespace ImageTracerNet
         ////////////////////////////////////////////////////////////
 
         // Loading an image from a file, tracing when loaded, then returning the SVG String
-        public static string ImageToSvg(string filename, Options options, byte[][] palette) 
+        public static string ImageToSvg(string filename, Options options) 
         {
-            return ImageToSvg(new Bitmap(filename), options, palette);
+            return ImageToSvg(new Bitmap(filename), options);
         }
 
-        public static string ImageToSvg(Bitmap image, Options options, byte[][] palette) 
+        public static string ImageToSvg(Bitmap image, Options options) 
         {
-            return ImageDataToSvg(image, LoadImageData(image), options, palette);
-        }
-
-        // Loading an image from a file, tracing when loaded, then returning PaddedPaletteImage with tracedata in layers
-        internal static PaddedPaletteImage ImageToTraceData(string filename, Options options, byte[][] palette) 
-        {
-            return ImageToTraceData(new Bitmap(filename), options, palette);
-        }
-
-        internal static PaddedPaletteImage ImageToTraceData(Bitmap image, Options options, byte[][] palette) 
-        {
-            return ImageDataToTraceData(image, LoadImageData(image), options, palette);
+            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
+            var colors = rbgImage.ToColorReferences();
+            var paddedPaletteImage = new PaddedPaletteImage(colors, rbgImage.Height, rbgImage.Width, Palette);
+            return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
         }
 
         ////////////////////////////////////////////////////////////
 
-        private static ImageData LoadImageData(Bitmap image)
-        {
-            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
-            //var data = rbgImage.ToRgbaByteArray();
-            return new ImageData(image.Width, image.Height, rbgImage);
-        }
+        //private static ImageData LoadImageData(Bitmap image)
+        //{
+        //    var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
+        //    return new ImageData(image.Width, image.Height, rbgImage);
+        //}
 
-        // Tracing ImageData, then returning the SVG String
-        private static string ImageDataToSvg(Bitmap image, ImageData imgd, Options options, byte[][] palette)
-        {
-            return ImageDataToTraceData(image, imgd, options, palette).ToSvgString(options.SvgRendering);
-        }
+        //// Tracing ImageData, then returning the SVG String
+        //private static string ImageDataToSvg(ImageData imgd, Options options)
+        //{
+        //    return ImageDataToTraceData(imgd, options).ToSvgString(options.SvgRendering);
+        //}
 
         // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
-        private static PaddedPaletteImage ImageDataToTraceData(Bitmap image, ImageData imgd, Options options, byte[][] palette)
+        private static PaddedPaletteImage PaddedPaletteImageToTraceData(PaddedPaletteImage image, Tracing options)
         {
-            //var paletteRowsColumns = (int)Math.Sqrt(options.ColorQuantization.NumberOfColors);
-            // Use custom palette if pal is defined or sample or generate custom length palette
-            //var colorPalette = palette != null 
-            //    ? ColorExtensions.FromRgbaByteArray(palette.SelectMany(c => c).ToArray()) 
-            //    : SmartPalette.Generate(image, paletteRowsColumns, paletteRowsColumns);
-
-            //colorPalette = colorPalette ?? (options.ColorQuantization.ColorSampling.IsNotZero()
-            //        ? PaletteGenerator.SamplePalette(options.ColorQuantization.NumberOfColors, imgd)
-            //        : PaletteGenerator.GeneratePalette(options.ColorQuantization.NumberOfColors));
-
-            var colorPalette = BitmapPalettes.Halftone256.Colors.Select(c => new ColorReference(c.A, c.R, c.G, c.B)).ToList();
-
             // Selective Gaussian blur preprocessing
             //if (options.Blur.BlurRadius > 0)
             //{
@@ -78,17 +61,17 @@ namespace ImageTracerNet
             //}
 
             // 1. Color quantization
-            var ii = new PaddedPaletteImage(imgd, colorPalette);
+            //var ii = new PaddedPaletteImage(imgd, colorPalette);
             // 2. Layer separation and edge detection
-            var rawLayers = Layering.Convert(ii);
+            var rawLayers = Layering.Convert(image);
             // 3. Batch pathscan
-            var bps = rawLayers.Select(layer => Pathing.Scan(layer.Value, options.Tracing.PathOmit)).ToList();
+            var bps = rawLayers.Select(layer => Pathing.Scan(layer.Value, options.PathOmit)).ToList();
             // 4. Batch interpollation
             var bis = bps.Select(Interpolation.Convert).ToList();
             // 5. Batch tracing
-            ii.Layers = bis.Select(l => l.Select(p => Pathing.Trace(p, options.Tracing).ToList()).ToList()).ToList();
+            image.Layers = bis.Select(l => l.Select(p => Pathing.Trace(p, options).ToList()).ToList()).ToList();
             
-            return ii;
+            return image;
         }
 
         ////////////////////////////////////////////////////////////
