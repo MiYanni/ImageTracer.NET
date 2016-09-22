@@ -30,25 +30,15 @@ namespace ImageTracerNet
 
         public static string ImageToSvg(Bitmap image, Options options) 
         {
+            // 1. Color quantization
             var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
             var colors = rbgImage.ToColorReferences();
             var paddedPaletteImage = new PaddedPaletteImage(colors, rbgImage.Height, rbgImage.Width, Palette);
+
             return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
         }
 
         ////////////////////////////////////////////////////////////
-
-        //private static ImageData LoadImageData(Bitmap image)
-        //{
-        //    var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
-        //    return new ImageData(image.Width, image.Height, rbgImage);
-        //}
-
-        //// Tracing ImageData, then returning the SVG String
-        //private static string ImageDataToSvg(ImageData imgd, Options options)
-        //{
-        //    return ImageDataToTraceData(imgd, options).ToSvgString(options.SvgRendering);
-        //}
 
         // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
         private static PaddedPaletteImage PaddedPaletteImageToTraceData(PaddedPaletteImage image, Tracing options)
@@ -60,8 +50,6 @@ namespace ImageTracerNet
             //    imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
             //}
 
-            // 1. Color quantization
-            //var ii = new PaddedPaletteImage(imgd, colorPalette);
             // 2. Layer separation and edge detection
             var rawLayers = Layering.Convert(image);
             // 3. Batch pathscan
