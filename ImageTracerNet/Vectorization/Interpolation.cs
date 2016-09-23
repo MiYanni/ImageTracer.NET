@@ -27,7 +27,7 @@ namespace ImageTracerNet.Vectorization
         }
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
-        public static List<List<InterpolationPoint>> Convert(List<List<PathPoint>> paths)
+        public static List<List<InterpolationPoint>> Convert(IEnumerable<List<PathPoint>> paths)
         {
             var ins = new List<List<InterpolationPoint>>();
 

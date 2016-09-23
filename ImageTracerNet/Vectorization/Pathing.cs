@@ -152,9 +152,9 @@ namespace ImageTracerNet.Vectorization
         // ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        public static List<List<PathPoint>> Scan(EdgeNode[][] nodes, int pathOmit)
+        public static IEnumerable<IEnumerable<PathPoint>> Scan(EdgeNode[][] nodes, int pathOmit)
         {
-            var paths = new List<List<PathPoint>>();
+            //var paths = new List<List<PathPoint>>();
             var width = nodes[0].Length;
             var height = nodes.Length;
             var holePath = false;
@@ -177,52 +177,13 @@ namespace ImageTracerNet.Vectorization
                     var path = CreatePath(nodes, column, row, dir, holePath, pathOmit);
                     if (path != null)
                     {
-                        paths.Add(path.ToList());
+                        //paths.Add(path.ToList());
+                        yield return path;
                     }
-                    // Init
-                    //var px = column;
-                    //var py = row;
-
-                    //var thisPath = new List<PathPoint>();
-                    //paths.Add(thisPath);
-                    //var pathFinished = false;
-
-                    //// Path points loop
-                    //while (!pathFinished)
-                    //{
-                    //    var nodeValue = nodes[py][px];
-
-                    //    // New path point
-                    //    thisPath.Add(new PathPoint { X = px - 1, Y = py - 1, EdgeNode = nodeValue });
-
-                    //    // Node types
-                    //    nodes[py][px] = NonZeroNodes.ContainsKey(nodeValue) ? NonZeroNodes[nodeValue][(int)dir] : DDDD;
-
-                    //    var nodeValueDirPair = new Tuple<EdgeNode, WalkDirection>(nodeValue, dir);
-                    //    py += MinusOneYs.Contains(nodeValueDirPair) ? -1 : (PlusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
-                    //    px += MinusOneXs.Contains(nodeValueDirPair) ? -1 : (PlusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
-                    //    dir = RightAssignments.Contains(nodeValueDirPair) ? Right :
-                    //        (UpAssignments.Contains(nodeValueDirPair) ? Up :
-                    //        (LeftAssignments.Contains(nodeValueDirPair) ? Left :
-                    //        (DownAssignments.Contains(nodeValueDirPair) ? Down : dir)));
-
-                    //    // Close path
-                    //    var allXyPairs = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
-                    //    var isCompletedPath = !allXyPairs.Contains(nodeValueDirPair);
-                    //    var canClosePath = (px - 1 == thisPath[0].X) && (py - 1 == thisPath[0].Y);
-                    //    pathFinished = isCompletedPath || canClosePath;
-
-                    //    // Discarding 'hole' type paths and paths shorter than pathOmit
-                    //    var isHoleOrShortPath = holePath || (thisPath.Count < pathOmit);
-                    //    if (isCompletedPath || (canClosePath && isHoleOrShortPath))
-                    //    {
-                    //        paths.Remove(thisPath);
-                    //    }
-                    //}
                 }
             }
 
-            return paths;
+            //return paths;
         }
 
         // 5. tracepath() : recursively trying to fit straight and quadratic spline segments on the 8 direction internode path
