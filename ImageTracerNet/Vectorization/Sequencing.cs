@@ -9,14 +9,13 @@ namespace ImageTracerNet.Vectorization
             var initialDirection = directions[initialIndex];
             var lastIndex = directions.Count - 1;
 
-            //var sequenceEndIndex = initialIndex + 1;
             int sequenceEndIndex;
             Heading? storedDirection = null;
             for (sequenceEndIndex = initialIndex + 1; sequenceEndIndex < lastIndex; ++sequenceEndIndex)
             {
                 if (!(storedDirection == null || directions[sequenceEndIndex] == storedDirection || directions[sequenceEndIndex] == initialDirection))
                 {
-                    break;
+                    return sequenceEndIndex;
                 }
 
                 if (directions[sequenceEndIndex] != initialDirection && storedDirection == null)
@@ -26,7 +25,8 @@ namespace ImageTracerNet.Vectorization
             }
 
             // If it gets to the end of the list, return zero instead of the index.
-            return sequenceEndIndex == lastIndex ? 0 : sequenceEndIndex;
+            //return sequenceEndIndex == lastIndex ? 0 : sequenceEndIndex;
+            return 0;
         }
 
         public static IEnumerable<SequenceIndices> Create(IReadOnlyList<Heading> directions)
