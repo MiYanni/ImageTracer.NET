@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ImageTracerNet.Vectorization
 {
@@ -13,14 +14,16 @@ namespace ImageTracerNet.Vectorization
             Heading? storedDirection = null;
             for (sequenceEndIndex = initialIndex + 1; sequenceEndIndex < lastIndex; ++sequenceEndIndex)
             {
-                if (!(storedDirection == null || directions[sequenceEndIndex] == storedDirection || directions[sequenceEndIndex] == initialDirection))
+                var direction = directions[sequenceEndIndex];
+                if (!(storedDirection == null || direction == storedDirection || direction == initialDirection))
                 {
                     return sequenceEndIndex;
                 }
 
-                if (directions[sequenceEndIndex] != initialDirection && storedDirection == null)
+                // This initializes storedDirection at some point during the loop.
+                if (storedDirection == null && direction != initialDirection)
                 {
-                    storedDirection = directions[sequenceEndIndex];
+                    storedDirection = direction;
                 }
             }
 
