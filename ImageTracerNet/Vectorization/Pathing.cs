@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using ImageTracerNet.Vectorization.Points;
-using NodeDirList = System.Collections.Generic.List<System.Tuple<ImageTracerNet.Vectorization.EdgeNode, ImageTracerNet.Vectorization.WalkDirection>>;
-using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Segments;
+using DirectedEdgeList = System.Collections.Generic.List<ImageTracerNet.Vectorization.DirectedEdge>;
 using static ImageTracerNet.Vectorization.EdgeNode;
 using static ImageTracerNet.Vectorization.WalkDirection;
 
@@ -26,7 +25,7 @@ namespace ImageTracerNet.Vectorization
             [DLLD] = new[] { LLLD, DLLL, DLLL, LLLD }
         };
 
-        private static readonly NodeDirList MinusOneYs = new NodeDirList
+        private static readonly DirectedEdgeList MinusOneYs = new DirectedEdgeList
         {
             {LDDD, Right},
             {DLDD, Left},
@@ -37,7 +36,7 @@ namespace ImageTracerNet.Vectorization
             {LDLL, Left},
             {DLLL, Right}
         };
-        private static readonly NodeDirList PlusOneYs = new NodeDirList
+        private static readonly DirectedEdgeList PlusOneYs = new DirectedEdgeList
         {
             {DDDL, Left},
             {LDDL, Right},
@@ -49,7 +48,7 @@ namespace ImageTracerNet.Vectorization
             {LLLD, Left}
         };
 
-        private static readonly NodeDirList MinusOneXs = new NodeDirList
+        private static readonly DirectedEdgeList MinusOneXs = new DirectedEdgeList
         {
             {LDDD, Down},
             {LLDD, Left},
@@ -60,7 +59,7 @@ namespace ImageTracerNet.Vectorization
             {DDLL, Left},
             {DLLL, Down}
         };
-        private static readonly NodeDirList PlusOneXs = new NodeDirList
+        private static readonly DirectedEdgeList PlusOneXs = new DirectedEdgeList
         {
             {DLDD, Down},
             {LLDD, Right},
@@ -72,9 +71,9 @@ namespace ImageTracerNet.Vectorization
             {LDLL, Down}
         };
 
-        private static readonly NodeDirList AcceptedPaths = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
+        private static readonly DirectedEdgeList AcceptedPaths = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
 
-        private static readonly NodeDirList RightAssignments = new NodeDirList
+        private static readonly DirectedEdgeList RightAssignments = new DirectedEdgeList
         {
             {DLDD, Down},
             {DDDL, Up},
@@ -83,7 +82,7 @@ namespace ImageTracerNet.Vectorization
             {LLLD, Up},
             {LDLL, Down}
         };
-        private static readonly NodeDirList UpAssignments = new NodeDirList
+        private static readonly DirectedEdgeList UpAssignments = new DirectedEdgeList
         {
             {LDDD, Right},
             {DLDD, Left},
@@ -92,7 +91,7 @@ namespace ImageTracerNet.Vectorization
             {LDLL, Left},
             {DLLL, Right}
         };
-        private static readonly NodeDirList LeftAssignments = new NodeDirList
+        private static readonly DirectedEdgeList LeftAssignments = new DirectedEdgeList
         {
             {LDDD, Down},
             {LDDL, Up},
@@ -101,7 +100,7 @@ namespace ImageTracerNet.Vectorization
             {DLLD, Down},
             {DLLL, Down}
         };
-        private static readonly NodeDirList DownAssignments = new NodeDirList
+        private static readonly DirectedEdgeList DownAssignments = new DirectedEdgeList
         {
             {DDDL, Left},
             {LDDL, Right},
@@ -110,6 +109,15 @@ namespace ImageTracerNet.Vectorization
             {DLLD, Left},
             {LLLD, Left}
         };
+
+        private static readonly Func<DirectedEdge, int> CalcNextX = ndp => MinusOneXs.Contains(ndp) ? -1 : (PlusOneXs.Contains(ndp) ? 1 : 0);
+        private static readonly Func<DirectedEdge, int> CalcNextY = ndp => MinusOneYs.Contains(ndp) ? -1 : (PlusOneYs.Contains(ndp) ? 1 : 0);
+        private static readonly Func<DirectedEdge, WalkDirection> CalcDirection = ndp => 
+            RightAssignments.Contains(ndp) ? Right :
+            (UpAssignments.Contains(ndp) ? Up :
+            (LeftAssignments.Contains(ndp) ? Left :
+            (DownAssignments.Contains(ndp) ? Down : ndp.Direction)));
+        private static readonly Func<DirectedEdge, EdgeNode> CalcNode = ndp => NonZeroNodes.ContainsKey(ndp.Node) ? NonZeroNodes[ndp.Node][(int)ndp.Direction] : DDDD;
 
         private static IEnumerable<PathPoint> CreatePath(EdgeNode[][] nodes, int x, int y, WalkDirection dir, bool holePath, int pathOmit)
         {
@@ -121,23 +129,18 @@ namespace ImageTracerNet.Vectorization
             // Path points loop
             while (!(isIncorrectPath || canClosePath))
             {
-                var node = nodes[y][x];
+                var directedEdge = new DirectedEdge { Node = nodes[y][x], Direction = dir };
                 // New path point
-                path.Add(new PathPoint { X = x - 1, Y = y - 1, EdgeNode = node });
+                path.Add(new PathPoint { X = x - 1, Y = y - 1, EdgeNode = directedEdge.Node });
 
-                // Node types
-                nodes[y][x] = NonZeroNodes.ContainsKey(node) ? NonZeroNodes[node][(int)dir] : DDDD;
+                nodes[y][x] = CalcNode(directedEdge);
 
-                var nodeDirPair = new Tuple<EdgeNode, WalkDirection>(node, dir);
-                y += MinusOneYs.Contains(nodeDirPair) ? -1 : (PlusOneYs.Contains(nodeDirPair) ? 1 : 0);
-                x += MinusOneXs.Contains(nodeDirPair) ? -1 : (PlusOneXs.Contains(nodeDirPair) ? 1 : 0);
-                dir = RightAssignments.Contains(nodeDirPair) ? Right :
-                    (UpAssignments.Contains(nodeDirPair) ? Up :
-                    (LeftAssignments.Contains(nodeDirPair) ? Left :
-                    (DownAssignments.Contains(nodeDirPair) ? Down : dir)));
+                y += CalcNextY(directedEdge);
+                x += CalcNextX(directedEdge);
+                dir = CalcDirection(directedEdge);
 
                 // Close path
-                isIncorrectPath = !AcceptedPaths.Contains(nodeDirPair);
+                isIncorrectPath = !AcceptedPaths.Contains(directedEdge);
                 canClosePath = (x - 1 == path[0].X) && (y - 1 == path[0].Y);
             }
             // Discarding 'hole' type paths and paths shorter than pathOmit
