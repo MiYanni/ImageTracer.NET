@@ -1,27 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ImageTracerNet.Vectorization
 {
     internal static class Sequencing
     {
-        private static int DetermineSequenceEndIndex(IReadOnlyList<Heading> directions, int pathIndex)
+        private static int DetermineSequenceEndIndex(IReadOnlyList<Heading> directions, int initialIndex)
         {
-            var pathDirection = directions[pathIndex];
+            var initialDirection = directions[initialIndex];
             var lastIndex = directions.Count - 1;
 
-            var sequenceEndIndex = pathIndex + 1;
+            //var sequenceEndIndex = initialIndex + 1;
+            int sequenceEndIndex;
             Heading? storedDirection = null;
-            for (var i = sequenceEndIndex; i < lastIndex; sequenceEndIndex = ++i)
+            for (sequenceEndIndex = initialIndex + 1; sequenceEndIndex < lastIndex; ++sequenceEndIndex)
             {
-                if (!(storedDirection == null || directions[i] == storedDirection || directions[i] == pathDirection))
+                if (!(storedDirection == null || directions[sequenceEndIndex] == storedDirection || directions[sequenceEndIndex] == initialDirection))
                 {
                     break;
                 }
 
-                if (directions[i] != pathDirection && storedDirection == null)
+                if (directions[sequenceEndIndex] != initialDirection && storedDirection == null)
                 {
-                    storedDirection = directions[i];
+                    storedDirection = directions[sequenceEndIndex];
                 }
             }
 
