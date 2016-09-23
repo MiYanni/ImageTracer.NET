@@ -188,5 +188,22 @@ namespace ImageTracerTester
             }
             paletteImage.Save(outputPath, ImageFormat.Png);
         }
+
+        private static readonly Random Rng = new Random();
+        private static readonly Func<bool> GetRandom = () => Convert.ToBoolean(Rng.Next(0, 1));
+        private static int BooleanTest()
+        {
+            var a = false;
+            var b = false;
+            var c = GetRandom();
+
+            while (!(a || b))
+            {
+                a = GetRandom();
+                b = GetRandom();
+            }
+
+            return a || (b && c) ? 0 : 1337;
+        }
     }
 }

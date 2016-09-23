@@ -109,6 +109,41 @@ namespace ImageTracerNet.Vectorization
             {LLLD, Left}
         };
 
+        private static IEnumerable<PathPoint> CreatePath(EdgeNode[][] nodes, int x, int y, WalkDirection dir, bool holePath, int pathOmit)
+        {
+            //var initialPoint = new PathPoint {X = px - 1, Y = py - 1, EdgeNode = nodes[py][px]};
+            var path = new List<PathPoint>();
+            var isIncorrectPath = false;
+            var canClosePath = false;
+
+            // Path points loop
+            while (!(isIncorrectPath || canClosePath))
+            {
+                var node = nodes[y][x];
+                // New path point
+                path.Add(new PathPoint { X = x - 1, Y = y - 1, EdgeNode = node });
+
+                // Node types
+                nodes[y][x] = NonZeroNodes.ContainsKey(node) ? NonZeroNodes[node][(int)dir] : DDDD;
+
+                var nodeDirPair = new Tuple<EdgeNode, WalkDirection>(node, dir);
+                y += MinusOneYs.Contains(nodeDirPair) ? -1 : (PlusOneYs.Contains(nodeDirPair) ? 1 : 0);
+                x += MinusOneXs.Contains(nodeDirPair) ? -1 : (PlusOneXs.Contains(nodeDirPair) ? 1 : 0);
+                dir = RightAssignments.Contains(nodeDirPair) ? Right :
+                    (UpAssignments.Contains(nodeDirPair) ? Up :
+                    (LeftAssignments.Contains(nodeDirPair) ? Left :
+                    (DownAssignments.Contains(nodeDirPair) ? Down : dir)));
+
+                // Close path
+                var acceptedPaths = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
+                isIncorrectPath = !acceptedPaths.Contains(nodeDirPair);
+                canClosePath = (x - 1 == path[0].X) && (y - 1 == path[0].Y);
+            }
+            // Discarding 'hole' type paths and paths shorter than pathOmit
+            var isHoleOrShortPath = holePath || (path.Count < pathOmit);
+            return isIncorrectPath || isHoleOrShortPath ? null : path;
+        }
+
         // 3. Walking through an edge node array, discarding edge node types 0 and 15 and creating paths from the rest.
         // Walk directions (dir): 0 > ; 1 ^ ; 2 < ; 3 v
 
@@ -124,6 +159,8 @@ namespace ImageTracerNet.Vectorization
             var height = nodes.Length;
             var holePath = false;
 
+            //var filteredNodes = nodes.Select(r => r.Where(c => c != DDDD && c != LLLL));
+
             for (var row = 0; row < height; row++)
             {
                 for (var column = 0; column < width; column++)
@@ -137,45 +174,51 @@ namespace ImageTracerNet.Vectorization
                     var dir = InitialOneNodes.Contains(initialNodeValue) ? Up : (InitialThreeNodes.Contains(initialNodeValue) ? Down : Right);
                     holePath = HoleNodes.Contains(initialNodeValue) || (NonHoleNode != initialNodeValue && holePath);
 
-                    // Init
-                    var px = column;
-                    var py = row;
-                    var thisPath = new List<PathPoint>();
-                    paths.Add(thisPath);
-                    var pathFinished = false;
-
-                    // Path points loop
-                    while (!pathFinished)
+                    var path = CreatePath(nodes, column, row, dir, holePath, pathOmit);
+                    if (path != null)
                     {
-                        var nodeValue = nodes[py][px];
-
-                        // New path point
-                        thisPath.Add(new PathPoint { X = px - 1, Y = py - 1, EdgeNode = nodeValue });
-
-                        // Node types
-                        nodes[py][px] = NonZeroNodes.ContainsKey(nodeValue) ? NonZeroNodes[nodeValue][(int)dir] : DDDD;
-
-                        var nodeValueDirPair = new Tuple<EdgeNode, WalkDirection>(nodeValue, dir);
-                        py += MinusOneYs.Contains(nodeValueDirPair) ? -1 : (PlusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
-                        px += MinusOneXs.Contains(nodeValueDirPair) ? -1 : (PlusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
-                        dir = RightAssignments.Contains(nodeValueDirPair) ? Right :
-                            (UpAssignments.Contains(nodeValueDirPair) ? Up :
-                            (LeftAssignments.Contains(nodeValueDirPair) ? Left :
-                            (DownAssignments.Contains(nodeValueDirPair) ? Down : dir)));
-
-                        // Close path
-                        var allXyPairs = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
-                        var isCompletedPath = !allXyPairs.Contains(nodeValueDirPair);
-                        var canClosePath = (px - 1 == thisPath[0].X) && (py - 1 == thisPath[0].Y);
-                        pathFinished = isCompletedPath || canClosePath;
-
-                        // Discarding 'hole' type paths and paths shorter than pathOmit
-                        var isHoleOrShortPath = holePath || (thisPath.Count < pathOmit);
-                        if (isCompletedPath || (canClosePath && isHoleOrShortPath))
-                        {
-                            paths.Remove(thisPath);
-                        }
+                        paths.Add(path.ToList());
                     }
+                    // Init
+                    //var px = column;
+                    //var py = row;
+
+                    //var thisPath = new List<PathPoint>();
+                    //paths.Add(thisPath);
+                    //var pathFinished = false;
+
+                    //// Path points loop
+                    //while (!pathFinished)
+                    //{
+                    //    var nodeValue = nodes[py][px];
+
+                    //    // New path point
+                    //    thisPath.Add(new PathPoint { X = px - 1, Y = py - 1, EdgeNode = nodeValue });
+
+                    //    // Node types
+                    //    nodes[py][px] = NonZeroNodes.ContainsKey(nodeValue) ? NonZeroNodes[nodeValue][(int)dir] : DDDD;
+
+                    //    var nodeValueDirPair = new Tuple<EdgeNode, WalkDirection>(nodeValue, dir);
+                    //    py += MinusOneYs.Contains(nodeValueDirPair) ? -1 : (PlusOneYs.Contains(nodeValueDirPair) ? 1 : 0);
+                    //    px += MinusOneXs.Contains(nodeValueDirPair) ? -1 : (PlusOneXs.Contains(nodeValueDirPair) ? 1 : 0);
+                    //    dir = RightAssignments.Contains(nodeValueDirPair) ? Right :
+                    //        (UpAssignments.Contains(nodeValueDirPair) ? Up :
+                    //        (LeftAssignments.Contains(nodeValueDirPair) ? Left :
+                    //        (DownAssignments.Contains(nodeValueDirPair) ? Down : dir)));
+
+                    //    // Close path
+                    //    var allXyPairs = MinusOneYs.Concat(MinusOneXs.Concat(PlusOneYs.Concat(PlusOneXs))).ToList();
+                    //    var isCompletedPath = !allXyPairs.Contains(nodeValueDirPair);
+                    //    var canClosePath = (px - 1 == thisPath[0].X) && (py - 1 == thisPath[0].Y);
+                    //    pathFinished = isCompletedPath || canClosePath;
+
+                    //    // Discarding 'hole' type paths and paths shorter than pathOmit
+                    //    var isHoleOrShortPath = holePath || (thisPath.Count < pathOmit);
+                    //    if (isCompletedPath || (canClosePath && isHoleOrShortPath))
+                    //    {
+                    //        paths.Remove(thisPath);
+                    //    }
+                    //}
                 }
             }
 
