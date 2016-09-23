@@ -12,8 +12,11 @@ namespace ImageTracerNet.Vectorization
 {
     internal static class Pathing
     {
-        private static readonly EdgeNode[] InitialOneNodes = { DDDL, LLLD };
-        private static readonly EdgeNode[] InitialThreeNodes = { DLDD, DLDL, LDLD, DLLD, LDLL };
+        private static readonly EdgeNode[] InitializeUp = { DDDL, LLLD };
+        private static readonly EdgeNode[] InitializeDown = { DLDD, DLDL, LDLD, DLLD, LDLL };
+        private static readonly Func<EdgeNode, WalkDirection> InitializeDirection = n => 
+            InitializeUp.Contains(n) ? Up : 
+            (InitializeDown.Contains(n) ? Down : Right);
 
         private static readonly EdgeNode[] HoleNodes = { LLDL, LLLD, LDLL, DLLL };
         private const EdgeNode NonHoleNode = DDDL;
@@ -119,19 +122,19 @@ namespace ImageTracerNet.Vectorization
             (DownAssignments.Contains(ndp) ? Down : ndp.Direction)));
         private static readonly Func<DirectedEdge, EdgeNode> CalcNode = ndp => NonZeroNodes.ContainsKey(ndp.Node) ? NonZeroNodes[ndp.Node][(int)ndp.Direction] : DDDD;
 
-        private static IEnumerable<PathPoint> CreatePath(EdgeNode[][] nodes, int x, int y, WalkDirection dir, bool holePath, int pathOmit)
+        private static IEnumerable<PathPoint> CreatePath(IReadOnlyList<EdgeNode[]> nodes, int x, int y, WalkDirection dir, bool holePath, int pathOmit)
         {
             //var initialPoint = new PathPoint {X = px - 1, Y = py - 1, EdgeNode = nodes[py][px]};
             var path = new List<PathPoint>();
-            var isIncorrectPath = false;
-            var canClosePath = false;
+            bool isIncorrectPath;
+            bool canClosePath;
 
             // Path points loop
-            while (!(isIncorrectPath || canClosePath))
+            do
             {
-                var directedEdge = new DirectedEdge { Node = nodes[y][x], Direction = dir };
+                var directedEdge = new DirectedEdge {Node = nodes[y][x], Direction = dir};
                 // New path point
-                path.Add(new PathPoint { X = x - 1, Y = y - 1, EdgeNode = directedEdge.Node });
+                path.Add(new PathPoint {X = x - 1, Y = y - 1, EdgeNode = directedEdge.Node});
 
                 nodes[y][x] = CalcNode(directedEdge);
 
@@ -142,7 +145,8 @@ namespace ImageTracerNet.Vectorization
                 // Close path
                 isIncorrectPath = !AcceptedPaths.Contains(directedEdge);
                 canClosePath = (x - 1 == path[0].X) && (y - 1 == path[0].Y);
-            }
+            } while (!(isIncorrectPath || canClosePath));
+
             // Discarding 'hole' type paths and paths shorter than pathOmit
             var isHoleOrShortPath = holePath || (path.Count < pathOmit);
             return isIncorrectPath || isHoleOrShortPath ? null : path;
@@ -168,15 +172,16 @@ namespace ImageTracerNet.Vectorization
             {
                 for (var column = 0; column < width; column++)
                 {
-                    var initialNodeValue = nodes[row][column];
+                    var node = nodes[row][column];
 
                     // Follow path
-                    if ((initialNodeValue == DDDD) || (initialNodeValue == LLLL)) continue;
+                    if ((node == DDDD) || (node == LLLL)) continue;
 
                     // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
-                    var dir = InitialOneNodes.Contains(initialNodeValue) ? Up : (InitialThreeNodes.Contains(initialNodeValue) ? Down : Right);
-                    holePath = HoleNodes.Contains(initialNodeValue) || (NonHoleNode != initialNodeValue && holePath);
+                    var dir = InitializeDirection(node);
+                    holePath = HoleNodes.Contains(node) || (NonHoleNode != node && holePath);
 
+                    // The values in nodes are updated in CreatePath.
                     var path = CreatePath(nodes, column, row, dir, holePath, pathOmit);
                     if (path != null)
                     {
