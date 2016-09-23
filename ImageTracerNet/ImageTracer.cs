@@ -55,7 +55,7 @@ namespace ImageTracerNet
             // 3. Batch pathscan
             var bps = rawLayers.Select(layer => Pathing.Scan(layer.Value, options.PathOmit).Select(p => p.ToList()));
             // 4. Batch interpollation
-            var bis = bps.Select(Interpolation.Convert).ToList();
+            var bis = bps.Select(Interpolation.Convert);
             // 5. Batch tracing
             image.Layers = bis.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
             

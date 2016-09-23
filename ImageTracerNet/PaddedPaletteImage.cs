@@ -19,7 +19,7 @@ namespace ImageTracerNet
         // array[palettelength][4] RGBA color palette
         public IReadOnlyList<ColorReference> Palette { get; }
         // tracedata
-        public List<List<List<Segment>>> Layers { set; get; }
+        public IReadOnlyList<IReadOnlyList<IReadOnlyList<Segment>>> Layers { set; get; }
 
         public PaddedPaletteImage(IEnumerable<ColorReference> colors, int height, int width, IReadOnlyList<ColorReference> palette)
         {
