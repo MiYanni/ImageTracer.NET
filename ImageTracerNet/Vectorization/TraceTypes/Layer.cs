@@ -2,8 +2,8 @@
 
 namespace ImageTracerNet.Vectorization.TraceTypes
 {
-    internal class SegmentLayer
+    internal class Layer<T> where T : class
     {
-        public IReadOnlyList<SegmentPath> Paths { get; set; }
+        public IReadOnlyList<T> Paths { get; set; }
     }
 }

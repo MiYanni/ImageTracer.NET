@@ -21,7 +21,7 @@ namespace ImageTracerNet
         public IReadOnlyList<ColorReference> Palette { get; }
         //// tracedata
         //public IReadOnlyList<IReadOnlyList<IReadOnlyList<Segment>>> Layers { set; get; }
-        public IReadOnlyList<SegmentLayer> Layers { get; set; }
+        public IReadOnlyList<Layer<SegmentPath>> Layers { get; set; }
 
         public PaddedPaletteImage(IEnumerable<ColorReference> colors, int height, int width, IReadOnlyList<ColorReference> palette)
         {

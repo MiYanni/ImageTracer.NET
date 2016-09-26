@@ -22,10 +22,10 @@ namespace ImageTracerNet.Vectorization
         }
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
-        public static InterpolationPointLayer Convert(PathPointLayer layer)
+        public static Layer<InterpolationPointPath> Convert(Layer<PathPointPath> layer)
         {
             // TODO: It was less efficient to parallelize these calls. Investigate later.
-            return new InterpolationPointLayer { Paths = layer.Paths.Select(path => 
+            return new Layer<InterpolationPointPath> { Paths = layer.Paths.Select(path => 
                 new InterpolationPointPath { Points = path.Points.Select((p, i) => 
                     CreatePoint(path.Points, i)).ToList() }).ToList() };
         }

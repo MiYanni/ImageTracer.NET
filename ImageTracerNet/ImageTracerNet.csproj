@@ -80,10 +80,8 @@
     <Compile Include="Vectorization\Sequencing.cs" />
     <Compile Include="Vectorization\Segments\SplineSegment.cs" />
     <Compile Include="Svg\ZPosition.cs" />
-    <Compile Include="Vectorization\TraceTypes\InterpolationPointLayer.cs" />
     <Compile Include="Vectorization\TraceTypes\InterpolationPointPath.cs" />
-    <Compile Include="Vectorization\TraceTypes\SegmentLayer.cs" />
-    <Compile Include="Vectorization\TraceTypes\PathPointLayer.cs" />
+    <Compile Include="Vectorization\TraceTypes\Layer.cs" />
     <Compile Include="Vectorization\TraceTypes\PathPointPath.cs" />
     <Compile Include="Vectorization\TraceTypes\RawLayer.cs" />
     <Compile Include="Vectorization\TraceTypes\SegmentPath.cs" />
