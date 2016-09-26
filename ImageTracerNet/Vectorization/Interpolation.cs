@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ImageTracerNet.Vectorization.Points;
+using ImageTracerNet.Vectorization.TraceTypes;
 
 namespace ImageTracerNet.Vectorization
 {
@@ -21,10 +22,12 @@ namespace ImageTracerNet.Vectorization
         }
 
         // 4. interpolating between path points for nodes with 8 directions ( East, SouthEast, S, SW, W, NW, N, NE )
-        public static IEnumerable<IEnumerable<InterpolationPoint>> Convert(IEnumerable<IReadOnlyList<PathPoint>> paths)
+        public static InterpolationPointLayer Convert(PathPointLayer layer)
         {
             // TODO: It was less efficient to parallelize these calls. Investigate later.
-            return paths.Select(path => path.Select((p, i) => CreatePoint(path, i)));
+            return new InterpolationPointLayer { Paths = layer.Paths.Select(path => 
+                new InterpolationPointPath { Points = path.Points.Select((p, i) => 
+                    CreatePoint(path.Points, i)).ToList() }).ToList() };
         }
     }
 }

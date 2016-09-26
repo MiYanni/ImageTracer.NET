@@ -47,19 +47,7 @@ namespace ImageTracerNet.Svg
 
             // creating Z-index
             // Only selecting the first segment of each path.
-            var zIndex = CreateZIndex(ii.Layers.Select(l => l.Select(p => p.First()).ToList()).ToList(), width);
-            //var zIndex = new SortedDictionary<double, ZPosition>();
-            //// Layer loop
-            //for (var layerIndex = 0; layerIndex < ii.Layers.Count; layerIndex++)
-            //{
-            //    // Path loop
-            //    for (var pathIndex = 0; pathIndex < ii.Layers[layerIndex].Count; pathIndex++)
-            //    {
-            //        // Label (Z-index key) is the startpoint of the path, linearized
-            //        var label = ii.Layers[layerIndex][pathIndex][0].Start.Y * width + ii.Layers[layerIndex][pathIndex][0].Start.X;
-            //        zIndex[label] = new ZPosition { Layer = layerIndex, Path = pathIndex };
-            //    }
-            //}
+            var zIndex = CreateZIndex(ii.Layers.Select(l => l.Paths.Select(p => p.Segments.First()).ToList()).ToList(), width);
 
             // Sorting Z-index is not required, TreeMap is sorted automatically
 
@@ -74,7 +62,7 @@ namespace ImageTracerNet.Svg
                     description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
                 }
 
-                AppendPathString(svgStringBuilder, description, ii.Layers[zValue.Layer][zValue.Path],
+                AppendPathString(svgStringBuilder, description, ii.Layers[zValue.Layer].Paths[zValue.Path].Segments,
                     ii.Palette[zValue.Layer].ToSvgColorString(), options);
             }
 

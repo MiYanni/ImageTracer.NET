@@ -7,6 +7,7 @@ using System.Windows.Media.Imaging;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Svg;
 using ImageTracerNet.Vectorization;
+using ImageTracerNet.Vectorization.TraceTypes;
 
 namespace ImageTracerNet
 {
@@ -53,12 +54,16 @@ namespace ImageTracerNet
             // 2. Layer separation and edge detection
             var rawLayers = Layering.Convert(image);
             // 3. Batch pathscan
-            var bps = rawLayers.Select(layer => Pathing.Scan(layer.Value, options.PathOmit).Select(p => p.ToList()));
+            var pathPointLayers = rawLayers.Select(layer => new PathPointLayer { Paths = Pathing.Scan(layer.Value, options.PathOmit).ToList() });
             // 4. Batch interpollation
-            var bis = bps.Select(Interpolation.Convert);
+            var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
             // 5. Batch tracing
-            image.Layers = bis.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
-            
+            //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
+            image.Layers = interpolationPointLayers.Select(layer => 
+                new SegmentLayer { Paths = layer.Paths.Select(path => 
+                    new SegmentPath { Segments = 
+                        Pathing.Trace(path, options).ToList() }).ToList() }).ToList();
+
             return image;
         }
 

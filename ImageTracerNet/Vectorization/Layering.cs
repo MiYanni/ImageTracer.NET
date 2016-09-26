@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using ImageTracerNet.Extensions;
+using ImageTracerNet.Vectorization.TraceTypes;
 using EdgeNodeCalc = System.Func<ImageTracerNet.ColorGroup, ImageTracerNet.Vectorization.EdgeNode>;
 using static System.Convert;
 
@@ -29,28 +30,28 @@ namespace ImageTracerNet.Vectorization
 
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        public static Dictionary<ColorReference, EdgeNode[][]> Convert(PaddedPaletteImage ii)
+        public static Dictionary<ColorReference, RawLayer> Convert(PaddedPaletteImage ii)
         {
             // Creating layers for each indexed color in arr
-            var layers = ii.Palette.ToDictionary(p => p, p => new EdgeNode[ii.PaddedHeight][].InitInner(ii.PaddedWidth));
+            var layers = ii.Palette.ToDictionary(p => p, p => new RawLayer { Nodes = new EdgeNode[ii.PaddedHeight][].InitInner(ii.PaddedWidth) });
 
             // Looping through all pixels and calculating edge node type
             foreach (var cg in ii.ColorGroups)
             {
                 // Are neighbor pixel colors the same?
                 // this pixel's type and looking back on previous pixels
-                layers[cg.Mid][cg.X + 1][cg.Y + 1] = BottomRight(cg);
+                layers[cg.Mid].Nodes[cg.X + 1][cg.Y + 1] = BottomRight(cg);
                 if (cg.MidLeft != cg.Mid)
                 {
-                    layers[cg.Mid][cg.X + 1][cg.Y] = BottomMid(cg);
+                    layers[cg.Mid].Nodes[cg.X + 1][cg.Y] = BottomMid(cg);
                 }
                 if (cg.TopMid != cg.Mid)
                 {
-                    layers[cg.Mid][cg.X][cg.Y + 1] = MidRight(cg);
+                    layers[cg.Mid].Nodes[cg.X][cg.Y + 1] = MidRight(cg);
                 }
                 if (cg.TopLeft != cg.Mid)
                 {
-                    layers[cg.Mid][cg.X][cg.Y] = Mid(cg);
+                    layers[cg.Mid].Nodes[cg.X][cg.Y] = Mid(cg);
                 }
             }
 

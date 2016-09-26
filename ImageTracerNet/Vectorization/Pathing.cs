@@ -4,6 +4,7 @@ using System.Linq;
 using ImageTracerNet.Vectorization.Points;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Segments;
+using ImageTracerNet.Vectorization.TraceTypes;
 using DirectedEdgeList = System.Collections.Generic.List<ImageTracerNet.Vectorization.DirectedEdge>;
 using static ImageTracerNet.Vectorization.EdgeNode;
 using static ImageTracerNet.Vectorization.WalkDirection;
@@ -161,10 +162,10 @@ namespace ImageTracerNet.Vectorization
         // ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        public static IEnumerable<IEnumerable<PathPoint>> Scan(EdgeNode[][] nodes, int pathOmit)
+        public static IEnumerable<PathPointPath> Scan(RawLayer layer, int pathOmit)
         {
-            var width = nodes[0].Length;
-            var height = nodes.Length;
+            var width = layer.Nodes[0].Length;
+            var height = layer.Nodes.Length;
             var isHolePath = false;
 
             // This loop itself is updating nodes as it is looping. Hole paths also update nodes, but do not return paths.
@@ -172,7 +173,7 @@ namespace ImageTracerNet.Vectorization
             {
                 for (var column = 0; column < width; column++)
                 {
-                    var node = nodes[row][column];
+                    var node = layer.Nodes[row][column];
 
                     // Remove completely filled or empty edge nodes.
                     if ((node == DDDD) || (node == LLLL)) continue;
@@ -182,10 +183,10 @@ namespace ImageTracerNet.Vectorization
                     isHolePath = CalcHole(node, isHolePath);
 
                     // The values in nodes are updated in CreatePath.
-                    var path = CreatePath(nodes, column, row, dir, isHolePath, pathOmit);
+                    var path = CreatePath(layer.Nodes, column, row, dir, isHolePath, pathOmit);
                     if (path != null)
                     {
-                        yield return path;
+                        yield return new PathPointPath { Points = path.ToList() };
                     }
                 }
             }
@@ -209,11 +210,11 @@ namespace ImageTracerNet.Vectorization
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        public static IEnumerable<Segment> Trace(IReadOnlyList<InterpolationPoint> path, Tracing tracingOptions)
+        public static IEnumerable<Segment> Trace(InterpolationPointPath path, Tracing tracingOptions)
         {
-            var sequences = Sequencing.Create(path.Select(p => p.Direction).ToList());
+            var sequences = Sequencing.Create(path.Points.Select(p => p.Direction).ToList());
             // Fit the sequences into segments, and return them.
-            return sequences.Select(s => Segmentation.Fit(path, tracingOptions, s)).SelectMany(s => s);
+            return sequences.Select(s => Segmentation.Fit(path.Points, tracingOptions, s)).SelectMany(s => s);
         }
     }
 }
