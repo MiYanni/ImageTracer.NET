@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Image x:Name="ImageDisplay" Margin="10"/>
+        <WebBrowser x:Name="Browser" Margin="10"/>
+        <!--<Image x:Name="ImageDisplay" Margin="10"/>-->
 
     </Grid>
 </Window>

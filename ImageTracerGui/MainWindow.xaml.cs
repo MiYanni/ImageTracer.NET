@@ -36,7 +36,9 @@ namespace ImageTracerGui
             Width = image.Width / 10;
             image.Save(@"chronotrigger2.png");
             var imageSource = BitmapToImageSource(image);
-            ImageDisplay.Source = imageSource;
+            //ImageDisplay.Source = imageSource;
+            Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
+            //Browser.
             //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
             //ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
             WindowState = WindowState.Maximized;
