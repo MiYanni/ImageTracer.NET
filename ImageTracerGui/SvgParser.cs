@@ -40,6 +40,7 @@ namespace ImageTracerGui
         public static SvgDocument GetSvgDocument(string filePath)
         {
             SvgDocument document = SvgDocument.Open(filePath);
+            //document.Opacity = 0;
             return AdjustSize(document);
         }
 

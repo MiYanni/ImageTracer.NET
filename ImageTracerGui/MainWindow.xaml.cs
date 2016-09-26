@@ -27,15 +27,19 @@ namespace ImageTracerGui
         public MainWindow()
         {
             InitializeComponent();
-            SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "4", "numberofcolors", "256", "pathomit", "0" });
-            SvgParser.MaximumSize = new System.Drawing.Size(1920, 1080);
+            SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+            SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
             //var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
             //var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
             var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
-            Height = image.Height;
-            Width = image.Width;
-            var imageSource = BitmapToImageSource(image);
-            ImageDisplay.Source = imageSource;
+            Height = image.Height / 10;
+            Width = image.Width / 10;
+            image.Save(@"chronotrigger2.png");
+            // TODO: The BitmapToImageSource does not render transparency properly.
+            //var imageSource = BitmapToImageSource(image);
+            //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
+            ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
+            WindowState = WindowState.Maximized;
         }
 
         private static void SaveTracedImage(string[] args)
