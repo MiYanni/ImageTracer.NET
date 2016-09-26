@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ImageTracerNet.Extensions;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Segments;
 using CoordMethod = System.Func<double, double>;
@@ -11,6 +10,23 @@ namespace ImageTracerNet.Svg
 {
     internal static class SvgGeneration
     {
+        private static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Segment>> layers, int width)
+        {
+            var zIndex = new SortedDictionary<double, ZPosition>();
+            // Layer loop
+            for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
+            {
+                // Path loop
+                for (var pathIndex = 0; pathIndex < layers[layerIndex].Count; pathIndex++)
+                {
+                    // Label (Z-index key) is the startpoint of the path, linearized
+                    var label = layers[layerIndex][pathIndex].Start.Y * width + layers[layerIndex][pathIndex].Start.X;
+                    zIndex[label] = new ZPosition { Layer = layerIndex, Path = pathIndex };
+                }
+            }
+            return zIndex;
+        }
+
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
         public static string ToSvgString(this PaddedPaletteImage ii, SvgRendering options)
@@ -19,29 +35,31 @@ namespace ImageTracerNet.Svg
             var width = (int)(ii.ImageWidth * options.Scale);
             var height = (int)(ii.ImageHeight * options.Scale);
 
-            var viewBoxOrViewPort = options.Viewbox.IsNotZero() ?
+            var viewBoxOrViewPort = options.Viewbox ?
                 $"viewBox=\"0 0 {width} {height}\"" :
                 $"width=\"{width}\" height=\"{height}\"";
             var svgStringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options.Desc.IsNotZero())
+            if (options.Desc)
             {
                 svgStringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
             }
             svgStringBuilder.Append(">");
 
             // creating Z-index
-            var zIndex = new SortedDictionary<double, ZPosition>();
-            // Layer loop
-            for (var layerIndex = 0; layerIndex < ii.Layers.Count; layerIndex++)
-            {
-                // Path loop
-                for (var pathIndex = 0; pathIndex < ii.Layers[layerIndex].Count; pathIndex++)
-                {
-                    // Label (Z-index key) is the startpoint of the path, linearized
-                    var label = ii.Layers[layerIndex][pathIndex][0].Start.Y * width + ii.Layers[layerIndex][pathIndex][0].Start.X;
-                    zIndex[label] = new ZPosition { Layer = layerIndex, Path = pathIndex };
-                }
-            }
+            // Only selecting the first segment of each path.
+            var zIndex = CreateZIndex(ii.Layers.Select(l => l.Select(p => p.First()).ToList()).ToList(), width);
+            //var zIndex = new SortedDictionary<double, ZPosition>();
+            //// Layer loop
+            //for (var layerIndex = 0; layerIndex < ii.Layers.Count; layerIndex++)
+            //{
+            //    // Path loop
+            //    for (var pathIndex = 0; pathIndex < ii.Layers[layerIndex].Count; pathIndex++)
+            //    {
+            //        // Label (Z-index key) is the startpoint of the path, linearized
+            //        var label = ii.Layers[layerIndex][pathIndex][0].Start.Y * width + ii.Layers[layerIndex][pathIndex][0].Start.X;
+            //        zIndex[label] = new ZPosition { Layer = layerIndex, Path = pathIndex };
+            //    }
+            //}
 
             // Sorting Z-index is not required, TreeMap is sorted automatically
 
@@ -51,7 +69,7 @@ namespace ImageTracerNet.Svg
             {
                 var zValue = zPosition.Value;
                 var description = String.Empty;
-                if (options.Desc.IsNotZero())
+                if (options.Desc)
                 {
                     description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
                 }
