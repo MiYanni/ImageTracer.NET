@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageTracerNet", "ImageTrac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageTracerTester", "ImageTracerTester\ImageTracerTester.csproj", "{0D388C1A-EF27-4B1E-8783-2BA7531D2411}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageTracerGui", "ImageTracerGui\ImageTracerGui.csproj", "{9563592E-EA21-494A-AE89-6CFA1CB6F528}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{0D388C1A-EF27-4B1E-8783-2BA7531D2411}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D388C1A-EF27-4B1E-8783-2BA7531D2411}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D388C1A-EF27-4B1E-8783-2BA7531D2411}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9563592E-EA21-494A-AE89-6CFA1CB6F528}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9563592E-EA21-494A-AE89-6CFA1CB6F528}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9563592E-EA21-494A-AE89-6CFA1CB6F528}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9563592E-EA21-494A-AE89-6CFA1CB6F528}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

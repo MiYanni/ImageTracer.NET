@@ -16,7 +16,7 @@ namespace ImageTracerTester
         private static void Main(string[] args)
         {
             //SaveTracedImage(args);
-            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "44", "numberofcolors", "256", "pathomit", "0" });
+            SaveTracedImage(new [] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2-traced-new.svg", "ltres", "0.1", "qtres", "1", "scale", "1", "numberofcolors", "256", "pathomit", "0" });
             //ColorArrayTest(100, 200);
             //GaussianBlurTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-blurred.png");
             //ColorPaletteTest(@"..\..\Images\Chrono Trigger2.png", @"chronotrigger2-palette.png", 8, 8);
