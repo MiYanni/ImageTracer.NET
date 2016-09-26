@@ -35,10 +35,10 @@ namespace ImageTracerGui
             Height = image.Height / 10;
             Width = image.Width / 10;
             image.Save(@"chronotrigger2.png");
-            // TODO: The BitmapToImageSource does not render transparency properly.
-            //var imageSource = BitmapToImageSource(image);
+            var imageSource = BitmapToImageSource(image);
+            ImageDisplay.Source = imageSource;
             //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
-            ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
+            //ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
             WindowState = WindowState.Maximized;
         }
 
@@ -122,7 +122,7 @@ namespace ImageTracerGui
         {
             using (MemoryStream memory = new MemoryStream())
             {
-                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
                 memory.Position = 0;
                 BitmapImage bitmapimage = new BitmapImage();
                 bitmapimage.BeginInit();
