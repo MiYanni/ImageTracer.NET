@@ -7,8 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <WebBrowser x:Name="Browser" Margin="10"/>
-        <!--<Image x:Name="ImageDisplay" Margin="10"/>-->
-
+        <!--<WebBrowser x:Name="Browser" Margin="10"/>-->
+        <Image x:Name="ImageDisplay" Margin="10"/>
+        <Button x:Name="Part1Button" Content="Part 1" Margin="0,0,10,10" Click="Part1Button_Click" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75"/>
     </Grid>
 </Window>

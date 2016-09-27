@@ -7,26 +7,26 @@ namespace ImageTracerNet
 {
     internal class ColorReference
     {
-        private readonly Color _color;
+        public Color Color { get; }
 
         public ColorReference(Color color)
         {
-            _color = color;
+            Color = color;
         }
 
         public ColorReference(byte alpha, byte red, byte green, byte blue)
+            : this(Color.FromArgb(alpha, red, green, blue))
         {
-            _color = Color.FromArgb(alpha, red, green, blue);
         }
 
-        public byte A => _color.A;
-        public byte R => _color.R;
-        public byte G => _color.G;
-        public byte B => _color.B;
+        public byte A => Color.A;
+        public byte R => Color.R;
+        public byte G => Color.G;
+        public byte B => Color.B;
 
         public int CalculateRectilinearDistance(ColorReference other)
         {
-            return _color.CalculateRectilinearDistance(other._color);
+            return Color.CalculateRectilinearDistance(other.Color);
         }
 
         private ColorReference() { }

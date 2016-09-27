@@ -15,7 +15,7 @@ namespace ImageTracerNet
     {
         public static readonly string VersionNumber = typeof(ImageTracer).Assembly.GetName().Version.ToString();
 
-        private static readonly List<ColorReference> Palette = BitmapPalettes.Halftone256.Colors.Select(c => new ColorReference(c.A, c.R, c.G, c.B)).ToList();
+        internal static readonly List<ColorReference> Palette = BitmapPalettes.Halftone256.Colors.Select(c => new ColorReference(c.A, c.R, c.G, c.B)).ToList();
 
         ////////////////////////////////////////////////////////////
         //

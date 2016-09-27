@@ -1,21 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using ImageTracerNet;
-using Svg;
+using ImageTracerNet.OptionTypes;
+using ImageTracerNet.Vectorization;
+using ImageTracerNet.Vectorization.TraceTypes;
+using ImageTracerNet.Extensions;
+using ImageTracerNet.Svg;
 
 namespace ImageTracerGui
 {
@@ -27,24 +22,24 @@ namespace ImageTracerGui
         public MainWindow()
         {
             InitializeComponent();
-            SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
-            SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
-            //var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
-            //var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
-            var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
-            Height = image.Height / 10;
-            Width = image.Width / 10;
-            image.Save(@"chronotrigger2.png");
-            var imageSource = BitmapToImageSource(image);
-            //ImageDisplay.Source = imageSource;
-            Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
-            //Browser.
-            //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
-            //ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
             WindowState = WindowState.Maximized;
+            //SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+            //SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
+            ////var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
+            ////var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
+            //var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
+            //Height = image.Height / 10;
+            //Width = image.Width / 10;
+            //image.Save(@"chronotrigger2.png");
+            //var imageSource = BitmapToImageSource(image);
+            //ImageDisplay.Source = imageSource;
+            ////Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
+            ////http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
+            ////ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
+            //WindowState = WindowState.Maximized;
         }
 
-        private static void SaveTracedImage(string[] args)
+        private void SaveTracedImage(string[] args)
         {
             //try
             //{
@@ -92,12 +87,83 @@ namespace ImageTracerGui
                 }// End of parameternames loop
 
                 // Loading image, tracing, rendering SVG, saving SVG file
-                File.WriteAllText(outfilename, ImageTracer.ImageToSvg(args[0], options));
-
+                //File.WriteAllText(outfilename, ImageToSvg(args[0], options));
+                ImageToSvg(args[0], options);
             }// End of parameter parsing and processing
 
             //}
             //catch (Exception e) { Console.WriteLine(e.StackTrace); }
+        }
+
+        private Bitmap _loadedImage;
+
+        public void ImageToSvg(string filename, Options options)
+        {
+            //return ImageToSvg(new Bitmap(filename), options);
+
+            // 1. Color quantization
+            var rbgImage = new Bitmap(filename).ChangeFormat(PixelFormat.Format32bppArgb);
+
+            ImageDisplay.Source = BitmapToImageSource(rbgImage);
+
+            _loadedImage = rbgImage;
+        }
+        //public void ImageToSvg(Bitmap image, Options options) 
+        //{
+        //    //var colors = rbgImage.ToColorReferences();
+        //    //var paddedPaletteImage = new PaddedPaletteImage(colors, rbgImage.Height, rbgImage.Width, ImageTracer.Palette);
+
+        //    //var paletteImageBitmap = new Bitmap(paddedPaletteImage.ImageWidth, paddedPaletteImage.ImageHeight);
+        //    //paddedPaletteImage.ColorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
+        //    //ImageDisplay.Source = BitmapToImageSource(paletteImageBitmap);
+
+        //    //return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
+        //}
+
+        public string ImageToSvg2(Bitmap image, Options options)
+        {
+            // 1. Color quantization
+            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
+
+            ImageDisplay.Source = null;
+            ImageDisplay.Source = BitmapToImageSource(image);
+
+            var colors = rbgImage.ToColorReferences();
+            var paddedPaletteImage = new PaddedPaletteImage(colors, rbgImage.Height, rbgImage.Width, ImageTracer.Palette);
+
+            var paletteImageBitmap = new Bitmap(paddedPaletteImage.ImageWidth, paddedPaletteImage.ImageHeight);
+            paddedPaletteImage.ColorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
+            ImageDisplay.Source = BitmapToImageSource(paletteImageBitmap);
+
+            return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
+        }
+
+        ////////////////////////////////////////////////////////////
+
+        // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
+        private PaddedPaletteImage PaddedPaletteImageToTraceData(PaddedPaletteImage image, Tracing options)
+        {
+            // Selective Gaussian blur preprocessing
+            //if (options.Blur.BlurRadius > 0)
+            //{
+            //    // TODO: This seems to not work currently.
+            //    imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
+            //}
+
+            // 2. Layer separation and edge detection
+            var rawLayers = Layering.Convert(image);
+            // 3. Batch pathscan
+            var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, options.PathOmit).ToList() });
+            // 4. Batch interpollation
+            var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
+            // 5. Batch tracing
+            //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
+            image.Layers = interpolationPointLayers.Select(layer => 
+                new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
+                    new SegmentPath { Segments = 
+                        Pathing.Trace(path, options).ToList() }).ToList() }).ToList();
+
+            return image;
         }
 
         private static int arraycontains(String[] arr, String str)
@@ -120,20 +186,47 @@ namespace ImageTracerGui
         }
 
         //http://stackoverflow.com/questions/22499407/how-to-display-a-bitmap-in-a-wpf-image
-        private BitmapImage BitmapToImageSource(Bitmap bitmap)
+        private static BitmapImage BitmapToImageSource(Bitmap bitmap)
         {
-            using (MemoryStream memory = new MemoryStream())
+            using (var memory = new MemoryStream())
             {
-                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
+                bitmap.Save(memory, ImageFormat.Png);
                 memory.Position = 0;
-                BitmapImage bitmapimage = new BitmapImage();
+                var bitmapimage = new BitmapImage();
                 bitmapimage.BeginInit();
                 bitmapimage.StreamSource = memory;
                 bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                //http://stackoverflow.com/questions/10518986/image-does-not-refresh-in-custom-picture-box
+                //bitmapimage.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
                 bitmapimage.EndInit();
 
                 return bitmapimage;
             }
+        }
+
+        private void GoButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+            SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
+            //var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
+            //var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
+            var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
+            Height = image.Height / 10;
+            Width = image.Width / 10;
+            image.Save(@"chronotrigger2.png");
+            var imageSource = BitmapToImageSource(image);
+            ImageDisplay.Source = imageSource;
+            //Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
+            //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
+            //ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
+            //WindowState = WindowState.Maximized;
+        }
+
+        
+
+        private void Part1Button_Click(object sender, RoutedEventArgs e)
+        {
+            SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
         }
     }
 }
