@@ -103,9 +103,6 @@ namespace ImageTracerGui
 
             // 1. Color quantization
             var rbgImage = new Bitmap(filename).ChangeFormat(PixelFormat.Format32bppArgb);
-
-            ImageDisplay.Source = BitmapToImageSource(rbgImage);
-
             _loadedImage = rbgImage;
         }
         //public void ImageToSvg(Bitmap image, Options options) 
@@ -120,22 +117,23 @@ namespace ImageTracerGui
         //    //return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
         //}
 
-        public string ImageToSvg2(Bitmap image, Options options)
+        private Bitmap _paletteImage;
+        public void ImageToSvg2()
         {
             // 1. Color quantization
-            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
+            //var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
 
-            ImageDisplay.Source = null;
-            ImageDisplay.Source = BitmapToImageSource(image);
+            //ImageDisplay.Source = null;
+            //ImageDisplay.Source = BitmapToImageSource(image);
 
-            var colors = rbgImage.ToColorReferences();
-            var paddedPaletteImage = new PaddedPaletteImage(colors, rbgImage.Height, rbgImage.Width, ImageTracer.Palette);
+            var colors = _loadedImage.ToColorReferences();
+            var paddedPaletteImage = new PaddedPaletteImage(colors, _loadedImage.Height, _loadedImage.Width, ImageTracer.Palette);
 
             var paletteImageBitmap = new Bitmap(paddedPaletteImage.ImageWidth, paddedPaletteImage.ImageHeight);
             paddedPaletteImage.ColorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
-            ImageDisplay.Source = BitmapToImageSource(paletteImageBitmap);
-
-            return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
+            
+            _paletteImage = paletteImageBitmap;
+            //return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
         }
 
         ////////////////////////////////////////////////////////////
@@ -222,11 +220,27 @@ namespace ImageTracerGui
             //WindowState = WindowState.Maximized;
         }
 
-        
 
+        private bool _part1Complete;
         private void Part1Button_Click(object sender, RoutedEventArgs e)
         {
-            SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+            if (!_part1Complete)
+            {
+                SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                _part1Complete = true;
+            }
+            ImageDisplay.Source = BitmapToImageSource(_loadedImage);
+        }
+
+        private bool _part2Complete;
+        private void Part2Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_part2Complete)
+            {
+                ImageToSvg2();
+                _part2Complete = true;
+            }
+            ImageDisplay.Source = BitmapToImageSource(_paletteImage);
         }
     }
 }

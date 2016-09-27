@@ -40,18 +40,18 @@ namespace ImageTracerNet.Vectorization
             {
                 // Are neighbor pixel colors the same?
                 // this pixel's type and looking back on previous pixels
-                layers[cg.Mid].Nodes[cg.X + 1][cg.Y + 1] = BottomRight(cg);
+                layers[cg.Mid].Nodes[cg.Y + 1][cg.X + 1] = BottomRight(cg);
                 if (cg.MidLeft != cg.Mid)
                 {
-                    layers[cg.Mid].Nodes[cg.X + 1][cg.Y] = BottomMid(cg);
+                    layers[cg.Mid].Nodes[cg.Y + 1][cg.X] = BottomMid(cg);
                 }
                 if (cg.TopMid != cg.Mid)
                 {
-                    layers[cg.Mid].Nodes[cg.X][cg.Y + 1] = MidRight(cg);
+                    layers[cg.Mid].Nodes[cg.Y][cg.X + 1] = MidRight(cg);
                 }
                 if (cg.TopLeft != cg.Mid)
                 {
-                    layers[cg.Mid].Nodes[cg.X][cg.Y] = Mid(cg);
+                    layers[cg.Mid].Nodes[cg.Y][cg.X] = Mid(cg);
                 }
             }
 

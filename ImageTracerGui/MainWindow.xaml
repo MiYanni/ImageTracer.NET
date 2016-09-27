@@ -10,5 +10,6 @@
         <!--<WebBrowser x:Name="Browser" Margin="10"/>-->
         <Image x:Name="ImageDisplay" Margin="10"/>
         <Button x:Name="Part1Button" Content="Part 1" Margin="0,0,10,10" Click="Part1Button_Click" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75"/>
+        <Button x:Name="Part2Button" Content="Part 2" HorizontalAlignment="Right" Margin="0,0,10,35" VerticalAlignment="Bottom" Width="75" Click="Part2Button_Click"/>
     </Grid>
 </Window>
