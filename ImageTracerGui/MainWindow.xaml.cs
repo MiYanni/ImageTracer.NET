@@ -233,7 +233,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -260,7 +260,7 @@ namespace ImageTracerGui
                 _rawLayers = Layering.Convert(_image);
                 _part3Complete = true;
                 _filteredRawLayers =
-                    _rawLayers.Where(cl => cl.Value.Nodes.Any(r => r.Any(n => (int) n%2 != 0)))
+                    _rawLayers.Where(cl => cl.Value.Nodes.Any(r => r.Any(n => n.IsLight())))
                         .ToDictionary(cl => cl.Key, cl => cl.Value);
 
                 //http://www.wpf-tutorial.com/list-controls/combobox-control/
@@ -292,7 +292,7 @@ namespace ImageTracerGui
                     var node = nodes[row][column];
                     //if (node == EdgeNode.DDDD || node == EdgeNode.DDDL || node == EdgeNode.DDLD || node == EdgeNode.DDLL ||
                     //    node == EdgeNode.DLDD || node == EdgeNode.DLDL || node == EdgeNode.DLLD || node == EdgeNode.DLLL)
-                    if((int)node % 2 != 0)
+                    if(node.IsLight())
                     {
                         image.SetPixel(column - 1, row - 1, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
                     }

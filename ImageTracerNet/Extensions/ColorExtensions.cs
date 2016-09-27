@@ -26,7 +26,7 @@ namespace ImageTracerNet.Extensions
             var firstArray = first.ToRgbaByteArray();
             var secondArray = second.ToRgbaByteArray();
             // weighted alpha seems to help images with transparency
-            return firstArray.Zip(secondArray, (f, s) => Math.Abs(f - s)).Select((d, i) => i == 3 ? d * 4 : d).Aggregate((f, s) => f + s);
+            return firstArray.Zip(secondArray, (f, s) => Math.Abs(f - s)).Select((d, i) => i == 3 ? d * 4 : d).Sum();
         }
 
         public static byte[] ToRgbaByteArray(this Color[] colors)
