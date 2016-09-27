@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageTracerNet;
 using ImageTracerNet.OptionTypes;
@@ -11,6 +13,7 @@ using ImageTracerNet.Vectorization;
 using ImageTracerNet.Vectorization.TraceTypes;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.Svg;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace ImageTracerGui
 {
@@ -96,6 +99,7 @@ namespace ImageTracerGui
         }
 
         private Bitmap _loadedImage;
+        private Options _options;
 
         public void ImageToSvg(string filename, Options options)
         {
@@ -104,6 +108,7 @@ namespace ImageTracerGui
             // 1. Color quantization
             var rbgImage = new Bitmap(filename).ChangeFormat(PixelFormat.Format32bppArgb);
             _loadedImage = rbgImage;
+            _options = options;
         }
         //public void ImageToSvg(Bitmap image, Options options) 
         //{
@@ -118,6 +123,7 @@ namespace ImageTracerGui
         //}
 
         private Bitmap _paletteImage;
+        private PaddedPaletteImage _image;
         public void ImageToSvg2()
         {
             // 1. Color quantization
@@ -133,13 +139,14 @@ namespace ImageTracerGui
             paddedPaletteImage.ColorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
             
             _paletteImage = paletteImageBitmap;
+            _image = paddedPaletteImage;
             //return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
         }
 
         ////////////////////////////////////////////////////////////
 
         // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
-        private PaddedPaletteImage PaddedPaletteImageToTraceData(PaddedPaletteImage image, Tracing options)
+        private PaddedPaletteImage PaddedPaletteImageToTraceData()
         {
             // Selective Gaussian blur preprocessing
             //if (options.Blur.BlurRadius > 0)
@@ -149,19 +156,19 @@ namespace ImageTracerGui
             //}
 
             // 2. Layer separation and edge detection
-            var rawLayers = Layering.Convert(image);
+            var rawLayers = Layering.Convert(_image);
             // 3. Batch pathscan
-            var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, options.PathOmit).ToList() });
+            var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, _options.Tracing.PathOmit).ToList() });
             // 4. Batch interpollation
             var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
             // 5. Batch tracing
             //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
-            image.Layers = interpolationPointLayers.Select(layer => 
+            _image.Layers = interpolationPointLayers.Select(layer => 
                 new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
                     new SegmentPath { Segments = 
-                        Pathing.Trace(path, options).ToList() }).ToList() }).ToList();
+                        Pathing.Trace(path, _options.Tracing).ToList() }).ToList() }).ToList();
 
-            return image;
+            return _image;
         }
 
         private static int arraycontains(String[] arr, String str)
@@ -241,6 +248,26 @@ namespace ImageTracerGui
                 _part2Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_paletteImage);
+        }
+
+        private Dictionary<ColorReference, RawLayer> _rawLayers;
+        private bool _part3Complete;
+        private void Part3Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_part3Complete)
+            {
+                _rawLayers = Layering.Convert(_image);
+                _part3Complete = true;
+                //http://www.wpf-tutorial.com/list-controls/combobox-control/
+                //http://stackoverflow.com/questions/7719164/databinding-a-color-in-wpf-datatemplate
+                Part3ComboBox.ItemsSource = _rawLayers.Keys.Select((k, i) => new { Color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(k.A, k.R, k.G, k.B)), Index = i });
+                Part3Button.IsEnabled = false;
+            }
+        }
+
+        private void Part3ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+
         }
     }
 }

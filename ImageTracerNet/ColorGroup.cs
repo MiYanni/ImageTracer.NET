@@ -17,8 +17,8 @@ namespace ImageTracerNet
 
         public ColorGroup(IReadOnlyList<ColorReference> colors, int row, int column, int width)
         {
-            //X = row;
-            //Y = column;
+            X = column;
+            Y = row;
             TopLeft = colors[(row - 1) * width + (column - 1)];
             TopMid = colors[(row - 1) * width + column];
             TopRight = colors[(row - 1) * width + column + 1];
@@ -28,8 +28,6 @@ namespace ImageTracerNet
             BottomLeft = colors[(row + 1) * width + (column - 1)];
             BottomMid = colors[(row + 1) * width + column];
             BottomRight = colors[(row + 1) * width + column + 1];
-            X = column;
-            Y = row;
         }
     }
 }
