@@ -21,7 +21,7 @@ namespace ImageTracerNet.Vectorization
 
         private static readonly EdgeNode[] HoleNodes = { LLDL, LLLD, LDLL, DLLL };
         private const EdgeNode NonHoleNode = DDDL;
-        private static Func<EdgeNode, bool, bool> CalcHole = (node, isHolePath) => HoleNodes.Contains(node) || (NonHoleNode != node && isHolePath);
+        private static readonly Func<EdgeNode, bool, bool> CalcHole = (node, isHolePath) => HoleNodes.Contains(node) || (NonHoleNode != node && isHolePath);
 
         private static readonly Dictionary<EdgeNode, EdgeNode[]> NonZeroNodes = new Dictionary<EdgeNode, EdgeNode[]>
         {

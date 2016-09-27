@@ -251,6 +251,7 @@ namespace ImageTracerGui
         }
 
         private Dictionary<ColorReference, RawLayer> _rawLayers;
+        private Dictionary<ColorReference, RawLayer> _filteredRawLayers;
         private bool _part3Complete;
         private void Part3Button_Click(object sender, RoutedEventArgs e)
         {
@@ -258,16 +259,47 @@ namespace ImageTracerGui
             {
                 _rawLayers = Layering.Convert(_image);
                 _part3Complete = true;
+                _filteredRawLayers =
+                    _rawLayers.Where(cl => cl.Value.Nodes.Any(r => r.Any(n => (int) n%2 != 0)))
+                        .ToDictionary(cl => cl.Key, cl => cl.Value);
+
                 //http://www.wpf-tutorial.com/list-controls/combobox-control/
                 //http://stackoverflow.com/questions/7719164/databinding-a-color-in-wpf-datatemplate
-                Part3ComboBox.ItemsSource = _rawLayers.Keys.Select((k, i) => new { Color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(k.A, k.R, k.G, k.B)), Index = i });
+                Part3ComboBox.ItemsSource = _filteredRawLayers.Keys.Select((k, i) => new { Color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(k.A, k.R, k.G, k.B)), Index = i });
                 Part3Button.IsEnabled = false;
             }
         }
 
         private void Part3ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            var selected = e.AddedItems.OfType<dynamic>().First();
+            var brush = (SolidColorBrush)selected.Color;
+            var index = (int)selected.Index;
+            //Console.WriteLine($"Selected: {brush.Color} {index}");
+            var nodes = _filteredRawLayers.ElementAt(index).Value.Nodes;
 
+            var image = new Bitmap(_loadedImage.Width, _loadedImage.Height);
+            using (var gfx = Graphics.FromImage(image))
+            using (var blackBrush = new SolidBrush(System.Drawing.Color.Transparent))
+            {
+                gfx.FillRectangle(blackBrush, 0, 0, image.Width, image.Height);
+            }
+
+            for (var row = 1; row < nodes.Length - 1; ++row)
+            {
+                for (var column = 1; column < nodes[0].Length - 1; ++column)
+                {
+                    var node = nodes[row][column];
+                    //if (node == EdgeNode.DDDD || node == EdgeNode.DDDL || node == EdgeNode.DDLD || node == EdgeNode.DDLL ||
+                    //    node == EdgeNode.DLDD || node == EdgeNode.DLDL || node == EdgeNode.DLLD || node == EdgeNode.DLLL)
+                    if((int)node % 2 != 0)
+                    {
+                        image.SetPixel(column - 1, row - 1, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
+                    }
+                }
+            }
+
+            ImageDisplay.Source = BitmapToImageSource(image);
         }
     }
 }
