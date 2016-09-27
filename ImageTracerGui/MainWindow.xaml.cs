@@ -278,16 +278,16 @@ namespace ImageTracerGui
                 gfx.FillRectangle(blackBrush, 0, 0, image.Width, image.Height);
             }
 
-            for (var row = 1; row < nodes.Length; ++row)
+            for (var row = 1; row < nodes.Length - 1; ++row)
             {
-                for (var column = 1; column < nodes[0].Length; ++column)
+                for (var column = 1; column < nodes[0].Length - 1; ++column)
                 {
                     var node = nodes[row][column];
                     //if (node == EdgeNode.DDDD || node == EdgeNode.DDDL || node == EdgeNode.DDLD || node == EdgeNode.DDLL ||
                     //    node == EdgeNode.DLDD || node == EdgeNode.DLDL || node == EdgeNode.DLLD || node == EdgeNode.DLLL)
                     if(node.IsLight())
                     {
-                        image.SetPixel(column - 2, row - 2, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
+                        image.SetPixel(column - 1, row - 1, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
                     }
                 }
             }

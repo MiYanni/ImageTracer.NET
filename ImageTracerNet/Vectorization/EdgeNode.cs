@@ -1,5 +1,8 @@
 ﻿// ReSharper disable InconsistentNaming
 
+using System.Linq;
+using static ImageTracerNet.Vectorization.EdgeNode;
+
 namespace ImageTracerNet.Vectorization
 {
 
@@ -31,12 +34,20 @@ namespace ImageTracerNet.Vectorization
 
     internal static class EdgeNodeExtensions
     {
-        // Even nodes are dark (no color).
+        // Dark nodes are 0-3 and 8-11. This is 2 groups of 4.
+        private static readonly EdgeNode[] _darkNodes =
+        {
+            DDDD, LDDD, DLDD, LLDD,
+            DDLD, LDLD, DLLD, LLLD
+        };
+        // Even nodes are dark (no color) when based on the top-left pixel.
+        // However, nodes are based on the bottom right pixel, as this is always set during conversion.
         public static bool IsDark(this EdgeNode node)
         {
-            return (int)node % 2 == 0;
+            return _darkNodes.Contains(node);
         }
-        // Odd nodeas are light (colored).
+        // Odd nodeas are light (colored) when based on the top-left pixel.
+        // However, nodes are based on the bottom right pixel, as this is always set during conversion.
         public static bool IsLight(this EdgeNode node)
         {
             return !node.IsDark();
