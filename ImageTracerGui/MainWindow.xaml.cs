@@ -148,13 +148,6 @@ namespace ImageTracerGui
         // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
         private PaddedPaletteImage PaddedPaletteImageToTraceData()
         {
-            // Selective Gaussian blur preprocessing
-            //if (options.Blur.BlurRadius > 0)
-            //{
-            //    // TODO: This seems to not work currently.
-            //    imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
-            //}
-
             // 2. Layer separation and edge detection
             var rawLayers = Layering.Convert(_image);
             // 3. Batch pathscan
@@ -209,23 +202,23 @@ namespace ImageTracerGui
             }
         }
 
-        private void GoButton_Click(object sender, RoutedEventArgs e)
-        {
-            SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
-            SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
-            //var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
-            //var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
-            var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
-            Height = image.Height / 10;
-            Width = image.Width / 10;
-            image.Save(@"chronotrigger2.png");
-            var imageSource = BitmapToImageSource(image);
-            ImageDisplay.Source = imageSource;
-            //Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
-            //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
-            //ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
-            //WindowState = WindowState.Maximized;
-        }
+        //private void GoButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+        //    SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
+        //    //var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
+        //    //var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
+        //    var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
+        //    Height = image.Height / 10;
+        //    Width = image.Width / 10;
+        //    image.Save(@"chronotrigger2.png");
+        //    var imageSource = BitmapToImageSource(image);
+        //    ImageDisplay.Source = imageSource;
+        //    //Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
+        //    //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
+        //    //ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
+        //    //WindowState = WindowState.Maximized;
+        //}
 
 
         private bool _part1Complete;
@@ -233,7 +226,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -285,16 +278,16 @@ namespace ImageTracerGui
                 gfx.FillRectangle(blackBrush, 0, 0, image.Width, image.Height);
             }
 
-            for (var row = 1; row < nodes.Length - 1; ++row)
+            for (var row = 1; row < nodes.Length; ++row)
             {
-                for (var column = 1; column < nodes[0].Length - 1; ++column)
+                for (var column = 1; column < nodes[0].Length; ++column)
                 {
                     var node = nodes[row][column];
                     //if (node == EdgeNode.DDDD || node == EdgeNode.DDDL || node == EdgeNode.DDLD || node == EdgeNode.DDLL ||
                     //    node == EdgeNode.DLDD || node == EdgeNode.DLDL || node == EdgeNode.DLLD || node == EdgeNode.DLLL)
                     if(node.IsLight())
                     {
-                        image.SetPixel(column - 1, row - 1, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
+                        image.SetPixel(column - 2, row - 2, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
                     }
                 }
             }
