@@ -35,7 +35,7 @@ namespace ImageTracerNet.Vectorization
     internal static class EdgeNodeExtensions
     {
         // Dark nodes are 0-3 and 8-11. This is 2 groups of 4.
-        private static readonly EdgeNode[] _darkNodes =
+        private static readonly EdgeNode[] _darkNodesBottomRight =
         {
             DDDD, LDDD, DLDD, LLDD,
             DDLD, LDLD, DLLD, LLLD
@@ -44,7 +44,7 @@ namespace ImageTracerNet.Vectorization
         // However, nodes are based on the bottom right pixel, as this is always set during conversion.
         public static bool IsDark(this EdgeNode node)
         {
-            return _darkNodes.Contains(node);
+            return (int)node % 2 == 0;
         }
         // Odd nodeas are light (colored) when based on the top-left pixel.
         // However, nodes are based on the bottom right pixel, as this is always set during conversion.

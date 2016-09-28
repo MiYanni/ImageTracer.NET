@@ -284,9 +284,9 @@ namespace ImageTracerGui
 
             var image = MakeClearBitmap();
 
-            for (var row = 1; row < nodes.Length - 1; ++row)
+            for (var row = 1; row < nodes.Length; ++row)
             {
-                for (var column = 1; column < nodes[0].Length - 1; ++column)
+                for (var column = 1; column < nodes[0].Length; ++column)
                 {
                     var node = nodes[row][column];
                     //if (node == EdgeNode.DDDD || node == EdgeNode.DDDL || node == EdgeNode.DDLD || node == EdgeNode.DDLL ||
