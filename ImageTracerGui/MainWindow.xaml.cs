@@ -263,6 +263,17 @@ namespace ImageTracerGui
             }
         }
 
+        private Bitmap MakeClearBitmap()
+        {
+            var image = new Bitmap(_loadedImage.Width, _loadedImage.Height);
+            using (var gfx = Graphics.FromImage(image))
+            using (var transBrush = new SolidBrush(System.Drawing.Color.Transparent))
+            {
+                gfx.FillRectangle(transBrush, 0, 0, image.Width, image.Height);
+            }
+            return image;
+        }
+
         private void Part3ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             var selected = e.AddedItems.OfType<dynamic>().First();
@@ -271,12 +282,7 @@ namespace ImageTracerGui
             //Console.WriteLine($"Selected: {brush.Color} {index}");
             var nodes = _filteredRawLayers.ElementAt(index).Value.Nodes;
 
-            var image = new Bitmap(_loadedImage.Width, _loadedImage.Height);
-            using (var gfx = Graphics.FromImage(image))
-            using (var blackBrush = new SolidBrush(System.Drawing.Color.Transparent))
-            {
-                gfx.FillRectangle(blackBrush, 0, 0, image.Width, image.Height);
-            }
+            var image = MakeClearBitmap();
 
             for (var row = 1; row < nodes.Length - 1; ++row)
             {
@@ -293,6 +299,31 @@ namespace ImageTracerGui
             }
 
             ImageDisplay.Source = BitmapToImageSource(image);
+        }
+
+        private Dictionary<ColorReference, Layer<PathPointPath>> _pathPointLayers;
+        private bool _part4Complete;
+        private Bitmap _pathPointImage;
+        private void Part4Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_part4Complete)
+            {
+                _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
+                var image = MakeClearBitmap();
+                var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points }));
+                foreach (var path in paths.Where((p, i) => i == 0))
+                {
+                    var points = path.Points.Where(p => p.EdgeNode.IsLight());
+                    foreach (var point in points)
+                    {
+                        image.SetPixel(point.X, point.Y, path.Color.Color);
+                    }
+                }
+                _pathPointImage = image;
+                _part4Complete = true;
+            }
+
+            ImageDisplay.Source = BitmapToImageSource(_pathPointImage);
         }
     }
 }

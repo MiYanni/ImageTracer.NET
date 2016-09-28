@@ -22,5 +22,6 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
+        <Button x:Name="Part4Button" Content="Part 4" Margin="0,112,10,0" HorizontalAlignment="Right" Width="75" Height="20" VerticalAlignment="Top" Click="Part4Button_Click"/>
     </Grid>
 </Window>
