@@ -33,25 +33,25 @@ namespace ImageTracerNet.Vectorization
         public static Dictionary<ColorReference, RawLayer> Convert(PaddedPaletteImage ii)
         {
             // Creating layers for each indexed color in arr
-            var layers = ii.Palette.ToDictionary(p => p, p => new RawLayer { Nodes = new EdgeNode[ii.PaddedHeight][].InitInner(ii.PaddedWidth) });
-
+            var layers = ii.Palette.ToDictionary(p => p, p => new RawLayer { Nodes = new EdgeNode[ii.PaddedHeight - 1][].InitInner(ii.PaddedWidth - 1) });
+            //var colorGroups = ii.ColorGroups.ToList();
             // Looping through all pixels and calculating edge node type
             foreach (var cg in ii.ColorGroups)
             {
                 // Are neighbor pixel colors the same?
                 // this pixel's type and looking back on previous pixels
-                layers[cg.Mid].Nodes[cg.Y + 1][cg.X + 1] = BottomRight(cg);
+                layers[cg.Mid].Nodes[cg.Y][cg.X] = BottomRight(cg);
                 if (cg.MidLeft != cg.Mid)
                 {
-                    layers[cg.Mid].Nodes[cg.Y + 1][cg.X] = BottomMid(cg);
+                    layers[cg.Mid].Nodes[cg.Y][cg.X - 1] = BottomMid(cg);
                 }
                 if (cg.TopMid != cg.Mid)
                 {
-                    layers[cg.Mid].Nodes[cg.Y][cg.X + 1] = MidRight(cg);
+                    layers[cg.Mid].Nodes[cg.Y - 1][cg.X] = MidRight(cg);
                 }
                 if (cg.TopLeft != cg.Mid)
                 {
-                    layers[cg.Mid].Nodes[cg.Y][cg.X] = Mid(cg);
+                    layers[cg.Mid].Nodes[cg.Y - 1][cg.X - 1] = Mid(cg);
                 }
             }
 

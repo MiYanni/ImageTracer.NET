@@ -175,7 +175,7 @@ namespace ImageTracerNet.Vectorization
                 {
                     var node = layer.Nodes[row][column];
 
-                    // Remove completely filled or empty edge nodes.
+                    // Remove completely empty or filled edge nodes.
                     if ((node == DDDD) || (node == LLLL)) continue;
 
                     // fill paths will be drawn, but hole paths are also required to remove unnecessary edge nodes
