@@ -226,7 +226,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -263,9 +263,9 @@ namespace ImageTracerGui
             }
         }
 
-        private Bitmap MakeClearBitmap()
+        private Bitmap MakeClearBitmap(int? width = null, int? height = null)
         {
-            var image = new Bitmap(_loadedImage.Width, _loadedImage.Height);
+            var image = new Bitmap(width ?? _loadedImage.Width, height ?? _loadedImage.Height);
             using (var gfx = Graphics.FromImage(image))
             using (var transBrush = new SolidBrush(System.Drawing.Color.Transparent))
             {
@@ -309,11 +309,11 @@ namespace ImageTracerGui
             if (!_part4Complete)
             {
                 _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
-                var image = MakeClearBitmap();
+                var image = MakeClearBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
                 var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points }));
-                foreach (var path in paths.Where((p, i) => i == 0))
+                foreach (var path in paths) // TODO: Only first layer
                 {
-                    var points = path.Points.Where(p => p.EdgeNode.IsLight());
+                    var points = path.Points;//.Where(p => p.EdgeNode.IsLight());
                     foreach (var point in points)
                     {
                         image.SetPixel(point.X, point.Y, path.Color.Color);

@@ -135,7 +135,7 @@ namespace ImageTracerNet.Vectorization
             do
             {
                 var directedEdge = new DirectedEdge { Node = nodes[y][x], Direction = dir };
-                path.Add(new PathPoint { X = x - 1, Y = y - 1, EdgeNode = directedEdge.Node });
+                path.Add(new PathPoint { X = x, Y = y, EdgeNode = directedEdge.Node });
 
                 // TODO: This nodes update is problematic for simplifying the the Scan algorithm.
                 nodes[y][x] = CalcNode(directedEdge);
@@ -146,7 +146,7 @@ namespace ImageTracerNet.Vectorization
 
                 // Close path
                 isIncorrectPath = !AcceptedPaths.Contains(directedEdge);
-                canClosePath = (x - 1 == path[0].X) && (y - 1 == path[0].Y);
+                canClosePath = (x == path[0].X) && (y == path[0].Y);
             } while (!(isIncorrectPath || canClosePath));
 
             // Discarding 'hole' type paths and paths shorter than pathOmit
@@ -160,6 +160,7 @@ namespace ImageTracerNet.Vectorization
         // Edge node types ( ▓:light or 1; ░:dark or 0 )
 
         // ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓  ░░  ▓░  ░▓  ▓▓
+
         // ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         // 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
         public static IEnumerable<PathPointPath> Scan(RawLayer layer, int pathOmit)
