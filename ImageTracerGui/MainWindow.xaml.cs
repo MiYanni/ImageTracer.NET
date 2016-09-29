@@ -226,7 +226,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -311,7 +311,7 @@ namespace ImageTracerGui
                 _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
                 var image = MakeClearBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
                 var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points }));
-                foreach (var path in paths) // TODO: Only first layer
+                foreach (var path in paths) //.Where((p, i) => i == 1) TODO: Only first layer
                 {
                     var points = path.Points;//.Where(p => p.EdgeNode.IsLight());
                     foreach (var point in points)
