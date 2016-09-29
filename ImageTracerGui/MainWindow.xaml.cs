@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ImageTracerNet;
@@ -226,7 +227,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -258,7 +259,7 @@ namespace ImageTracerGui
 
                 //http://www.wpf-tutorial.com/list-controls/combobox-control/
                 //http://stackoverflow.com/questions/7719164/databinding-a-color-in-wpf-datatemplate
-                Part3ComboBox.ItemsSource = _filteredRawLayers.Keys.Select((k, i) => new { Color = new SolidColorBrush(System.Windows.Media.Color.FromArgb(k.A, k.R, k.G, k.B)), Index = i });
+                Part3ComboBox.ItemsSource = _filteredRawLayers.Keys.Select((k, i) => new ColorSelectionItem(k, i));
                 Part3Button.IsEnabled = false;
             }
         }
@@ -274,11 +275,11 @@ namespace ImageTracerGui
             return image;
         }
 
-        private void Part3ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void Part3ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selected = e.AddedItems.OfType<dynamic>().First();
-            var brush = (SolidColorBrush)selected.Color;
-            var index = (int)selected.Index;
+            var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
+            var brush = selected.Color;
+            var index = selected.Index;
             //Console.WriteLine($"Selected: {brush.Color} {index}");
             var nodes = _filteredRawLayers.ElementAt(index).Value.Nodes;
 
@@ -310,20 +311,33 @@ namespace ImageTracerGui
             {
                 _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
                 var image = MakeClearBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
-                var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points }));
+                var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
                 foreach (var path in paths) //.Where((p, i) => i == 1) TODO: Only first layer
                 {
-                    var points = path.Points;//.Where(p => p.EdgeNode.IsLight());
-                    foreach (var point in points)
+                    foreach (var point in path.Points)//.Where(p => p.EdgeNode.IsLight());
                     {
                         image.SetPixel(point.X, point.Y, path.Color.Color);
                     }
                 }
                 _pathPointImage = image;
                 _part4Complete = true;
+                Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i));
             }
 
             ImageDisplay.Source = BitmapToImageSource(_pathPointImage);
+        }
+
+        private void Part4ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
+            var index = selected.Index;
+            var path = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).Where((cp, i) => i == index).Single();
+            var image = MakeClearBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
+            foreach (var point in path.Points)
+            {
+                image.SetPixel(point.X, point.Y, path.Color.Color);
+            }
+            ImageDisplay.Source = BitmapToImageSource(image);
         }
     }
 }
