@@ -14,8 +14,8 @@ namespace ImageTracerNet
         public int ImageWidth { get; }
         public int ImageHeight { get; }
         // Indexed color array adds +2 to the original width and height
-        public int PaddedWidth => ImageWidth + 2;
-        public int PaddedHeight => ImageHeight + 2;
+        private int PaddedWidth => ImageWidth + 2;
+        private int PaddedHeight => ImageHeight + 2;
         // array[palettelength][4] RGBA color palette
         public IReadOnlyList<ColorReference> Palette { get; }
         // tracedata

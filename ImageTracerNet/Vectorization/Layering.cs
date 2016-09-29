@@ -33,8 +33,8 @@ namespace ImageTracerNet.Vectorization
         public static Dictionary<ColorReference, RawLayer> Convert(PaddedPaletteImage ii)
         {
             // Creating layers for each indexed color in arr
-            var layers = ii.Palette.ToDictionary(p => p, p => new RawLayer { Nodes = new EdgeNode[ii.PaddedHeight - 1][].InitInner(ii.PaddedWidth - 1) });
-            //var colorGroups = ii.ColorGroups.ToList();
+            // Adding 1 to height and width because EdgeNodes represent in-between pixels. So, half of a pixel is added to all sides of the image (in a logical sense).
+            var layers = ii.Palette.ToDictionary(p => p, p => new RawLayer { Nodes = new EdgeNode[ii.ImageHeight + 1][].InitInner(ii.ImageWidth + 1) });
             // Looping through all pixels and calculating edge node type
             foreach (var cg in ii.ColorGroups)
             {
