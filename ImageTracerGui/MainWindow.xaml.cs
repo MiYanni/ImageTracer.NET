@@ -8,12 +8,16 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using ImageTracerNet;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization;
 using ImageTracerNet.Vectorization.TraceTypes;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.Svg;
+using ImageTracerNet.Vectorization.Points;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace ImageTracerGui
@@ -27,6 +31,16 @@ namespace ImageTracerGui
         {
             InitializeComponent();
             WindowState = WindowState.Maximized;
+            //var line = new Line
+            //{
+            //    X1 = 3,
+            //    Y1 = 3,
+            //    X2 = 100,
+            //    Y2 = 100,
+            //    Stroke = Brushes.Black,
+            //    Fill = Brushes.Black
+            //};
+            //LineGrid.Children.Add(line);
             //SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
             //SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
             ////var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
@@ -227,7 +241,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -327,18 +341,80 @@ namespace ImageTracerGui
             ImageDisplay.Source = BitmapToImageSource(_pathPointImage);
         }
 
+        private static int CalculateLineGridDimension(int dimension, int multiplier, out int offset)
+        {
+            var pathSized = dimension + 1;
+            var multipliedDimension = dimension*multiplier;
+            var multipliedPathSized = pathSized*multiplier;
+            var delta = multipliedPathSized - multipliedDimension;
+            offset = (int) Math.Floor(delta/3.0);
+            return multipliedPathSized - offset;
+        }
+
+        //private static int CalculateLineOffset(int dimension)
+        //{
+        //    var pathSized = dimension + 1;
+        //    var delta = pathSized - dimension;
+        //    return (int)Math.Floor(delta / 2.0);
+        //}
+
         private void Part4ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
             var index = selected.Index;
             var path = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).Where((cp, i) => i == index).Single();
+            var color = path.Color.Color;
             var image = MakeClearBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
             foreach (var point in path.Points)
             {
-                image.SetPixel(point.X, point.Y, path.Color.Color);
+                image.SetPixel(point.X, point.Y, color);
             }
             PathPointsCount.Content = path.Points.Count;
             ImageDisplay.Source = BitmapToImageSource(image);
+
+            LineGrid.Children.Clear();
+            PathPoint previous = null;
+            //http://stackoverflow.com/a/1165145/294804
+            //var oppositeColor = ColorExtensions.FromAhsb(color.A, 360 - color.GetHue(), color.GetSaturation(), color.GetBrightness());
+            //var oppositeColor = color.Invert();
+            //http://jacobmsaylor.com/?p=1250
+            var oppositeColor = Color.FromRgb((byte)~color.R, (byte)~color.G, (byte)~color.B);
+            var oppositeBrush = new SolidColorBrush(Color.FromArgb(oppositeColor.A, oppositeColor.R, oppositeColor.G, oppositeColor.B));
+            var multiplier = 10;
+            int heightOffset;
+            int widthOffset;
+            LineGrid.Height = CalculateLineGridDimension(_loadedImage.Height, multiplier, out heightOffset);
+            LineGrid.Width = CalculateLineGridDimension(_loadedImage.Width, multiplier, out widthOffset);
+            //var heightOffset = CalculateLineOffset(_loadedImage.Height);
+            //var widthOffset = CalculateLineOffset(_loadedImage.Width);
+            PathPoint initial = null;
+            foreach (var point in path.Points)
+            {
+                if (previous != null)
+                {
+                    var line = new Line
+                    {
+                        X1 = previous.X * multiplier + widthOffset,
+                        Y1 = previous.Y * multiplier + heightOffset,
+                        X2 = point.X * multiplier + widthOffset,
+                        Y2 = point.Y * multiplier + heightOffset,
+                        Stroke = oppositeBrush,
+                        Fill = oppositeBrush
+                    };
+                    
+                    LineGrid.Children.Add(line);
+                } else { initial = point; }
+                previous = point;
+            }
+            LineGrid.Children.Add(new Line
+            {
+                X1 = previous.X * multiplier + widthOffset,
+                Y1 = previous.Y * multiplier + heightOffset,
+                X2 = initial.X * multiplier + widthOffset,
+                Y2 = initial.Y * multiplier + heightOffset,
+                Stroke = oppositeBrush,
+                Fill = oppositeBrush
+            });
         }
     }
 }
