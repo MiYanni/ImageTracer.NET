@@ -8,30 +8,34 @@
         Title="MainWindow" Height="350" Width="525">
     <Grid>
         <!--<WebBrowser x:Name="Browser" Margin="10"/>-->
-        <Image x:Name="ImageDisplay" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"  Margin="10,10,90,10"/>
-        <Button x:Name="Part1Button" Content="Read" Margin="0,10,10,0" Click="Part1Button_Click" HorizontalAlignment="Right" Width="75" Height="20" VerticalAlignment="Top"/>
-        <Button x:Name="Part2Button" Content="Palette-ize" HorizontalAlignment="Right" Margin="0,35,10,0" Width="75" Click="Part2Button_Click" Height="20" VerticalAlignment="Top"/>
-        <Button x:Name="Part3Button" Content="Layer-ize" Margin="0,60,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="Part3Button_Click"/>
-        <ComboBox x:Name="Part3ComboBox" Margin="0,85,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" SelectionChanged="Part3ComboBox_SelectionChanged">
+        <Image x:Name="ImageDisplay" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"  Margin="10,10,150,10"/>
+        <Button x:Name="Part1Button" Content="Read" Margin="0,10,70,0" Click="Part1Button_Click" HorizontalAlignment="Right" Width="75" Height="20" VerticalAlignment="Top"/>
+        <Button x:Name="Part2Button" Content="Palette-ize" HorizontalAlignment="Right" Margin="0,35,70,0" Width="75" Click="Part2Button_Click" Height="20" VerticalAlignment="Top"/>
+        <Button x:Name="Part3Button" Content="Layer-ize" Margin="0,60,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="Part3Button_Click"/>
+        <ComboBox x:Name="Part3ComboBox" Margin="0,85,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" SelectionChanged="Part3ComboBox_SelectionChanged">
             <ComboBox.ItemTemplate>
                 <DataTemplate DataType="local:ColorSelectionItem">
                     <StackPanel Orientation="Horizontal">
-                        <Rectangle Fill="{Binding Color}" Width="16" Height="16" Margin="0,2,5,2" />
+                        <Rectangle Fill="{Binding Color}" Width="12" Height="12" Margin="0,2,5,2" />
                         <TextBlock Text="{Binding Index}" />
                     </StackPanel>
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
-        <Button x:Name="Part4Button" Content="Path-ize" Margin="0,112,10,0" HorizontalAlignment="Right" Width="75" Height="20" VerticalAlignment="Top" Click="Part4Button_Click"/>
-        <ComboBox x:Name="Part4ComboBox" Margin="0,137,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" SelectionChanged="Part4ComboBox_SelectionChanged">
+        <Button x:Name="Part4Button" Content="Path-ize" Margin="0,112,70,0" HorizontalAlignment="Right" Width="75" Height="20" VerticalAlignment="Top" Click="Part4Button_Click"/>
+        <ComboBox x:Name="Part4ComboBox" Margin="0,137,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" SelectionChanged="Part4ComboBox_SelectionChanged">
             <ComboBox.ItemTemplate>
                 <DataTemplate DataType="local:ColorSelectionItem">
                     <StackPanel Orientation="Horizontal">
-                        <Rectangle Fill="{Binding Color}" Width="16" Height="16" Margin="0,2,5,2" />
+                        <Rectangle Fill="{Binding Color}" Width="12" Height="12" Margin="0,2,5,2" />
                         <TextBlock Text="{Binding Index}" />
                     </StackPanel>
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
+        <Label x:Name="LayerCount" Content="" Margin="0,60,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
+        <Label x:Name="LayerPixelCount" Content="" Margin="0,85,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
+        <Label x:Name="PathCount" Content="" Margin="0,112,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
+        <Label x:Name="PathPointsCount" Content="" Margin="0,137,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
     </Grid>
 </Window>

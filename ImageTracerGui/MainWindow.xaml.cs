@@ -259,8 +259,9 @@ namespace ImageTracerGui
 
                 //http://www.wpf-tutorial.com/list-controls/combobox-control/
                 //http://stackoverflow.com/questions/7719164/databinding-a-color-in-wpf-datatemplate
-                Part3ComboBox.ItemsSource = _filteredRawLayers.Keys.Select((k, i) => new ColorSelectionItem(k, i));
+                Part3ComboBox.ItemsSource = _filteredRawLayers.Keys.Select((k, i) => new ColorSelectionItem(k, i)).ToList();
                 Part3Button.IsEnabled = false;
+                LayerCount.Content = _filteredRawLayers.Count;
             }
         }
 
@@ -282,23 +283,21 @@ namespace ImageTracerGui
             var index = selected.Index;
             //Console.WriteLine($"Selected: {brush.Color} {index}");
             var nodes = _filteredRawLayers.ElementAt(index).Value.Nodes;
-
             var image = MakeClearBitmap();
-
+            var pixelCount = 0;
             for (var row = 1; row < nodes.Length; ++row)
             {
                 for (var column = 1; column < nodes[0].Length; ++column)
                 {
                     var node = nodes[row][column];
-                    //if (node == EdgeNode.DDDD || node == EdgeNode.DDDL || node == EdgeNode.DDLD || node == EdgeNode.DDLL ||
-                    //    node == EdgeNode.DLDD || node == EdgeNode.DLDL || node == EdgeNode.DLLD || node == EdgeNode.DLLL)
                     if(node.IsLight())
                     {
                         image.SetPixel(column - 1, row - 1, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
+                        pixelCount++;
                     }
                 }
             }
-
+            LayerPixelCount.Content = pixelCount;
             ImageDisplay.Source = BitmapToImageSource(image);
         }
 
@@ -321,7 +320,8 @@ namespace ImageTracerGui
                 }
                 _pathPointImage = image;
                 _part4Complete = true;
-                Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i));
+                Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i)).ToList();
+                PathCount.Content = paths.Count;
             }
 
             ImageDisplay.Source = BitmapToImageSource(_pathPointImage);
@@ -337,6 +337,7 @@ namespace ImageTracerGui
             {
                 image.SetPixel(point.X, point.Y, path.Color.Color);
             }
+            PathPointsCount.Content = path.Points.Count;
             ImageDisplay.Source = BitmapToImageSource(image);
         }
     }
