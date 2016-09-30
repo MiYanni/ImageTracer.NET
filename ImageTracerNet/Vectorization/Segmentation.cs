@@ -20,6 +20,7 @@ namespace ImageTracerNet.Vectorization
                 yield break;
             }
 
+            // TODO: This is actually the number of line segments in the sequence. Not the number of points in the sequence.
             var sequenceLength = sequence.End - sequence.Start;
             sequenceLength += sequenceLength < 0 ? pathLength : 0;
 

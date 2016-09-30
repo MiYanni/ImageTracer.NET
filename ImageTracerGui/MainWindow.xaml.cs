@@ -17,6 +17,7 @@ using ImageTracerNet.Vectorization.TraceTypes;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.Svg;
 using ImageTracerNet.Vectorization.Points;
+using ImageTracerNet.Vectorization.Segments;
 using Brushes = System.Windows.Media.Brushes;
 using MColor = System.Windows.Media.Color;
 using DColor = System.Drawing.Color;
@@ -24,6 +25,7 @@ using MBrush = System.Windows.Media.Brush;
 using MSize = System.Windows.Size;
 using DSize = System.Drawing.Size;
 using MRectangle = System.Windows.Shapes.Rectangle;
+using LineSegment = ImageTracerNet.Vectorization.Segments.LineSegment;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace ImageTracerGui
@@ -527,9 +529,9 @@ namespace ImageTracerGui
                     Sequences = Sequencing.Create(path.Points.Select(p => p.Direction).ToList()).ToList()
                 }).ToList()
             });
-            var paths = _sequenceLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Sequences.Select(s => new { Color = cl.Key }))).ToList();
-            Part6ComboBox.ItemsSource = paths.Select((cs, i) => new ColorSelectionItem(cs.Color, i)).ToList();
-            SequenceCount.Content = paths.Count;
+            var sequences = _sequenceLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Sequences.Select(s => new { Color = cl.Key }))).ToList();
+            Part6ComboBox.ItemsSource = sequences.Select((cs, i) => new ColorSelectionItem(cs.Color, i)).ToList();
+            SequenceCount.Content = sequences.Count;
             Part6Button.IsEnabled = false;
         }
 
@@ -593,6 +595,28 @@ namespace ImageTracerGui
             LineGrid.Height = gridHeight;
             LineGrid.Children.AddRange(lines);
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
+        }
+
+        private Dictionary<ColorReference, Layer<SegmentPath>> _segmentLayers;
+        private void Part7Button_Click(object sender, RoutedEventArgs e)
+        {
+            _segmentLayers = _sequenceLayers.ToDictionary(ci => ci.Key, ci => new Layer<SegmentPath>
+            {
+                Paths = ci.Value.Paths.Select(path => new SegmentPath
+                {
+                    Path = path.Path,
+                    Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, _options.Tracing, s)).SelectMany(s => s).ToList()
+                }).ToList()
+            });
+            var segments = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new { Color = cl.Key, Type = s is LineSegment ? "Line" : (s is SplineSegment ? "Spline" : "Unknown") }))).ToList();
+            Part7ComboBox.ItemsSource = segments.Select((cs, i) => new ColorSelectionItem(cs.Color, i) { Type = $"{i} {cs.Type}" }).ToList();
+            SegmentCount.Content = segments.Count;
+            Part7Button.IsEnabled = false;
+        }
+
+        private void Part7ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
         }
     }
 }

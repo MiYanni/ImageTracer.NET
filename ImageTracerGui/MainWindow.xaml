@@ -55,5 +55,17 @@
             </ComboBox.ItemTemplate>
         </ComboBox>
         <Label x:Name="SequencePointCount" Content="" Margin="0,214,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
+        <Button x:Name="Part7Button" Content="Segment-ize" Margin="0,241,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="Part7Button_Click"/>
+        <Label x:Name="SegmentCount" Content="" Margin="0,241,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
+        <ComboBox x:Name="Part7ComboBox" Margin="0,266,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" SelectionChanged="Part7ComboBox_SelectionChanged">
+            <ComboBox.ItemTemplate>
+                <DataTemplate DataType="local:ColorSelectionItem">
+                    <StackPanel Orientation="Horizontal">
+                        <Rectangle Fill="{Binding Color}" Width="12" Height="12" Margin="0,2,5,2" />
+                        <TextBlock Text="{Binding Type}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
     </Grid>
 </Window>

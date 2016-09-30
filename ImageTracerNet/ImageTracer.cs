@@ -51,6 +51,7 @@ namespace ImageTracerNet
             //    imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
             //}
 
+            // TODO: Change code below to always create dictionarys keyed by ColorReference.
             // 2. Layer separation and edge detection
             var rawLayers = Layering.Convert(image);
             // 3. Batch pathscan

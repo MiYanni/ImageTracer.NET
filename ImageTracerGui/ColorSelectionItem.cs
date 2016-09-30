@@ -7,6 +7,7 @@ namespace ImageTracerGui
     {
         public SolidColorBrush Color { get; set; }
         public int Index { get; set; }
+        public string Type { get; set; }
 
         public ColorSelectionItem() { }
 
