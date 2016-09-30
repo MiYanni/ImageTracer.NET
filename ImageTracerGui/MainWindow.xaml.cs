@@ -357,7 +357,7 @@ namespace ImageTracerGui
             return scaledMidPixelDimension - offset;
         }
 
-        private static Bitmap DrawPointsImage(IEnumerable<Point<int>> points, int height, int width, DColor color)
+        private static Bitmap DrawPointsImage(IEnumerable<Point<int>> points, int width, int height, DColor color)
         {
             var image = CreateTransparentBitmap(width, height);
             foreach (var point in points)
@@ -392,47 +392,59 @@ namespace ImageTracerGui
             //http://stackoverflow.com/questions/16023995/moving-dotted-line-for-cropping
             //http://stackoverflow.com/questions/15469283/how-do-you-animate-a-line-on-a-canvas-in-c
             var sb = new Storyboard();
-            //<DoubleAnimation To="200" Duration="0:0:10" RepeatBehavior="Forever" By="2" Storyboard.TargetProperty = "StrokeDashOffset" Storyboard.TargetName = "Border" />
-            //var da = new DoubleAnimation(line.Y2, 100, new Duration(new TimeSpan(0, 0, 1)));
             var da = new DoubleAnimation
             {
-                To = 200,
+                To = -200,
                 Duration = new TimeSpan(0, 0, 20),
                 RepeatBehavior = RepeatBehavior.Forever,
-                By = 3
+                By = -3
             };
-            //var da1 = new DoubleAnimation(line.X2, 100, new Duration(new TimeSpan(0, 0, 1)));
-            //Storyboard.SetTargetProperty(da, new PropertyPath("(Line.Y2)"));
             Storyboard.SetTargetProperty(da, new PropertyPath("(Line.StrokeDashOffset)"));
-            //Storyboard.SetTargetProperty(da1, new PropertyPath("(Line.X2)"));
             sb.Children.Add(da);
-            //sb.Children.Add(da1);
             line.BeginStoryboard(sb);
             return line;
         }
 
-        private static IEnumerable<Line> CreateOverlayLines(IReadOnlyList<Point<double>> points, MSize offset, MBrush brush, double multiplier = 10.0)
+        private static Ellipse CreateLineDot(Point<double> point, MBrush brush, double size = 2.5)
+        {
+            var dot = new Ellipse
+            {
+                Width = size,
+                Height = size,
+                Fill = brush
+            };
+            var yPoint = point.Y - (size / 2.0);
+            var xPoint = point.X - (size / 2.0);
+            Canvas.SetTop(dot, yPoint < 0 ? 0 : yPoint);
+            Canvas.SetLeft(dot, xPoint < 0 ? 0 : xPoint);
+            return dot;
+        }
+
+        private static IEnumerable<UIElement> CreateOverlayLines(IReadOnlyList<Point<double>> points, MSize offset, MBrush brush, double multiplier = 10.0)
         {
             if (!points.Any())
             {
                 yield break;
             }
-            var initial = points.First();
-            var previous = points.First();
+
             Func<Point<double>, Point<double>> scale = p => new Point<double>
             {
                 X = p.X * multiplier + offset.Width,
                 Y = p.Y * multiplier + offset.Height
             };
-            foreach (var point in points)
+            var scaledPoints = points.Select(p => scale(p)).ToList();
+            var initial = scaledPoints.First();
+            var previous = scaledPoints.First();
+            foreach (var point in scaledPoints)
             {
                 if (previous != null)
                 {
-                    yield return CreateLine(scale(previous), scale(point), brush);
+                    yield return CreateLine(previous, point, brush);
                 }
+                yield return CreateLineDot(point, brush);
                 previous = point;
             }
-            yield return CreateLine(scale(previous), scale(initial), brush);
+            yield return CreateLine(previous, initial, brush);
         }
 
         private void Part4ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -455,44 +467,35 @@ namespace ImageTracerGui
             double gridWidth = _loadedImage.Width;
             double gridHeight = _loadedImage.Height;
             var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
-            var lines = CreateOverlayLines(path.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList(), offset, oppositeBrush);
+            var points = path.Points.Select(p => new Point<double> {X = p.X, Y = p.Y}).ToList();
+            var lines = CreateOverlayLines(points, offset, oppositeBrush);
             LineGrid.Width = gridWidth;
             LineGrid.Height = gridHeight;
             LineGrid.Children.AddRange(lines);
-            //var multiplier = 10;
-            //int heightOffset;
-            //int widthOffset;
-            //LineGrid.Height = CalculateScaledDimension(_loadedImage.Height, multiplier, out heightOffset);
-            //LineGrid.Width = CalculateScaledDimension(_loadedImage.Width, multiplier, out widthOffset);
-            //PathPoint previous = null;
-            //PathPoint initial = null;
-            //foreach (var point in path.Points)
-            //{
-            //    if (previous != null)
-            //    {
-            //        var line = new Line
-            //        {
-            //            X1 = previous.X * multiplier + widthOffset,
-            //            Y1 = previous.Y * multiplier + heightOffset,
-            //            X2 = point.X * multiplier + widthOffset,
-            //            Y2 = point.Y * multiplier + heightOffset,
-            //            Stroke = oppositeBrush,
-            //            Fill = oppositeBrush
-            //        };
 
-            //        LineGrid.Children.Add(line);
-            //    } else { initial = point; }
-            //    previous = point;
-            //}
-            //LineGrid.Children.Add(new Line
+            //var multiplier = 10.0;
+            //Func<Point<double>, Point<double>> scale = p => new Point<double>
             //{
-            //    X1 = previous.X * multiplier + widthOffset,
-            //    Y1 = previous.Y * multiplier + heightOffset,
-            //    X2 = initial.X * multiplier + widthOffset,
-            //    Y2 = initial.Y * multiplier + heightOffset,
-            //    Stroke = oppositeBrush,
-            //    Fill = oppositeBrush
-            //});
+            //    X = p.X * multiplier + offset.Width,
+            //    Y = p.Y * multiplier + offset.Height
+            //};
+            //var side = 2.5;
+            //var sideOffset = side/2.0;
+            //foreach (var point in points.Select(p => scale(p)))
+            //{
+            //    var rect = new Ellipse
+            //    {
+            //        Width = side,
+            //        Height = side,
+            //        Fill = oppositeBrush
+            //    };
+                
+            //    LineGrid.Children.Add(rect);
+            //    var yPoint = point.Y - sideOffset;
+            //    var xPoint = point.X - sideOffset;
+            //    Canvas.SetTop(rect, yPoint < 0 ? 0 : yPoint);
+            //    Canvas.SetLeft(rect, xPoint < 0 ? 0 : xPoint);
+            //}
         }
     }
 }
