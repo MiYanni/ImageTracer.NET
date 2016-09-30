@@ -85,6 +85,7 @@
     <Compile Include="Vectorization\TraceTypes\PathPointPath.cs" />
     <Compile Include="Vectorization\TraceTypes\RawLayer.cs" />
     <Compile Include="Vectorization\TraceTypes\SegmentPath.cs" />
+    <Compile Include="Vectorization\TraceTypes\SequencePath.cs" />
     <Compile Include="Vectorization\WalkDirection.cs" />
   </ItemGroup>
   <ItemGroup>

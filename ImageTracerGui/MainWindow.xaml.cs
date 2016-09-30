@@ -247,7 +247,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -329,15 +329,7 @@ namespace ImageTracerGui
             if (!_part4Complete)
             {
                 _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
-                //var image = CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
                 var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
-                //foreach (var path in paths) //.Where((p, i) => i == 1) TODO: Only first layer
-                //{
-                //    foreach (var point in path.Points)//.Where(p => p.EdgeNode.IsLight());
-                //    {
-                //        image.SetPixel(point.X, point.Y, path.Color.Color);
-                //    }
-                //}
                 var imagePoints =_pathPointLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Points).Select(p => Tuple.Create((Point<int>)p, cl.Key.Color))).ToList();
                 _pathPointImage = DrawPointsImage(imagePoints, _loadedImage.Width + 1, _loadedImage.Height + 1);
                 _part4Complete = true;
@@ -391,14 +383,14 @@ namespace ImageTracerGui
                 X2 = second.X,
                 Y2 = second.Y,
                 Stroke = brush,
-                Fill = brush,
-                StrokeDashArray = new DoubleCollection(new []{2.0, 0.0, 2.0})
+                Fill = brush
             };
             //http://stackoverflow.com/questions/16561639/horizontal-dashed-line-stretched-to-container-width
             //http://stackoverflow.com/questions/16023995/moving-dotted-line-for-cropping
             //http://stackoverflow.com/questions/15469283/how-do-you-animate-a-line-on-a-canvas-in-c
             if (isAnimated)
             {
+                line.StrokeDashArray = new DoubleCollection(new[] { 2.0, 0.0, 2.0 });
                 var sb = new Storyboard();
                 var da = new DoubleAnimation
                 {
@@ -486,7 +478,6 @@ namespace ImageTracerGui
 
         private Dictionary<ColorReference, Layer<InterpolationPointPath>> _interpolationPointLayers;
         private bool _part5Compete;
-        //private Bitmap _interpPointImage;
         private IEnumerable<UIElement> _interpLines;
         private double _gridWidth;
         private double _gridHeight;
@@ -494,11 +485,8 @@ namespace ImageTracerGui
         {
             if (!_part5Compete)
             {
-                //_pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
                 _interpolationPointLayers = _pathPointLayers.ToDictionary(cp => cp.Key, cp => Interpolation.Convert(cp.Value));
                 var paths = _interpolationPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
-                //var imagePoints = _interpolationPointLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Points).Select(p => Tuple.Create(new Point<int> { X = (int)p.X, Y = (int)p.Y }, cl.Key.Color))).ToList();
-                //_interpPointImage = DrawPointsImage(imagePoints, _loadedImage.Width + 1, _loadedImage.Height + 1);
                 double gridWidth = _loadedImage.Width;
                 double gridHeight = _loadedImage.Height;
                 var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
@@ -508,32 +496,102 @@ namespace ImageTracerGui
                 var lines = new List<UIElement>();
                 foreach (var path in paths)
                 {
-                    //var path = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).Where((cp, i) => i == index).Single();
                     var color = path.Color.Color;
-
-                    //http://jacobmsaylor.com/?p=1250
-                    //var oppositeColor = MColor.FromRgb((byte)~color.R, (byte)~color.G, (byte)~color.B);
-                    //var oppositeBrush = new SolidColorBrush(MColor.FromArgb(oppositeColor.A, oppositeColor.R, oppositeColor.G, oppositeColor.B));
                     var brush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
                     var points = path.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList();
                     var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
-                    //LineGrid.Width = gridWidth;
-                    //LineGrid.Height = gridHeight;
-                    //LineGrid.Children.AddRange(lines);
                     lines.AddRange(pathLines);
                 }
 
                 _interpLines = lines;
                 _part5Compete = true;
-                //Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i)).ToList();
                 InterpCount.Content = paths.Count;
-                
             }
 
             LineGrid.Children.Clear();
             LineGrid.Width = _gridWidth;
             LineGrid.Height = _gridHeight;
             LineGrid.Children.AddRange(_interpLines);
+            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
+        }
+
+        private Dictionary<ColorReference, Layer<SequencePath>> _sequenceLayers;
+        //private bool _part6Compete;
+        private void Part6Button_Click(object sender, RoutedEventArgs e)
+        {
+            _sequenceLayers = _interpolationPointLayers.ToDictionary(ci => ci.Key, ci => new Layer<SequencePath>
+            {
+                Paths = ci.Value.Paths.Select(path => new SequencePath
+                {
+                    Path = path,
+                    Sequences = Sequencing.Create(path.Points.Select(p => p.Direction).ToList()).ToList()
+                }).ToList()
+            });
+            var paths = _sequenceLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Sequences.Select(s => new { Color = cl.Key }))).ToList();
+            Part6ComboBox.ItemsSource = paths.Select((cs, i) => new ColorSelectionItem(cs.Color, i)).ToList();
+            SequenceCount.Content = paths.Count;
+            Part6Button.IsEnabled = false;
+        }
+
+        private void Part6ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
+            var index = selected.Index;
+
+            var pathsWithSequences = _sequenceLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Sequences.Select(s => new { Color = cl.Key, p.Path, Indices = s }))).ToList();
+            var selectedSequence = pathsWithSequences[index].Indices;
+            var selectedPath = pathsWithSequences[index].Path;
+
+            var color = pathsWithSequences[index].Color.Color;
+            var regularBrush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
+            var sequenceBrush = new SolidColorBrush(Colors.Blue);
+            var points = selectedPath.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList();
+            double gridWidth = _loadedImage.Width;
+            double gridHeight = _loadedImage.Height;
+            var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+            //var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
+
+
+            var multiplier = 10.0;
+            var lines = new List<UIElement>();
+            Func<Point<double>, Point<double>> scale = p => new Point<double>
+            {
+                X = p.X * multiplier + offset.Width,
+                Y = p.Y * multiplier + offset.Height
+            };
+            var scaledPoints = points.Select(p => scale(p)).ToList();
+            var initial = scaledPoints.First();
+            var previous = scaledPoints.First();
+            var pointCount = 0;
+            var brush = regularBrush;
+            foreach (var point in scaledPoints)
+            {
+                
+                if (previous != null)
+                {
+                    brush = pointCount > selectedSequence.Start && (selectedSequence.End == 0 || pointCount <= selectedSequence.End)
+                        ? sequenceBrush
+                        : regularBrush;
+                    lines.Add(CreateLine(previous, point, brush, false));
+                }
+                brush = (pointCount >= selectedSequence.Start && (selectedSequence.End == 0  || pointCount <= selectedSequence.End)) || (selectedSequence.End == pointCount)
+                    ? sequenceBrush
+                    : regularBrush;
+                lines.Add(CreateLineDot(point, brush));
+                previous = point;
+                pointCount++;
+            }
+            brush = selectedSequence.End == 0 ? sequenceBrush : regularBrush;
+            lines.Add(CreateLine(previous, initial, brush, false));
+
+            var sequenceLength = selectedSequence.End - selectedSequence.Start;
+            sequenceLength += sequenceLength < 0 ? selectedPath.Points.Count : 0;
+            SequencePointCount.Content = sequenceLength;
+
+            LineGrid.Children.Clear();
+            LineGrid.Width = gridWidth;
+            LineGrid.Height = gridHeight;
+            LineGrid.Children.AddRange(lines);
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
     }

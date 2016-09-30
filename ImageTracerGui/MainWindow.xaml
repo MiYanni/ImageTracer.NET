@@ -42,5 +42,18 @@
         <Label x:Name="PathPointsCount" Content="" Margin="0,137,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
         <Button x:Name="Part5Button" Content="Interp-ize" Margin="0,164,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="Part5Button_Click"/>
         <Label x:Name="InterpCount" Content="" Margin="0,164,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
+        <Button x:Name="Part6Button" Content="Sequence-ize" Margin="0,189,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="Part6Button_Click"/>
+        <Label x:Name="SequenceCount" Content="" Margin="0,189,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
+        <ComboBox x:Name="Part6ComboBox" Margin="0,214,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" SelectionChanged="Part6ComboBox_SelectionChanged">
+            <ComboBox.ItemTemplate>
+                <DataTemplate DataType="local:ColorSelectionItem">
+                    <StackPanel Orientation="Horizontal">
+                        <Rectangle Fill="{Binding Color}" Width="12" Height="12" Margin="0,2,5,2" />
+                        <TextBlock Text="{Binding Index}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <Label x:Name="SequencePointCount" Content="" Margin="0,214,10,0" VerticalAlignment="Top" Height="20" FontSize="10" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" Width="55"/>
     </Grid>
 </Window>
