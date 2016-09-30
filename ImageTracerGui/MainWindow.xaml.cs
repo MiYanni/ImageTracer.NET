@@ -247,7 +247,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -382,7 +382,7 @@ namespace ImageTracerGui
             return new MSize(widthOffset, heightOffset);
         }
 
-        private static Line CreateLine(Point<double> first, Point<double> second, MBrush brush)
+        private static Line CreateLine(Point<double> first, Point<double> second, MBrush brush, bool isAnimated = true)
         {
             var line = new Line
             {
@@ -397,17 +397,21 @@ namespace ImageTracerGui
             //http://stackoverflow.com/questions/16561639/horizontal-dashed-line-stretched-to-container-width
             //http://stackoverflow.com/questions/16023995/moving-dotted-line-for-cropping
             //http://stackoverflow.com/questions/15469283/how-do-you-animate-a-line-on-a-canvas-in-c
-            var sb = new Storyboard();
-            var da = new DoubleAnimation
+            if (isAnimated)
             {
-                To = -200,
-                Duration = new TimeSpan(0, 0, 20),
-                RepeatBehavior = RepeatBehavior.Forever,
-                By = -3
-            };
-            Storyboard.SetTargetProperty(da, new PropertyPath("(Line.StrokeDashOffset)"));
-            sb.Children.Add(da);
-            line.BeginStoryboard(sb);
+                var sb = new Storyboard();
+                var da = new DoubleAnimation
+                {
+                    To = -200,
+                    Duration = new TimeSpan(0, 0, 20),
+                    RepeatBehavior = RepeatBehavior.Forever,
+                    By = -3
+                };
+                Storyboard.SetTargetProperty(da, new PropertyPath("(Line.StrokeDashOffset)"));
+                sb.Children.Add(da);
+                line.BeginStoryboard(sb);
+
+            }
             return line;
         }
 
@@ -426,7 +430,7 @@ namespace ImageTracerGui
             return dot;
         }
 
-        private static IEnumerable<UIElement> CreateOverlayLines(IReadOnlyList<Point<double>> points, MSize offset, MBrush brush, double multiplier = 10.0)
+        private static IEnumerable<UIElement> CreateOverlayLines(IReadOnlyList<Point<double>> points, MSize offset, MBrush brush, double multiplier = 10.0, bool isAnimated = true)
         {
             if (!points.Any())
             {
@@ -445,12 +449,12 @@ namespace ImageTracerGui
             {
                 if (previous != null)
                 {
-                    yield return CreateLine(previous, point, brush);
+                    yield return CreateLine(previous, point, brush, isAnimated);
                 }
                 yield return CreateLineDot(point, brush);
                 previous = point;
             }
-            yield return CreateLine(previous, initial, brush);
+            yield return CreateLine(previous, initial, brush, isAnimated);
         }
 
         private void Part4ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -508,10 +512,11 @@ namespace ImageTracerGui
                     var color = path.Color.Color;
 
                     //http://jacobmsaylor.com/?p=1250
-                    var oppositeColor = MColor.FromRgb((byte)~color.R, (byte)~color.G, (byte)~color.B);
-                    var oppositeBrush = new SolidColorBrush(MColor.FromArgb(oppositeColor.A, oppositeColor.R, oppositeColor.G, oppositeColor.B));
+                    //var oppositeColor = MColor.FromRgb((byte)~color.R, (byte)~color.G, (byte)~color.B);
+                    //var oppositeBrush = new SolidColorBrush(MColor.FromArgb(oppositeColor.A, oppositeColor.R, oppositeColor.G, oppositeColor.B));
+                    var brush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
                     var points = path.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList();
-                    var pathLines = CreateOverlayLines(points, offset, oppositeBrush);
+                    var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
                     //LineGrid.Width = gridWidth;
                     //LineGrid.Height = gridHeight;
                     //LineGrid.Children.AddRange(lines);
@@ -524,11 +529,12 @@ namespace ImageTracerGui
                 InterpCount.Content = paths.Count;
                 
             }
+
             LineGrid.Children.Clear();
             LineGrid.Width = _gridWidth;
             LineGrid.Height = _gridHeight;
             LineGrid.Children.AddRange(_interpLines);
-            //ImageDisplay.Source = BitmapToImageSource(_interpPointImage);
+            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
     }
 }
