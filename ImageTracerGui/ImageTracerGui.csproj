@@ -62,6 +62,7 @@
     </ApplicationDefinition>
     <Compile Include="ColorSelectionItem.cs" />
     <Compile Include="SvgParser.cs" />
+    <Compile Include="UIElementCollectionExtensions.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

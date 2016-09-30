@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using ImageTracerNet;
@@ -17,7 +18,12 @@ using ImageTracerNet.Extensions;
 using ImageTracerNet.Svg;
 using ImageTracerNet.Vectorization.Points;
 using Brushes = System.Windows.Media.Brushes;
-using Color = System.Windows.Media.Color;
+using MColor = System.Windows.Media.Color;
+using DColor = System.Drawing.Color;
+using MBrush = System.Windows.Media.Brush;
+using MSize = System.Windows.Size;
+using DSize = System.Drawing.Size;
+using MRectangle = System.Windows.Shapes.Rectangle;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace ImageTracerGui
@@ -279,11 +285,11 @@ namespace ImageTracerGui
             }
         }
 
-        private Bitmap MakeClearBitmap(int? width = null, int? height = null)
+        private static Bitmap CreateTransparentBitmap(int width, int height)
         {
-            var image = new Bitmap(width ?? _loadedImage.Width, height ?? _loadedImage.Height);
+            var image = new Bitmap(width, height);
             using (var gfx = Graphics.FromImage(image))
-            using (var transBrush = new SolidBrush(System.Drawing.Color.Transparent))
+            using (var transBrush = new SolidBrush(DColor.Transparent))
             {
                 gfx.FillRectangle(transBrush, 0, 0, image.Width, image.Height);
             }
@@ -297,7 +303,7 @@ namespace ImageTracerGui
             var index = selected.Index;
             //Console.WriteLine($"Selected: {brush.Color} {index}");
             var nodes = _filteredRawLayers.ElementAt(index).Value.Nodes;
-            var image = MakeClearBitmap();
+            var image = CreateTransparentBitmap(_loadedImage.Width, _loadedImage.Height);
             var pixelCount = 0;
             for (var row = 1; row < nodes.Length; ++row)
             {
@@ -306,7 +312,7 @@ namespace ImageTracerGui
                     var node = nodes[row][column];
                     if(node.IsLight())
                     {
-                        image.SetPixel(column - 1, row - 1, System.Drawing.Color.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
+                        image.SetPixel(column - 1, row - 1, DColor.FromArgb(brush.Color.A, brush.Color.R, brush.Color.G, brush.Color.B));
                         pixelCount++;
                     }
                 }
@@ -323,7 +329,7 @@ namespace ImageTracerGui
             if (!_part4Complete)
             {
                 _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
-                var image = MakeClearBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
+                var image = CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
                 var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
                 foreach (var path in paths) //.Where((p, i) => i == 1) TODO: Only first layer
                 {
@@ -341,22 +347,93 @@ namespace ImageTracerGui
             ImageDisplay.Source = BitmapToImageSource(_pathPointImage);
         }
 
-        private static int CalculateLineGridDimension(int dimension, int multiplier, out int offset)
+        private static double CalculateScaledDimension(double dimension, double multiplier, out double offset)
         {
-            var pathSized = dimension + 1;
-            var multipliedDimension = dimension*multiplier;
-            var multipliedPathSized = pathSized*multiplier;
-            var delta = multipliedPathSized - multipliedDimension;
-            offset = (int) Math.Floor(delta/3.0);
-            return multipliedPathSized - offset;
+            var midPixelDimension = dimension + 1;
+            var scaledDimension = dimension*multiplier;
+            var scaledMidPixelDimension = midPixelDimension*multiplier;
+            var delta = scaledMidPixelDimension - scaledDimension;
+            offset = delta / 3.0;
+            return scaledMidPixelDimension - offset;
         }
 
-        //private static int CalculateLineOffset(int dimension)
-        //{
-        //    var pathSized = dimension + 1;
-        //    var delta = pathSized - dimension;
-        //    return (int)Math.Floor(delta / 2.0);
-        //}
+        private static Bitmap DrawPointsImage(IEnumerable<Point<int>> points, int height, int width, DColor color)
+        {
+            var image = CreateTransparentBitmap(width, height);
+            foreach (var point in points)
+            {
+                image.SetPixel(point.X, point.Y, color);
+            }
+            return image;
+        }
+
+        private static MSize CalculateScaledOffsets(ref double width, ref double height, double multiplier = 10.0)
+        {
+            double heightOffset;
+            double widthOffset;
+            width = CalculateScaledDimension(width, multiplier, out widthOffset);
+            height = CalculateScaledDimension(height, multiplier, out heightOffset);
+            return new MSize(widthOffset, heightOffset);
+        }
+
+        private static Line CreateLine(Point<double> first, Point<double> second, MBrush brush)
+        {
+            var line = new Line
+            {
+                X1 = first.X,
+                Y1 = first.Y,
+                X2 = second.X,
+                Y2 = second.Y,
+                Stroke = brush,
+                Fill = brush,
+                StrokeDashArray = new DoubleCollection(new []{2.0, 0.0, 2.0})
+            };
+            //http://stackoverflow.com/questions/16561639/horizontal-dashed-line-stretched-to-container-width
+            //http://stackoverflow.com/questions/16023995/moving-dotted-line-for-cropping
+            //http://stackoverflow.com/questions/15469283/how-do-you-animate-a-line-on-a-canvas-in-c
+            var sb = new Storyboard();
+            //<DoubleAnimation To="200" Duration="0:0:10" RepeatBehavior="Forever" By="2" Storyboard.TargetProperty = "StrokeDashOffset" Storyboard.TargetName = "Border" />
+            //var da = new DoubleAnimation(line.Y2, 100, new Duration(new TimeSpan(0, 0, 1)));
+            var da = new DoubleAnimation
+            {
+                To = 200,
+                Duration = new TimeSpan(0, 0, 20),
+                RepeatBehavior = RepeatBehavior.Forever,
+                By = 3
+            };
+            //var da1 = new DoubleAnimation(line.X2, 100, new Duration(new TimeSpan(0, 0, 1)));
+            //Storyboard.SetTargetProperty(da, new PropertyPath("(Line.Y2)"));
+            Storyboard.SetTargetProperty(da, new PropertyPath("(Line.StrokeDashOffset)"));
+            //Storyboard.SetTargetProperty(da1, new PropertyPath("(Line.X2)"));
+            sb.Children.Add(da);
+            //sb.Children.Add(da1);
+            line.BeginStoryboard(sb);
+            return line;
+        }
+
+        private static IEnumerable<Line> CreateOverlayLines(IReadOnlyList<Point<double>> points, MSize offset, MBrush brush, double multiplier = 10.0)
+        {
+            if (!points.Any())
+            {
+                yield break;
+            }
+            var initial = points.First();
+            var previous = points.First();
+            Func<Point<double>, Point<double>> scale = p => new Point<double>
+            {
+                X = p.X * multiplier + offset.Width,
+                Y = p.Y * multiplier + offset.Height
+            };
+            foreach (var point in points)
+            {
+                if (previous != null)
+                {
+                    yield return CreateLine(scale(previous), scale(point), brush);
+                }
+                previous = point;
+            }
+            yield return CreateLine(scale(previous), scale(initial), brush);
+        }
 
         private void Part4ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -364,57 +441,58 @@ namespace ImageTracerGui
             var index = selected.Index;
             var path = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).Where((cp, i) => i == index).Single();
             var color = path.Color.Color;
-            var image = MakeClearBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
-            foreach (var point in path.Points)
-            {
-                image.SetPixel(point.X, point.Y, color);
-            }
+            var image = DrawPointsImage(path.Points, _loadedImage.Width + 1, _loadedImage.Height + 1, color);
             PathPointsCount.Content = path.Points.Count;
             ImageDisplay.Source = BitmapToImageSource(image);
 
             LineGrid.Children.Clear();
-            PathPoint previous = null;
             //http://stackoverflow.com/a/1165145/294804
             //var oppositeColor = ColorExtensions.FromAhsb(color.A, 360 - color.GetHue(), color.GetSaturation(), color.GetBrightness());
             //var oppositeColor = color.Invert();
             //http://jacobmsaylor.com/?p=1250
-            var oppositeColor = Color.FromRgb((byte)~color.R, (byte)~color.G, (byte)~color.B);
-            var oppositeBrush = new SolidColorBrush(Color.FromArgb(oppositeColor.A, oppositeColor.R, oppositeColor.G, oppositeColor.B));
-            var multiplier = 10;
-            int heightOffset;
-            int widthOffset;
-            LineGrid.Height = CalculateLineGridDimension(_loadedImage.Height, multiplier, out heightOffset);
-            LineGrid.Width = CalculateLineGridDimension(_loadedImage.Width, multiplier, out widthOffset);
-            //var heightOffset = CalculateLineOffset(_loadedImage.Height);
-            //var widthOffset = CalculateLineOffset(_loadedImage.Width);
-            PathPoint initial = null;
-            foreach (var point in path.Points)
-            {
-                if (previous != null)
-                {
-                    var line = new Line
-                    {
-                        X1 = previous.X * multiplier + widthOffset,
-                        Y1 = previous.Y * multiplier + heightOffset,
-                        X2 = point.X * multiplier + widthOffset,
-                        Y2 = point.Y * multiplier + heightOffset,
-                        Stroke = oppositeBrush,
-                        Fill = oppositeBrush
-                    };
-                    
-                    LineGrid.Children.Add(line);
-                } else { initial = point; }
-                previous = point;
-            }
-            LineGrid.Children.Add(new Line
-            {
-                X1 = previous.X * multiplier + widthOffset,
-                Y1 = previous.Y * multiplier + heightOffset,
-                X2 = initial.X * multiplier + widthOffset,
-                Y2 = initial.Y * multiplier + heightOffset,
-                Stroke = oppositeBrush,
-                Fill = oppositeBrush
-            });
+            var oppositeColor = MColor.FromRgb((byte)~color.R, (byte)~color.G, (byte)~color.B);
+            var oppositeBrush = new SolidColorBrush(MColor.FromArgb(oppositeColor.A, oppositeColor.R, oppositeColor.G, oppositeColor.B));
+            double gridWidth = _loadedImage.Width;
+            double gridHeight = _loadedImage.Height;
+            var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+            var lines = CreateOverlayLines(path.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList(), offset, oppositeBrush);
+            LineGrid.Width = gridWidth;
+            LineGrid.Height = gridHeight;
+            LineGrid.Children.AddRange(lines);
+            //var multiplier = 10;
+            //int heightOffset;
+            //int widthOffset;
+            //LineGrid.Height = CalculateScaledDimension(_loadedImage.Height, multiplier, out heightOffset);
+            //LineGrid.Width = CalculateScaledDimension(_loadedImage.Width, multiplier, out widthOffset);
+            //PathPoint previous = null;
+            //PathPoint initial = null;
+            //foreach (var point in path.Points)
+            //{
+            //    if (previous != null)
+            //    {
+            //        var line = new Line
+            //        {
+            //            X1 = previous.X * multiplier + widthOffset,
+            //            Y1 = previous.Y * multiplier + heightOffset,
+            //            X2 = point.X * multiplier + widthOffset,
+            //            Y2 = point.Y * multiplier + heightOffset,
+            //            Stroke = oppositeBrush,
+            //            Fill = oppositeBrush
+            //        };
+
+            //        LineGrid.Children.Add(line);
+            //    } else { initial = point; }
+            //    previous = point;
+            //}
+            //LineGrid.Children.Add(new Line
+            //{
+            //    X1 = previous.X * multiplier + widthOffset,
+            //    Y1 = previous.Y * multiplier + heightOffset,
+            //    X2 = initial.X * multiplier + widthOffset,
+            //    Y2 = initial.Y * multiplier + heightOffset,
+            //    Stroke = oppositeBrush,
+            //    Fill = oppositeBrush
+            //});
         }
     }
 }
