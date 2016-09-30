@@ -329,16 +329,17 @@ namespace ImageTracerGui
             if (!_part4Complete)
             {
                 _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
-                var image = CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
+                //var image = CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1);
                 var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
-                foreach (var path in paths) //.Where((p, i) => i == 1) TODO: Only first layer
-                {
-                    foreach (var point in path.Points)//.Where(p => p.EdgeNode.IsLight());
-                    {
-                        image.SetPixel(point.X, point.Y, path.Color.Color);
-                    }
-                }
-                _pathPointImage = image;
+                //foreach (var path in paths) //.Where((p, i) => i == 1) TODO: Only first layer
+                //{
+                //    foreach (var point in path.Points)//.Where(p => p.EdgeNode.IsLight());
+                //    {
+                //        image.SetPixel(point.X, point.Y, path.Color.Color);
+                //    }
+                //}
+                var imagePoints =_pathPointLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Points).Select(p => Tuple.Create((Point<int>)p, cl.Key.Color))).ToList();
+                _pathPointImage = DrawPointsImage(imagePoints, _loadedImage.Width + 1, _loadedImage.Height + 1);
                 _part4Complete = true;
                 Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i)).ToList();
                 PathCount.Content = paths.Count;
@@ -357,14 +358,19 @@ namespace ImageTracerGui
             return scaledMidPixelDimension - offset;
         }
 
-        private static Bitmap DrawPointsImage(IEnumerable<Point<int>> points, int width, int height, DColor color)
+        private static Bitmap DrawPointsImage(IEnumerable<Tuple<Point<int>, DColor>> points, int width, int height)
         {
             var image = CreateTransparentBitmap(width, height);
             foreach (var point in points)
             {
-                image.SetPixel(point.X, point.Y, color);
+                image.SetPixel(point.Item1.X, point.Item1.Y, point.Item2);
             }
             return image;
+        }
+
+        private static Bitmap DrawPointsImage(IEnumerable<Point<int>> points, int width, int height, DColor color)
+        {
+            return DrawPointsImage(points.Select(p => Tuple.Create(p, color)), width, height);
         }
 
         private static MSize CalculateScaledOffsets(ref double width, ref double height, double multiplier = 10.0)
@@ -472,30 +478,57 @@ namespace ImageTracerGui
             LineGrid.Width = gridWidth;
             LineGrid.Height = gridHeight;
             LineGrid.Children.AddRange(lines);
+        }
 
-            //var multiplier = 10.0;
-            //Func<Point<double>, Point<double>> scale = p => new Point<double>
-            //{
-            //    X = p.X * multiplier + offset.Width,
-            //    Y = p.Y * multiplier + offset.Height
-            //};
-            //var side = 2.5;
-            //var sideOffset = side/2.0;
-            //foreach (var point in points.Select(p => scale(p)))
-            //{
-            //    var rect = new Ellipse
-            //    {
-            //        Width = side,
-            //        Height = side,
-            //        Fill = oppositeBrush
-            //    };
+        private Dictionary<ColorReference, Layer<InterpolationPointPath>> _interpolationPointLayers;
+        private bool _part5Compete;
+        //private Bitmap _interpPointImage;
+        private IEnumerable<UIElement> _interpLines;
+        private double _gridWidth;
+        private double _gridHeight;
+        private void Part5Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_part5Compete)
+            {
+                //_pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
+                _interpolationPointLayers = _pathPointLayers.ToDictionary(cp => cp.Key, cp => Interpolation.Convert(cp.Value));
+                var paths = _interpolationPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
+                //var imagePoints = _interpolationPointLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Points).Select(p => Tuple.Create(new Point<int> { X = (int)p.X, Y = (int)p.Y }, cl.Key.Color))).ToList();
+                //_interpPointImage = DrawPointsImage(imagePoints, _loadedImage.Width + 1, _loadedImage.Height + 1);
+                double gridWidth = _loadedImage.Width;
+                double gridHeight = _loadedImage.Height;
+                var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+                _gridWidth = gridWidth;
+                _gridHeight = gridHeight;
+
+                var lines = new List<UIElement>();
+                foreach (var path in paths)
+                {
+                    //var path = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).Where((cp, i) => i == index).Single();
+                    var color = path.Color.Color;
+
+                    //http://jacobmsaylor.com/?p=1250
+                    var oppositeColor = MColor.FromRgb((byte)~color.R, (byte)~color.G, (byte)~color.B);
+                    var oppositeBrush = new SolidColorBrush(MColor.FromArgb(oppositeColor.A, oppositeColor.R, oppositeColor.G, oppositeColor.B));
+                    var points = path.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList();
+                    var pathLines = CreateOverlayLines(points, offset, oppositeBrush);
+                    //LineGrid.Width = gridWidth;
+                    //LineGrid.Height = gridHeight;
+                    //LineGrid.Children.AddRange(lines);
+                    lines.AddRange(pathLines);
+                }
+
+                _interpLines = lines;
+                _part5Compete = true;
+                //Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i)).ToList();
+                InterpCount.Content = paths.Count;
                 
-            //    LineGrid.Children.Add(rect);
-            //    var yPoint = point.Y - sideOffset;
-            //    var xPoint = point.X - sideOffset;
-            //    Canvas.SetTop(rect, yPoint < 0 ? 0 : yPoint);
-            //    Canvas.SetLeft(rect, xPoint < 0 ? 0 : xPoint);
-            //}
+            }
+            LineGrid.Children.Clear();
+            LineGrid.Width = _gridWidth;
+            LineGrid.Height = _gridHeight;
+            LineGrid.Children.AddRange(_interpLines);
+            //ImageDisplay.Source = BitmapToImageSource(_interpPointImage);
         }
     }
 }
