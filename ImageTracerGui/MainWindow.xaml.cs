@@ -609,19 +609,24 @@ namespace ImageTracerGui
                 }).ToList()
             });
             var segments = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new { Color = cl.Key, Type = s is LineSegment ? "Line" : (s is SplineSegment ? "Spline" : "Unknown") }))).ToList();
+
+            LineGrid.Children.Clear();
+            foreach (var index in segments.Select((s, i) => i))
+            {
+                DrawSegment(index);
+            }
+            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
+
             Part7ComboBox.ItemsSource = segments.Select((cs, i) => new ColorSelectionItem(cs.Color, i) { Type = $"{i} {cs.Type}" }).ToList();
             SegmentCount.Content = segments.Count;
             Part7Button.IsEnabled = false;
         }
 
-        private void Part7ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void DrawSegment(int index)
         {
-            var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
-            var index = selected.Index;
-
             var segments =
                 _segmentLayers.SelectMany(
-                    cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new {Color = cl.Key, Segment = s})))
+                    cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new { Color = cl.Key, Segment = s })))
                     .ToList();
             var segmentAndColor = segments[index];
             var segment = segmentAndColor.Segment;
@@ -629,8 +634,8 @@ namespace ImageTracerGui
             var color = segmentAndColor.Color.Color;
             var regularBrush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
             var points = segment is SplineSegment
-                ? new[] {segment.Start, ((SplineSegment) segment).Mid, segment.End}
-                : new[] {segment.Start, segment.End};
+                ? new[] { segment.Start, ((SplineSegment)segment).Mid, segment.End }
+                : new[] { segment.Start, segment.End };
             double gridWidth = _loadedImage.Width;
             double gridHeight = _loadedImage.Height;
             var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
@@ -639,8 +644,8 @@ namespace ImageTracerGui
             var lines = new List<UIElement>();
             Func<Point<double>, Point<double>> scale = p => new Point<double>
             {
-                X = p.X*multiplier + offset.Width,
-                Y = p.Y*multiplier + offset.Height
+                X = p.X * multiplier + offset.Width,
+                Y = p.Y * multiplier + offset.Height
             };
             var scaledPoints = points.Select(p => scale(p)).ToList();
             var initial = scaledPoints.First();
@@ -674,17 +679,17 @@ namespace ImageTracerGui
                 //http://www.purplemath.com/modules/midpoint.htm
                 var midpoint = new Point<double> { X = (scaledPoints[0].X + scaledPoints[2].X) / 2, Y = (scaledPoints[0].Y + scaledPoints[2].Y) / 2 };
                 //http://www.mathwarehouse.com/algebra/distance_formula/index.php
-                var triangleHeight = Math.Sqrt(Math.Pow(Math.Abs(midpoint.X - scaledPoints[1].X), 2) + Math.Pow(Math.Abs(midpoint.Y - scaledPoints[1].Y), 2));
+                var triangleHeight = Math.Sqrt(Math.Pow(midpoint.X - scaledPoints[1].X, 2) + Math.Pow(midpoint.Y - scaledPoints[1].Y, 2));
                 //http://keisan.casio.com/exec/system/1273850202
-                var baseLength = Math.Sqrt(Math.Pow(Math.Abs(scaledPoints[0].X - scaledPoints[2].X), 2) + Math.Pow(Math.Abs(scaledPoints[0].Y - scaledPoints[2].Y), 2));
+                var baseLength = Math.Sqrt(Math.Pow(scaledPoints[0].X - scaledPoints[2].X, 2) + Math.Pow(scaledPoints[0].Y - scaledPoints[2].Y, 2));
                 var sideLength = Math.Sqrt(Math.Pow(triangleHeight, 2) + (Math.Pow(baseLength, 2) / 4));
                 // Might be useful: http://stackoverflow.com/questions/22408769/how-can-i-draw-a-circular-arc-with-three-points-in-a-streamgeometry
                 var arc = new ArcSegment(
-                    new System.Windows.Point(scaledPoints[2].X, scaledPoints[2].Y), 
+                    new System.Windows.Point(scaledPoints[2].X, scaledPoints[2].Y),
                     new System.Windows.Size(sideLength, sideLength),
                     0, // TODO: Determine if this needs calculated.
                     false,
-                    SweepDirection.Clockwise, 
+                    scaledPoints[0].Y < scaledPoints[1].Y && scaledPoints[1].X < scaledPoints[2].X ? SweepDirection.Counterclockwise : SweepDirection.Clockwise,
                     true);
                 pathFigure.Segments.Add(arc);
                 geometry.Figures.Add(pathFigure);
@@ -697,10 +702,20 @@ namespace ImageTracerGui
 
             lines.Add(CreateLine(previous, initial, brush, false));
 
-            LineGrid.Children.Clear();
+            
             LineGrid.Width = gridWidth;
             LineGrid.Height = gridHeight;
             LineGrid.Children.AddRange(lines);
+            
+        }
+
+        private void Part7ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
+            var index = selected.Index;
+
+            LineGrid.Children.Clear();
+            DrawSegment(index);
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
     }
