@@ -256,10 +256,10 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"Chrono Trigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "44", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"1.svg", "ltres", "0.1", "qtres", "1", "scale", "44", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
         }
 
@@ -271,7 +271,7 @@ namespace ImageTracerGui
                 ImageToSvg2();
                 _part2Complete = true;
             }
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(_paletteImage);
         }
 
@@ -329,7 +329,7 @@ namespace ImageTracerGui
                 }
             }
             LayerPixelCount.Content = pixelCount;
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(image);
         }
 
@@ -348,7 +348,7 @@ namespace ImageTracerGui
                 Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i)).ToList();
                 PathCount.Content = paths.Count;
             }
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(_pathPointImage);
         }
 
@@ -469,7 +469,7 @@ namespace ImageTracerGui
             var color = path.Color.Color;
             var image = DrawPointsImage(path.Points, _loadedImage.Width + 1, _loadedImage.Height + 1, color);
             PathPointsCount.Content = path.Points.Count;
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(image);
 
             LineGrid.Children.Clear();
@@ -500,7 +500,7 @@ namespace ImageTracerGui
             {
                 _interpolationPointLayers = _pathPointLayers.ToDictionary(cp => cp.Key, cp => Interpolation.Convert(cp.Value));
                 var paths = _interpolationPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
-                if (false)
+                if (true)
                 {
                     double gridWidth = _loadedImage.Width;
                     double gridHeight = _loadedImage.Height;
@@ -517,9 +517,9 @@ namespace ImageTracerGui
                         var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
                         lines.AddRange(pathLines);
                     }
+                    _interpLines = lines;
                 }
-                //_interpLines = lines;
-                _interpLines = new List<UIElement>();
+                //_interpLines = new List<UIElement>();
                 _part5Compete = true;
                 InterpCount.Content = paths.Count;
             }
@@ -528,7 +528,7 @@ namespace ImageTracerGui
             LineGrid.Width = _gridWidth;
             LineGrid.Height = _gridHeight;
             LineGrid.Children.AddRange(_interpLines);
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
 
@@ -609,7 +609,7 @@ namespace ImageTracerGui
             LineGrid.Width = gridWidth;
             LineGrid.Height = gridHeight;
             LineGrid.Children.AddRange(lines);
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
 
@@ -633,7 +633,7 @@ namespace ImageTracerGui
                 _part7Complete = true;
             }
 
-            if (false)
+            if (true)
             {
                 LineGrid.Children.Clear();
                 double gridWidth = _loadedImage.Width;
@@ -642,11 +642,12 @@ namespace ImageTracerGui
 
                 var indices = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments)).ToList();
                 var segmentLines = indices.SelectMany((s, i) => CreateSegmentLines(i, offset, false));
-                ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
-
+                
                 LineGrid.Width = gridWidth;
                 LineGrid.Height = gridHeight;
                 LineGrid.Children.AddRange(segmentLines);
+                CanvasScroller.Visibility = Visibility.Hidden;
+                ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
             }
             
 
@@ -736,7 +737,7 @@ namespace ImageTracerGui
 
             LineGrid.Children.Clear();
             var segmentLines = CreateSegmentLines(index, offset);
-            SvgViewer.UnloadDiagrams();
+            CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
 
             LineGrid.Width = gridWidth;
@@ -773,24 +774,29 @@ namespace ImageTracerGui
                     //CanvasScroller.Visibility = Visibility.Visible;
                 }
 
+                //SvgViewer.UnloadDiagrams();
+
+
+                CanvasScroller.Visibility = Visibility.Hidden;
+                SvgViewer.RenderDiagrams(_renderedSvg);
+
+                Rect bounds = SvgViewer.Bounds;
+                if (bounds.IsEmpty)
+                {
+                    bounds = new Rect(0, 0, CanvasScroller.ActualWidth, CanvasScroller.ActualHeight);
+                }
+
+                ZoomPanControl.AnimatedZoomTo(bounds);
+
                 _part8Complete = true;
                 //Part8Button.IsEnabled = false;
             }
-
-            SvgViewer.UnloadDiagrams();
-            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
-
-            CanvasScroller.Visibility = Visibility.Hidden;
-            SvgViewer.RenderDiagrams(_renderedSvg);
-
-            Rect bounds = SvgViewer.Bounds;
-            if (bounds.IsEmpty)
+            else
             {
-                bounds = new Rect(0, 0, CanvasScroller.ActualWidth, CanvasScroller.ActualHeight);
+                CanvasScroller.Visibility = Visibility.Visible;
             }
 
-            ZoomPanControl.AnimatedZoomTo(bounds);
-
+            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
 
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
