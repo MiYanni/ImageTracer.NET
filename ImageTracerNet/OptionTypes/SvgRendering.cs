@@ -10,7 +10,7 @@ namespace ImageTracerNet.OptionTypes
         public int RoundCoords { get; set; } = 1;
         public double LCpr { get; set; } = 0f;
         public double QCpr { get; set; } = 0f;
-        public bool Desc { get; set; } = true;
+        public bool Desc { get; set; } = false;
         public bool Viewbox { get; set; } = false;
     }
 }

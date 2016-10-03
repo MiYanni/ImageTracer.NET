@@ -252,7 +252,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"9.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"Chrono Trigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "44", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -492,23 +492,26 @@ namespace ImageTracerGui
             {
                 _interpolationPointLayers = _pathPointLayers.ToDictionary(cp => cp.Key, cp => Interpolation.Convert(cp.Value));
                 var paths = _interpolationPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
-                double gridWidth = _loadedImage.Width;
-                double gridHeight = _loadedImage.Height;
-                var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
-                _gridWidth = gridWidth;
-                _gridHeight = gridHeight;
-
-                var lines = new List<UIElement>();
-                foreach (var path in paths)
+                if (false)
                 {
-                    var color = path.Color.Color;
-                    var brush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
-                    var points = path.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList();
-                    var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
-                    lines.AddRange(pathLines);
-                }
+                    double gridWidth = _loadedImage.Width;
+                    double gridHeight = _loadedImage.Height;
+                    var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+                    _gridWidth = gridWidth;
+                    _gridHeight = gridHeight;
 
-                _interpLines = lines;
+                    var lines = new List<UIElement>();
+                    foreach (var path in paths)
+                    {
+                        var color = path.Color.Color;
+                        var brush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
+                        var points = path.Points.Select(p => new Point<double> {X = p.X, Y = p.Y}).ToList();
+                        var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
+                        lines.AddRange(pathLines);
+                    }
+                }
+                //_interpLines = lines;
+                _interpLines = new List<UIElement>();
                 _part5Compete = true;
                 InterpCount.Content = paths.Count;
             }
@@ -620,18 +623,24 @@ namespace ImageTracerGui
                 _part7Complete = true;
             }
 
-            LineGrid.Children.Clear();
-            double gridWidth = _loadedImage.Width;
-            double gridHeight = _loadedImage.Height;
-            var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+            if (false)
+            {
+                LineGrid.Children.Clear();
+                double gridWidth = _loadedImage.Width;
+                double gridHeight = _loadedImage.Height;
+                var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
 
-            var indices = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments)).ToList();
-            var segmentLines = indices.SelectMany((s, i) => CreateSegmentLines(i, offset, false));
-            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
+                var indices = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments)).ToList();
+                var segmentLines = indices.SelectMany((s, i) => CreateSegmentLines(i, offset, false));
+                ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
 
-            LineGrid.Width = gridWidth;
-            LineGrid.Height = gridHeight;
-            LineGrid.Children.AddRange(segmentLines);
+                LineGrid.Width = gridWidth;
+                LineGrid.Height = gridHeight;
+                LineGrid.Children.AddRange(segmentLines);
+            }
+            
+
+            
 
             
             //Part7Button.IsEnabled = false;
