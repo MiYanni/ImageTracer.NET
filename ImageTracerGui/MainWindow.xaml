@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImageTracerGui"
+        xmlns:svg="http://sharpvectors.codeplex.com/runtime/"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
@@ -68,5 +69,19 @@
             </ComboBox.ItemTemplate>
         </ComboBox>
         <Button x:Name="Part8Button" Content="Svg-ize" Margin="0,293,70,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="Part8Button_Click"/>
+        <!--<svg:SvgDrawingCanvas x:Name="SvgViewer" Margin="10,10,150,10"/>-->
+        <ScrollViewer x:Name="CanvasScroller" CanContentScroll="True"
+            VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Hidden" AllowDrop="True" Margin="10,10,150,10">
+            <svg:ZoomPanControl x:Name="ZoomPanControl">
+                <Canvas Name="LayerContainer" Width="{Binding ElementName=SvgViewer, Path=ActualWidth}"
+                             Height="{Binding ElementName=SvgViewer, Path=ActualHeight}">
+                    <!-- This Canvas is the content that is displayed by the ZoomPanControl.
+                        Width and Height determine the size of the content. -->
+                    <svg:SvgDrawingCanvas x:Name="SvgViewer"/>
+                    <Canvas Name="UserLayer" Width="{Binding ElementName=SvgViewer, Path=ActualWidth}" Height="{Binding ElementName=SvgViewer, Path=ActualHeight}">
+                    </Canvas>
+                </Canvas>
+            </svg:ZoomPanControl>
+        </ScrollViewer>
     </Grid>
 </Window>

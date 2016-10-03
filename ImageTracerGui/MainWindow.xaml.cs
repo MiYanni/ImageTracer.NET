@@ -19,6 +19,8 @@ using ImageTracerNet.Extensions;
 using ImageTracerNet.Svg;
 using ImageTracerNet.Vectorization.Points;
 using ImageTracerNet.Vectorization.Segments;
+using SharpVectors.Converters;
+using SharpVectors.Renderers.Wpf;
 using Brushes = System.Windows.Media.Brushes;
 using MColor = System.Windows.Media.Color;
 using DColor = System.Drawing.Color;
@@ -40,6 +42,8 @@ namespace ImageTracerGui
         {
             InitializeComponent();
             WindowState = WindowState.Maximized;
+            ZoomPanControl.ContentScaleChanged += (o, args) => CanvasScroller.Visibility = Visibility.Visible;
+            ZoomPanControl.AnimationDuration = 0.01;
             //var line = new Line
             //{
             //    X1 = 3,
@@ -743,6 +747,35 @@ namespace ImageTracerGui
                 _image.Layers = layersList;
                 _svgImage = ToSvgString(_image, _segmentLayers, _options.SvgRendering);
                 File.WriteAllText(_outFilename, _svgImage);
+
+                SvgViewer.UnloadDiagrams();
+                //http://stackoverflow.com/questions/1879395/how-to-generate-a-stream-from-a-string
+                using (MemoryStream stream = new MemoryStream())
+                using (StreamWriter writer = new StreamWriter(stream))
+                {
+                    writer.Write(_svgImage);
+                    writer.Flush();
+                    stream.Position = 0;
+
+                    var wpfSettings = new WpfDrawingSettings();
+                    wpfSettings.CultureInfo = wpfSettings.NeutralCultureInfo;
+                    var reader = new FileSvgReader(wpfSettings);
+                    var drawingGroup = reader.Read(stream);
+                    CanvasScroller.Visibility = Visibility.Hidden;
+                    SvgViewer.RenderDiagrams(drawingGroup);
+
+                    Rect bounds = SvgViewer.Bounds;
+                    if (bounds.IsEmpty)
+                    {
+                        bounds = new Rect(0, 0, CanvasScroller.ActualWidth, CanvasScroller.ActualHeight);
+                    }
+                    
+                    ZoomPanControl.AnimatedZoomTo(bounds);
+                    
+                    //ZoomPanControl.ScaleToFit();
+                    //CanvasScroller.Visibility = Visibility.Visible;
+
+                }
 
                 _part8Complete = true;
                 Part8Button.IsEnabled = false;
