@@ -616,7 +616,92 @@ namespace ImageTracerGui
 
         private void Part7ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
+            var index = selected.Index;
 
+            var segments =
+                _segmentLayers.SelectMany(
+                    cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new {Color = cl.Key, Segment = s})))
+                    .ToList();
+            var segmentAndColor = segments[index];
+            var segment = segmentAndColor.Segment;
+
+            var color = segmentAndColor.Color.Color;
+            var regularBrush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
+            var points = segment is SplineSegment
+                ? new[] {segment.Start, ((SplineSegment) segment).Mid, segment.End}
+                : new[] {segment.Start, segment.End};
+            double gridWidth = _loadedImage.Width;
+            double gridHeight = _loadedImage.Height;
+            var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+
+            var multiplier = 10.0;
+            var lines = new List<UIElement>();
+            Func<Point<double>, Point<double>> scale = p => new Point<double>
+            {
+                X = p.X*multiplier + offset.Width,
+                Y = p.Y*multiplier + offset.Height
+            };
+            var scaledPoints = points.Select(p => scale(p)).ToList();
+            var initial = scaledPoints.First();
+            var previous = scaledPoints.First();
+            var brush = regularBrush;
+
+            if (segment is LineSegment)
+            {
+                foreach (var point in scaledPoints)
+                {
+                    if (previous != null)
+                    {
+                        lines.Add(CreateLine(previous, point, brush, false));
+                    }
+                    lines.Add(CreateLineDot(point, brush));
+                    previous = point;
+                }
+            }
+            //http://stackoverflow.com/a/21958079/294804
+            //http://stackoverflow.com/a/5336694/294804
+            if (segment is SplineSegment)
+            {
+                lines.Add(CreateLineDot(scaledPoints[0], brush));
+                var path = new System.Windows.Shapes.Path();
+                path.Stroke = brush;
+                var geometry = new PathGeometry();
+                var pathFigure = new PathFigure();
+                pathFigure.StartPoint = new System.Windows.Point(scaledPoints[0].X, scaledPoints[0].Y);
+
+                // Radius Calculation
+                //http://www.purplemath.com/modules/midpoint.htm
+                var midpoint = new Point<double> { X = (scaledPoints[0].X + scaledPoints[2].X) / 2, Y = (scaledPoints[0].Y + scaledPoints[2].Y) / 2 };
+                //http://www.mathwarehouse.com/algebra/distance_formula/index.php
+                var triangleHeight = Math.Sqrt(Math.Pow(Math.Abs(midpoint.X - scaledPoints[1].X), 2) + Math.Pow(Math.Abs(midpoint.Y - scaledPoints[1].Y), 2));
+                //http://keisan.casio.com/exec/system/1273850202
+                var baseLength = Math.Sqrt(Math.Pow(Math.Abs(scaledPoints[0].X - scaledPoints[2].X), 2) + Math.Pow(Math.Abs(scaledPoints[0].Y - scaledPoints[2].Y), 2));
+                var sideLength = Math.Sqrt(Math.Pow(triangleHeight, 2) + (Math.Pow(baseLength, 2) / 4));
+                // Might be useful: http://stackoverflow.com/questions/22408769/how-can-i-draw-a-circular-arc-with-three-points-in-a-streamgeometry
+                var arc = new ArcSegment(
+                    new System.Windows.Point(scaledPoints[2].X, scaledPoints[2].Y), 
+                    new System.Windows.Size(sideLength, sideLength),
+                    0, // TODO: Determine if this needs calculated.
+                    false,
+                    SweepDirection.Clockwise, 
+                    true);
+                pathFigure.Segments.Add(arc);
+                geometry.Figures.Add(pathFigure);
+                path.Data = geometry;
+                lines.Add(path);
+
+                lines.Add(CreateLineDot(scaledPoints[1], brush));
+                lines.Add(CreateLineDot(scaledPoints[2], brush));
+            }
+
+            lines.Add(CreateLine(previous, initial, brush, false));
+
+            LineGrid.Children.Clear();
+            LineGrid.Width = gridWidth;
+            LineGrid.Height = gridHeight;
+            LineGrid.Children.AddRange(lines);
+            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
     }
 }
