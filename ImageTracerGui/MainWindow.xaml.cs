@@ -259,6 +259,7 @@ namespace ImageTracerGui
                 SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"Chrono Trigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "44", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
         }
 
@@ -270,6 +271,7 @@ namespace ImageTracerGui
                 ImageToSvg2();
                 _part2Complete = true;
             }
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(_paletteImage);
         }
 
@@ -327,6 +329,7 @@ namespace ImageTracerGui
                 }
             }
             LayerPixelCount.Content = pixelCount;
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(image);
         }
 
@@ -345,7 +348,7 @@ namespace ImageTracerGui
                 Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i)).ToList();
                 PathCount.Content = paths.Count;
             }
-
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(_pathPointImage);
         }
 
@@ -466,6 +469,7 @@ namespace ImageTracerGui
             var color = path.Color.Color;
             var image = DrawPointsImage(path.Points, _loadedImage.Width + 1, _loadedImage.Height + 1, color);
             PathPointsCount.Content = path.Points.Count;
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(image);
 
             LineGrid.Children.Clear();
@@ -524,6 +528,7 @@ namespace ImageTracerGui
             LineGrid.Width = _gridWidth;
             LineGrid.Height = _gridHeight;
             LineGrid.Children.AddRange(_interpLines);
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
 
@@ -604,6 +609,7 @@ namespace ImageTracerGui
             LineGrid.Width = gridWidth;
             LineGrid.Height = gridHeight;
             LineGrid.Children.AddRange(lines);
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
 
@@ -730,6 +736,7 @@ namespace ImageTracerGui
 
             LineGrid.Children.Clear();
             var segmentLines = CreateSegmentLines(index, offset);
+            SvgViewer.UnloadDiagrams();
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
 
             LineGrid.Width = gridWidth;
@@ -738,6 +745,7 @@ namespace ImageTracerGui
         }
 
         private string _svgImage;
+        private DrawingGroup _renderedSvg;
         private bool _part8Complete;
         private void Part8Button_Click(object sender, RoutedEventArgs e)
         {
@@ -748,7 +756,6 @@ namespace ImageTracerGui
                 _svgImage = ToSvgString(_image, _segmentLayers, _options.SvgRendering);
                 File.WriteAllText(_outFilename, _svgImage);
 
-                SvgViewer.UnloadDiagrams();
                 //http://stackoverflow.com/questions/1879395/how-to-generate-a-stream-from-a-string
                 using (MemoryStream stream = new MemoryStream())
                 using (StreamWriter writer = new StreamWriter(stream))
@@ -760,26 +767,30 @@ namespace ImageTracerGui
                     var wpfSettings = new WpfDrawingSettings();
                     wpfSettings.CultureInfo = wpfSettings.NeutralCultureInfo;
                     var reader = new FileSvgReader(wpfSettings);
-                    var drawingGroup = reader.Read(stream);
-                    CanvasScroller.Visibility = Visibility.Hidden;
-                    SvgViewer.RenderDiagrams(drawingGroup);
+                    _renderedSvg = reader.Read(stream);
 
-                    Rect bounds = SvgViewer.Bounds;
-                    if (bounds.IsEmpty)
-                    {
-                        bounds = new Rect(0, 0, CanvasScroller.ActualWidth, CanvasScroller.ActualHeight);
-                    }
-                    
-                    ZoomPanControl.AnimatedZoomTo(bounds);
-                    
                     //ZoomPanControl.ScaleToFit();
                     //CanvasScroller.Visibility = Visibility.Visible;
-
                 }
 
                 _part8Complete = true;
-                Part8Button.IsEnabled = false;
+                //Part8Button.IsEnabled = false;
             }
+
+            SvgViewer.UnloadDiagrams();
+            ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
+
+            CanvasScroller.Visibility = Visibility.Hidden;
+            SvgViewer.RenderDiagrams(_renderedSvg);
+
+            Rect bounds = SvgViewer.Bounds;
+            if (bounds.IsEmpty)
+            {
+                bounds = new Rect(0, 0, CanvasScroller.ActualWidth, CanvasScroller.ActualHeight);
+            }
+
+            ZoomPanControl.AnimatedZoomTo(bounds);
+
         }
 
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
