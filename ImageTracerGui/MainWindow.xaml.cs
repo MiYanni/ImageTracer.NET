@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -65,6 +66,7 @@ namespace ImageTracerGui
             //WindowState = WindowState.Maximized;
         }
 
+        private string _outFilename;
         private void SaveTracedImage(string[] args)
         {
             //try
@@ -115,6 +117,7 @@ namespace ImageTracerGui
                 // Loading image, tracing, rendering SVG, saving SVG file
                 //File.WriteAllText(outfilename, ImageToSvg(args[0], options));
                 ImageToSvg(args[0], options);
+                _outFilename = outfilename;
             }// End of parameter parsing and processing
 
             //}
@@ -169,23 +172,23 @@ namespace ImageTracerGui
         ////////////////////////////////////////////////////////////
 
         // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
-        private PaddedPaletteImage PaddedPaletteImageToTraceData()
-        {
-            // 2. Layer separation and edge detection
-            var rawLayers = Layering.Convert(_image);
-            // 3. Batch pathscan
-            var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, _options.Tracing.PathOmit).ToList() });
-            // 4. Batch interpollation
-            var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
-            // 5. Batch tracing
-            //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
-            _image.Layers = interpolationPointLayers.Select(layer => 
-                new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
-                    new SegmentPath { Segments = 
-                        Pathing.Trace(path, _options.Tracing).ToList() }).ToList() }).ToList();
+        //private PaddedPaletteImage PaddedPaletteImageToTraceData()
+        //{
+        //    // 2. Layer separation and edge detection
+        //    var rawLayers = Layering.Convert(_image);
+        //    // 3. Batch pathscan
+        //    var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, _options.Tracing.PathOmit).ToList() });
+        //    // 4. Batch interpollation
+        //    var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
+        //    // 5. Batch tracing
+        //    //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
+        //    _image.Layers = interpolationPointLayers.Select(layer => 
+        //        new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
+        //            new SegmentPath { Segments = 
+        //                Pathing.Trace(path, _options.Tracing).ToList() }).ToList() }).ToList();
 
-            return _image;
-        }
+        //    return _image;
+        //}
 
         private static int arraycontains(String[] arr, String str)
         {
@@ -249,7 +252,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"1.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -679,43 +682,18 @@ namespace ImageTracerGui
             if (segment is SplineSegment)
             {
                 lines.Add(CreateLineDot(scaledPoints[0], brush));
-                //var path = new System.Windows.Shapes.Path();
-                //path.Stroke = brush;
-                //var geometry = new PathGeometry();
-                //var pathFigure = new PathFigure();
-                //pathFigure.StartPoint = new System.Windows.Point(scaledPoints[0].X, scaledPoints[0].Y);
-
-                //// Radius Calculation
-                ////http://www.purplemath.com/modules/midpoint.htm
-                //var midpoint = new Point<double> { X = (scaledPoints[0].X + scaledPoints[2].X) / 2, Y = (scaledPoints[0].Y + scaledPoints[2].Y) / 2 };
-                ////http://www.mathwarehouse.com/algebra/distance_formula/index.php
-                //var triangleHeight = Math.Sqrt(Math.Pow(midpoint.X - scaledPoints[1].X, 2) + Math.Pow(midpoint.Y - scaledPoints[1].Y, 2));
-                ////http://keisan.casio.com/exec/system/1273850202
-                //var baseLength = Math.Sqrt(Math.Pow(scaledPoints[0].X - scaledPoints[2].X, 2) + Math.Pow(scaledPoints[0].Y - scaledPoints[2].Y, 2));
-                //var sideLength = Math.Sqrt(Math.Pow(triangleHeight, 2) + (Math.Pow(baseLength, 2) / 4));
-                //// Might be useful: http://stackoverflow.com/questions/22408769/how-can-i-draw-a-circular-arc-with-three-points-in-a-streamgeometry
-                //var arc = new ArcSegment(
-                //    new System.Windows.Point(scaledPoints[2].X, scaledPoints[2].Y),
-                //    new System.Windows.Size(sideLength, sideLength),
-                //    0, // TODO: Determine if this needs calculated.
-                //    false,
-                //    scaledPoints[0].Y < scaledPoints[1].Y && scaledPoints[1].X < scaledPoints[2].X ? SweepDirection.Counterclockwise : SweepDirection.Clockwise,
-                //    true);
-                //pathFigure.Segments.Add(arc);
-                //geometry.Figures.Add(pathFigure);
-                //path.Data = geometry;
-                //lines.Add(path);
 
                 //http://stackoverflow.com/questions/13940983/how-to-draw-bezier-curve-by-several-points
                 var b = Bezier.GetBezierApproximation(scaledPoints.Select(p => new System.Windows.Point(p.X, p.Y)).ToArray(), 256);
                 PathFigure pf = new PathFigure(b.Points[0], new[] { b }, false);
                 PathFigureCollection pfc = new PathFigureCollection();
                 pfc.Add(pf);
-                var pge = new PathGeometry();
-                pge.Figures = pfc;
-                System.Windows.Shapes.Path path = new System.Windows.Shapes.Path();
-                path.Data = pge;
-                path.Stroke = brush;
+                var pge = new PathGeometry {Figures = pfc};
+                System.Windows.Shapes.Path path = new System.Windows.Shapes.Path
+                {
+                    Data = pge,
+                    Stroke = brush
+                };
                 lines.Add(path);
                 if (drawMidPoint)
                 {
@@ -744,6 +722,94 @@ namespace ImageTracerGui
             LineGrid.Width = gridWidth;
             LineGrid.Height = gridHeight;
             LineGrid.Children.AddRange(segmentLines);
+        }
+
+        private string _svgImage;
+        private bool _part8Complete;
+        private void Part8Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_part8Complete)
+            {
+                var layersList = _segmentLayers.Select(p => p.Value).ToList();
+                _image.Layers = layersList;
+                _svgImage = ToSvgString(_image, _segmentLayers, _options.SvgRendering);
+                File.WriteAllText(_outFilename, _svgImage);
+
+                _part8Complete = true;
+            }
+        }
+
+        // Converting tracedata to an SVG string, paths are drawn according to a Z-index
+        // the optional lcpr and qcpr are linear and quadratic control point radiuses
+        private static string ToSvgString(PaddedPaletteImage ii, Dictionary<ColorReference, Layer<SegmentPath>> layers, SvgRendering options)
+        {
+            // SVG start
+            var width = (int)(ii.ImageWidth * options.Scale);
+            var height = (int)(ii.ImageHeight * options.Scale);
+
+            var viewBoxOrViewPort = options.Viewbox ?
+                $"viewBox=\"0 0 {width} {height}\"" :
+                $"width=\"{width}\" height=\"{height}\"";
+            var svgStringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
+            if (options.Desc)
+            {
+                svgStringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
+            }
+            svgStringBuilder.Append(">");
+
+            // creating Z-index
+            // Only selecting the first segment of each path.
+
+            //var label = layers[layerIndex][pathIndex].Start.Y * width + layers[layerIndex][pathIndex].Start.X;
+            //var zIndex = SvgGeneration.CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => p.Segments.First()).ToList()).ToList(), width);
+            //var zIndex = new SortedDictionary<double, Tuple<ColorReference, List<Segment>>>(layers.ToDictionary(cs =>
+            //{
+            //    var firstSegmentStart = cs.Value.Paths.First().Segments.First().Start;
+            //    return firstSegmentStart.Y * width + firstSegmentStart.X;
+            //}, cs => Tuple.Create(cs.Key, cs.Value.Paths.SelectMany(p => p.Segments).ToList())
+            //    ));
+            var zIndex = CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => Tuple.Create(cs.Key, p.Segments)).ToList()).ToList(), width);
+
+
+            // Sorting Z-index is not required, TreeMap is sorted automatically
+
+            // Drawing
+            // Z-index loop
+            foreach (var zPosition in zIndex)
+            {
+                var zValue = zPosition.Value;
+                var description = String.Empty;
+                //if (options.Desc)
+                //{
+                //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
+                //}
+
+                SvgGeneration.AppendPathString(svgStringBuilder, description, zValue.Segments,
+                    zValue.Color.ToSvgColorString(), options);
+            }
+
+            // SVG End
+            svgStringBuilder.Append("</svg>");
+
+            return svgStringBuilder.ToString();
+        }
+
+        internal static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Tuple<ColorReference, IReadOnlyList<Segment>>>> layers, int width)
+        {
+            var zIndex = new SortedDictionary<double, ZPosition>();
+            // Layer loop
+            for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
+            {
+                // Path loop
+                for (var pathIndex = 0; pathIndex < layers[layerIndex].Count; pathIndex++)
+                {
+                    var tuple = layers[layerIndex][pathIndex];
+                    // Label (Z-index key) is the startpoint of the path, linearized
+                    var label = tuple.Item2.First().Start.Y * width + tuple.Item2.First().Start.X;
+                    zIndex[label] = new ZPosition { Color = tuple.Item1, Segments = tuple.Item2 };
+                }
+            }
+            return zIndex;
         }
     }
 }

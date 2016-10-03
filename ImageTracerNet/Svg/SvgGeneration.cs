@@ -10,7 +10,7 @@ namespace ImageTracerNet.Svg
 {
     internal static class SvgGeneration
     {
-        private static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Segment>> layers, int width)
+        internal static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Segment>> layers, int width)
         {
             var zIndex = new SortedDictionary<double, ZPosition>();
             // Layer loop
@@ -73,7 +73,7 @@ namespace ImageTracerNet.Svg
         }
 
         // Getting SVG path element string from a traced path
-        private static void AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<Segment> segments, string colorString, SvgRendering options)
+        internal static void AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<Segment> segments, string colorString, SvgRendering options)
         {
             var scale = options.Scale;
             var linearControlPointRadius = options.LCpr;
@@ -109,7 +109,7 @@ namespace ImageTracerNet.Svg
             }
         }
 
-        private static string ToSvgColorString(this ColorReference c)
+        internal static string ToSvgColorString(this ColorReference c)
         {
             return $"fill=\"rgb({c.R},{c.G},{c.B})\" stroke=\"rgb({c.R},{c.G},{c.B})\" stroke-width=\"1\" opacity=\"{c.A / 255.0}\" ";
         }
