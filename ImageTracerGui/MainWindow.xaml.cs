@@ -252,7 +252,7 @@ namespace ImageTracerGui
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"1.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
+                SaveTracedImage(new[] { @"..\..\Images\9.png", "outfilename", @"9.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
                 _part1Complete = true;
             }
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
@@ -736,6 +736,7 @@ namespace ImageTracerGui
                 File.WriteAllText(_outFilename, _svgImage);
 
                 _part8Complete = true;
+                Part8Button.IsEnabled = false;
             }
         }
 
