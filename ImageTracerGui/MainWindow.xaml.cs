@@ -598,31 +598,43 @@ namespace ImageTracerGui
         }
 
         private Dictionary<ColorReference, Layer<SegmentPath>> _segmentLayers;
+        private bool _part7Complete;
         private void Part7Button_Click(object sender, RoutedEventArgs e)
         {
-            _segmentLayers = _sequenceLayers.ToDictionary(ci => ci.Key, ci => new Layer<SegmentPath>
+            if (!_part7Complete)
             {
-                Paths = ci.Value.Paths.Select(path => new SegmentPath
+                _segmentLayers = _sequenceLayers.ToDictionary(ci => ci.Key, ci => new Layer<SegmentPath>
                 {
-                    Path = path.Path,
-                    Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, _options.Tracing, s)).SelectMany(s => s).ToList()
-                }).ToList()
-            });
-            var segments = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new { Color = cl.Key, Type = s is LineSegment ? "Line" : (s is SplineSegment ? "Spline" : "Unknown") }))).ToList();
+                    Paths = ci.Value.Paths.Select(path => new SegmentPath
+                    {
+                        Path = path.Path,
+                        Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, _options.Tracing, s)).SelectMany(s => s).ToList()
+                    }).ToList()
+                });
+                var segments = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new { Color = cl.Key, Type = s is LineSegment ? "Line" : (s is SplineSegment ? "Spline" : "Unknown") }))).ToList();
+                Part7ComboBox.ItemsSource = segments.Select((cs, i) => new ColorSelectionItem(cs.Color, i) { Type = $"{i} {cs.Type}" }).ToList();
+                SegmentCount.Content = segments.Count;
+                _part7Complete = true;
+            }
 
             LineGrid.Children.Clear();
-            foreach (var index in segments.Select((s, i) => i))
-            {
-                DrawSegment(index);
-            }
+            double gridWidth = _loadedImage.Width;
+            double gridHeight = _loadedImage.Height;
+            var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+
+            var indices = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments)).ToList();
+            var segmentLines = indices.SelectMany((s, i) => CreateSegmentLines(i, offset, false));
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
 
-            Part7ComboBox.ItemsSource = segments.Select((cs, i) => new ColorSelectionItem(cs.Color, i) { Type = $"{i} {cs.Type}" }).ToList();
-            SegmentCount.Content = segments.Count;
-            Part7Button.IsEnabled = false;
+            LineGrid.Width = gridWidth;
+            LineGrid.Height = gridHeight;
+            LineGrid.Children.AddRange(segmentLines);
+
+            
+            //Part7Button.IsEnabled = false;
         }
 
-        private void DrawSegment(int index)
+        private IEnumerable<UIElement> CreateSegmentLines(int index, MSize offset, bool drawMidPoint = true)
         {
             var segments =
                 _segmentLayers.SelectMany(
@@ -636,9 +648,6 @@ namespace ImageTracerGui
             var points = segment is SplineSegment
                 ? new[] { segment.Start, ((SplineSegment)segment).Mid, segment.End }
                 : new[] { segment.Start, segment.End };
-            double gridWidth = _loadedImage.Width;
-            double gridHeight = _loadedImage.Height;
-            var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
 
             var multiplier = 10.0;
             var lines = new List<UIElement>();
@@ -663,50 +672,60 @@ namespace ImageTracerGui
                     lines.Add(CreateLineDot(point, brush));
                     previous = point;
                 }
+                lines.Add(CreateLine(previous, initial, brush, false));
             }
             //http://stackoverflow.com/a/21958079/294804
             //http://stackoverflow.com/a/5336694/294804
             if (segment is SplineSegment)
             {
                 lines.Add(CreateLineDot(scaledPoints[0], brush));
-                var path = new System.Windows.Shapes.Path();
+                //var path = new System.Windows.Shapes.Path();
+                //path.Stroke = brush;
+                //var geometry = new PathGeometry();
+                //var pathFigure = new PathFigure();
+                //pathFigure.StartPoint = new System.Windows.Point(scaledPoints[0].X, scaledPoints[0].Y);
+
+                //// Radius Calculation
+                ////http://www.purplemath.com/modules/midpoint.htm
+                //var midpoint = new Point<double> { X = (scaledPoints[0].X + scaledPoints[2].X) / 2, Y = (scaledPoints[0].Y + scaledPoints[2].Y) / 2 };
+                ////http://www.mathwarehouse.com/algebra/distance_formula/index.php
+                //var triangleHeight = Math.Sqrt(Math.Pow(midpoint.X - scaledPoints[1].X, 2) + Math.Pow(midpoint.Y - scaledPoints[1].Y, 2));
+                ////http://keisan.casio.com/exec/system/1273850202
+                //var baseLength = Math.Sqrt(Math.Pow(scaledPoints[0].X - scaledPoints[2].X, 2) + Math.Pow(scaledPoints[0].Y - scaledPoints[2].Y, 2));
+                //var sideLength = Math.Sqrt(Math.Pow(triangleHeight, 2) + (Math.Pow(baseLength, 2) / 4));
+                //// Might be useful: http://stackoverflow.com/questions/22408769/how-can-i-draw-a-circular-arc-with-three-points-in-a-streamgeometry
+                //var arc = new ArcSegment(
+                //    new System.Windows.Point(scaledPoints[2].X, scaledPoints[2].Y),
+                //    new System.Windows.Size(sideLength, sideLength),
+                //    0, // TODO: Determine if this needs calculated.
+                //    false,
+                //    scaledPoints[0].Y < scaledPoints[1].Y && scaledPoints[1].X < scaledPoints[2].X ? SweepDirection.Counterclockwise : SweepDirection.Clockwise,
+                //    true);
+                //pathFigure.Segments.Add(arc);
+                //geometry.Figures.Add(pathFigure);
+                //path.Data = geometry;
+                //lines.Add(path);
+
+                //http://stackoverflow.com/questions/13940983/how-to-draw-bezier-curve-by-several-points
+                var b = Bezier.GetBezierApproximation(scaledPoints.Select(p => new System.Windows.Point(p.X, p.Y)).ToArray(), 256);
+                PathFigure pf = new PathFigure(b.Points[0], new[] { b }, false);
+                PathFigureCollection pfc = new PathFigureCollection();
+                pfc.Add(pf);
+                var pge = new PathGeometry();
+                pge.Figures = pfc;
+                System.Windows.Shapes.Path path = new System.Windows.Shapes.Path();
+                path.Data = pge;
                 path.Stroke = brush;
-                var geometry = new PathGeometry();
-                var pathFigure = new PathFigure();
-                pathFigure.StartPoint = new System.Windows.Point(scaledPoints[0].X, scaledPoints[0].Y);
-
-                // Radius Calculation
-                //http://www.purplemath.com/modules/midpoint.htm
-                var midpoint = new Point<double> { X = (scaledPoints[0].X + scaledPoints[2].X) / 2, Y = (scaledPoints[0].Y + scaledPoints[2].Y) / 2 };
-                //http://www.mathwarehouse.com/algebra/distance_formula/index.php
-                var triangleHeight = Math.Sqrt(Math.Pow(midpoint.X - scaledPoints[1].X, 2) + Math.Pow(midpoint.Y - scaledPoints[1].Y, 2));
-                //http://keisan.casio.com/exec/system/1273850202
-                var baseLength = Math.Sqrt(Math.Pow(scaledPoints[0].X - scaledPoints[2].X, 2) + Math.Pow(scaledPoints[0].Y - scaledPoints[2].Y, 2));
-                var sideLength = Math.Sqrt(Math.Pow(triangleHeight, 2) + (Math.Pow(baseLength, 2) / 4));
-                // Might be useful: http://stackoverflow.com/questions/22408769/how-can-i-draw-a-circular-arc-with-three-points-in-a-streamgeometry
-                var arc = new ArcSegment(
-                    new System.Windows.Point(scaledPoints[2].X, scaledPoints[2].Y),
-                    new System.Windows.Size(sideLength, sideLength),
-                    0, // TODO: Determine if this needs calculated.
-                    false,
-                    scaledPoints[0].Y < scaledPoints[1].Y && scaledPoints[1].X < scaledPoints[2].X ? SweepDirection.Counterclockwise : SweepDirection.Clockwise,
-                    true);
-                pathFigure.Segments.Add(arc);
-                geometry.Figures.Add(pathFigure);
-                path.Data = geometry;
                 lines.Add(path);
-
-                lines.Add(CreateLineDot(scaledPoints[1], brush));
+                if (drawMidPoint)
+                {
+                    lines.Add(CreateLineDot(scaledPoints[1], brush));
+                }
+                
                 lines.Add(CreateLineDot(scaledPoints[2], brush));
             }
 
-            lines.Add(CreateLine(previous, initial, brush, false));
-
-            
-            LineGrid.Width = gridWidth;
-            LineGrid.Height = gridHeight;
-            LineGrid.Children.AddRange(lines);
-            
+            return lines;
         }
 
         private void Part7ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -714,9 +733,17 @@ namespace ImageTracerGui
             var selected = e.AddedItems.OfType<ColorSelectionItem>().First();
             var index = selected.Index;
 
+            double gridWidth = _loadedImage.Width;
+            double gridHeight = _loadedImage.Height;
+            var offset = CalculateScaledOffsets(ref gridWidth, ref gridHeight);
+
             LineGrid.Children.Clear();
-            DrawSegment(index);
+            var segmentLines = CreateSegmentLines(index, offset);
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
+
+            LineGrid.Width = gridWidth;
+            LineGrid.Height = gridHeight;
+            LineGrid.Children.AddRange(segmentLines);
         }
     }
 }
