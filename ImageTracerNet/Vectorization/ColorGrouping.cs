@@ -2,7 +2,7 @@
 using System.Linq;
 using ImageTracerNet.Extensions;
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Vectorization
 {
     //https://en.wikipedia.org/wiki/Indexed_color
     // Container for the color-indexed image before and tracedata after vectorizing

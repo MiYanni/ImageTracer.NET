@@ -2,7 +2,7 @@
 using System.Linq;
 using ImageTracerNet.Extensions;
 using ImageTracerNet.Vectorization.TraceTypes;
-using EdgeNodeCalc = System.Func<ImageTracerNet.ColorGroup, ImageTracerNet.Vectorization.EdgeNode>;
+using EdgeNodeCalc = System.Func<ImageTracerNet.Vectorization.ColorGroup, ImageTracerNet.Vectorization.EdgeNode>;
 using static System.Convert;
 
 namespace ImageTracerNet.Vectorization

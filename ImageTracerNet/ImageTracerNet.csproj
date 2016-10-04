@@ -55,7 +55,7 @@
     <Compile Include="Svg\SvgGeneration.cs" />
     <Compile Include="Vectorization\Heading.cs" />
     <Compile Include="ImageTracer.cs" />
-    <Compile Include="ColorGrouping.cs" />
+    <Compile Include="Vectorization\ColorGrouping.cs" />
     <Compile Include="Vectorization\Interpolation.cs" />
     <Compile Include="Vectorization\Layering.cs" />
     <Compile Include="Vectorization\Points\InterpolationPoint.cs" />
@@ -70,7 +70,7 @@
     <Compile Include="Palettes\SmartPalette.cs" />
     <Compile Include="Vectorization\Pathing.cs" />
     <Compile Include="Vectorization\Points\PathPoint.cs" />
-    <Compile Include="ColorGroup.cs" />
+    <Compile Include="Vectorization\ColorGroup.cs" />
     <Compile Include="Vectorization\Points\Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Vectorization\DirectedEdge.cs" />

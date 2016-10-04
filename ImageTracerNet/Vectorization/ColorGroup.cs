@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using ImageTracerNet.Vectorization.Points;
 
-namespace ImageTracerNet
+namespace ImageTracerNet.Vectorization
 {
     internal class ColorGroup : Point<int>
     {
