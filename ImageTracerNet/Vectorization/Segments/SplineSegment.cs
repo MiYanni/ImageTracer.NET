@@ -50,5 +50,11 @@ namespace ImageTracerNet.Vectorization.Segments
 
             return isSpline ? new SplineSegment { Start = startPoint, Mid = midPoint, End = endPoint } : null;
         }
+
+        public override Segment Scale(double scale)
+        {
+            Mid = ScalePoint(Mid, scale);
+            return base.Scale(scale);
+        }
     }
 }

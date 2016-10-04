@@ -33,5 +33,21 @@ namespace ImageTracerNet.Vectorization.Segments
 
             return true;
         }
+
+        protected Point<double> ScalePoint(Point<double> point, double scale)
+        {
+            return new Point<double>
+            {
+                X = point.X * scale,
+                Y = point.Y * scale
+            };
+        }
+
+        public virtual Segment Scale(double scale)
+        {
+            Start = ScalePoint(Start, scale);
+            End = ScalePoint(End, scale);
+            return this;
+        }
     }
 }

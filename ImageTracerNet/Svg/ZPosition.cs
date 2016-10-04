@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using ImageTracerNet.Vectorization.Segments;
-using ImageTracerNet.Vectorization.TraceTypes;
+﻿using ImageTracerNet.Vectorization.TraceTypes;
 
 namespace ImageTracerNet.Svg
 {
