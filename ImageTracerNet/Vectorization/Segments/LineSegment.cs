@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using ImageTracerNet.Vectorization.Points;
 using LinePointCalculation = System.Func<double, double, double, double>;
+using CoordMethod = System.Func<double, double>;
 
 namespace ImageTracerNet.Vectorization.Segments
 {
@@ -44,6 +45,12 @@ namespace ImageTracerNet.Vectorization.Segments
                 (sequence.Start + 1) % pathLength, i => i != sequence.End, i => (i + 1) % pathLength, ref errorIndex);
 
             return isLine ? new LineSegment { Start = startPoint, End = endPoint } : null;
+        }
+
+        public override string ToPathString(int roundingValue)
+        {
+            var coordMethod = roundingValue == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, roundingValue);
+            return $"L {coordMethod(End.X)} {coordMethod(End.Y)} ";
         }
     }
 }

@@ -63,19 +63,14 @@ namespace ImageTracerNet.Svg
         {
             var linearControlPointRadius = options.LCpr;
             var quadraticControlPointRadius = options.QCpr;
-            var coordMethod = options.RoundCoords == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, options.RoundCoords);
+            //var coordMethod = options.RoundCoords == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, options.RoundCoords);
             var scaledSegments = segments.Select(s => s.Scale(options.Scale)).ToList();
 
             // Path
             stringBuilder.Append($"<path {description}{colorString}d=\"M {scaledSegments[0].Start.X} {scaledSegments[0].Start.Y} ");
             foreach (var segment in scaledSegments)
             {
-                var quadraticSegment = segment as SplineSegment;
-                var segmentAsString = quadraticSegment != null
-                    ? $"Q {coordMethod(quadraticSegment.Mid.X)} {coordMethod(quadraticSegment.Mid.Y)} {coordMethod(quadraticSegment.End.X)} {coordMethod(quadraticSegment.End.Y)} "
-                    : $"L {coordMethod(segment.End.X)} {coordMethod(segment.End.Y)} ";
-
-                stringBuilder.Append(segmentAsString);
+                stringBuilder.Append(segment.ToPathString(options.RoundCoords));
             }
             stringBuilder.Append("Z\" />");
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using ImageTracerNet.Vectorization.Points;
 using SplinePointCalculation = System.Func<double, double, double, double, double>;
+using CoordMethod = System.Func<double, double>;
 
 namespace ImageTracerNet.Vectorization.Segments
 {
@@ -55,6 +56,12 @@ namespace ImageTracerNet.Vectorization.Segments
         {
             Mid = ScalePoint(Mid, scale);
             return base.Scale(scale);
+        }
+
+        public override string ToPathString(int roundingValue)
+        {
+            var coordMethod = roundingValue == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, roundingValue);
+            return $"Q {coordMethod(Mid.X)} {coordMethod(Mid.Y)} {coordMethod(End.X)} {coordMethod(End.Y)} ";
         }
     }
 }

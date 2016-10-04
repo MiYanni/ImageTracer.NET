@@ -49,5 +49,7 @@ namespace ImageTracerNet.Vectorization.Segments
             End = ScalePoint(End, scale);
             return this;
         }
+
+        public abstract string ToPathString(int roundingValue);
     }
 }
