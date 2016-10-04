@@ -70,7 +70,7 @@ namespace ImageTracerNet.Svg
             stringBuilder.Append("Z\" />");
 
             // Rendering control points
-            var filteredSegments = scaledSegments.Where(s => (s is LineSegment && options.LCpr > 0) || (s is SplineSegment && options.QCpr > 0));
+            var filteredSegments = scaledSegments.Where(s => s.Radius > 0);
             foreach (var segment in filteredSegments)
             {
                 stringBuilder.Append(segment.ToControlPointString());
