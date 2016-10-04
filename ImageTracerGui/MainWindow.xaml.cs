@@ -623,7 +623,6 @@ namespace ImageTracerGui
                 {
                     Paths = ci.Value.Paths.Select(path => new SegmentPath
                     {
-                        Path = path.Path,
                         Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, _options.Tracing, s)).SelectMany(s => s).ToList()
                     }).ToList()
                 });
@@ -828,7 +827,7 @@ namespace ImageTracerGui
             //    return firstSegmentStart.Y * width + firstSegmentStart.X;
             //}, cs => Tuple.Create(cs.Key, cs.Value.Paths.SelectMany(p => p.Segments).ToList())
             //    ));
-            var zIndex = CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => Tuple.Create(cs.Key, p.Segments)).ToList()).ToList(), width);
+            var zIndex = CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => Tuple.Create(cs.Key, p)).ToList()).ToList(), width);
 
 
             // Sorting Z-index is not required, TreeMap is sorted automatically
@@ -844,7 +843,7 @@ namespace ImageTracerGui
                 //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
                 //}
 
-                SvgGeneration.AppendPathString(svgStringBuilder, description, zValue.Segments,
+                SvgGeneration.AppendPathString(svgStringBuilder, description, zValue.Path.Segments,
                     zValue.Color.ToSvgColorString(), options);
             }
 
@@ -854,7 +853,7 @@ namespace ImageTracerGui
             return svgStringBuilder.ToString();
         }
 
-        internal static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Tuple<ColorReference, IReadOnlyList<Segment>>>> layers, int width)
+        internal static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Tuple<ColorReference, SegmentPath>>> layers, int width)
         {
             var zIndex = new SortedDictionary<double, ZPosition>();
             // Layer loop
@@ -865,8 +864,8 @@ namespace ImageTracerGui
                 {
                     var tuple = layers[layerIndex][pathIndex];
                     // Label (Z-index key) is the startpoint of the path, linearized
-                    var label = tuple.Item2.First().Start.Y * width + tuple.Item2.First().Start.X;
-                    zIndex[label] = new ZPosition { Color = tuple.Item1, Segments = tuple.Item2 };
+                    var label = tuple.Item2.Segments.First().Start.Y * width + tuple.Item2.Segments.First().Start.X;
+                    zIndex[label] = new ZPosition { Color = tuple.Item1, Path = tuple.Item2 };
                 }
             }
             return zIndex;

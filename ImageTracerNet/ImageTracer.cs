@@ -29,20 +29,15 @@ namespace ImageTracerNet
             return ImageToSvg(new Bitmap(filename), options);
         }
 
-        public static string ImageToSvg(Bitmap image, Options options) 
+        public static string ImageToSvg(Bitmap image, Options options)
         {
-            // 1. Color quantization
-            var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
-            var colors = rbgImage.ToColorReferences();
-            var paddedPaletteImage = new PaddedPaletteImage(colors, rbgImage.Height, rbgImage.Width, Palette);
-
-            return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
+            return PaddedPaletteImageToTraceData(image, options.Tracing).ToSvgString(options.SvgRendering);
         }
 
         ////////////////////////////////////////////////////////////
 
         // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
-        private static PaddedPaletteImage PaddedPaletteImageToTraceData(PaddedPaletteImage image, Tracing options)
+        private static TracedImage PaddedPaletteImageToTraceData(Bitmap image, Tracing tracing)
         {
             // Selective Gaussian blur preprocessing
             //if (options.Blur.BlurRadius > 0)
@@ -51,21 +46,44 @@ namespace ImageTracerNet
             //    imgd = Blur(imgd, options.Blur.BlurRadius, options.Blur.BlurDelta);
             //}
 
-            // TODO: Change code below to always create dictionarys keyed by ColorReference.
+            // 1. Color quantization
+            var colors = image.ChangeFormat(PixelFormat.Format32bppArgb).ToColorReferences();
+            var paddedPaletteImage = new PaddedPaletteImage(colors, image.Height, image.Width, Palette);
             // 2. Layer separation and edge detection
-            var rawLayers = Layering.Convert(image);
+            var rawLayers = Layering.Convert(paddedPaletteImage);
             // 3. Batch pathscan
-            var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, options.PathOmit).ToList() });
+            //var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, options.PathOmit).ToList() });
+            var pathPointLayers = rawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath>
+            {
+                Paths = Pathing.Scan(cl.Value, tracing.PathOmit).ToList()
+            });
             // 4. Batch interpollation
-            var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
+            //var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
+            var interpolationPointLayers = pathPointLayers.ToDictionary(cp => cp.Key, cp => Interpolation.Convert(cp.Value));
             // 5. Batch tracing
             //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
-            image.Layers = interpolationPointLayers.Select(layer => 
-                new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
-                    new SegmentPath { Segments = 
-                        Pathing.Trace(path, options).ToList() }).ToList() }).ToList();
+            //paddedPaletteImage.Layers = interpolationPointLayers.Select(layer => 
+            //    new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
+            //        new SegmentPath { Segments = 
+            //            Pathing.Trace(path, tracing).ToList() }).ToList() }).ToList();
+            var sequenceLayers = interpolationPointLayers.ToDictionary(ci => ci.Key, ci => new Layer<SequencePath>
+            {
+                Paths = ci.Value.Paths.Select(path => new SequencePath
+                {
+                    Path = path,
+                    Sequences = Sequencing.Create(path.Points.Select(p => p.Direction).ToList()).ToList()
+                }).ToList()
+            });
 
-            return image;
+            var segmentLayers = sequenceLayers.ToDictionary(ci => ci.Key, ci => new Layer<SegmentPath>
+            {
+                Paths = ci.Value.Paths.Select(path => new SegmentPath
+                {
+                    Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, tracing, s)).SelectMany(s => s).ToList()
+                }).ToList()
+            });
+
+            return new TracedImage(segmentLayers, image.Width, image.Height);
         }
 
         ////////////////////////////////////////////////////////////

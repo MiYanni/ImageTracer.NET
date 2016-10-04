@@ -38,8 +38,7 @@ namespace ImageTracerNet.Vectorization
             // Looping through all pixels and calculating edge node type
             foreach (var cg in ii.ColorGroups)
             {
-                // Are neighbor pixel colors the same?
-                // this pixel's type and looking back on previous pixels
+                // Are neighbor pixel colors the same? Set this pixel's type and look back on previous pixels.
                 layers[cg.Mid].Nodes[cg.Y][cg.X] = BottomRight(cg);
                 if (cg.MidLeft != cg.Mid)
                 {
@@ -54,8 +53,8 @@ namespace ImageTracerNet.Vectorization
                     layers[cg.Mid].Nodes[cg.Y - 1][cg.X - 1] = Mid(cg);
                 }
             }
-
-            return layers;
+            // After the process is complete, we remove any layers that do not contain allocated nodes.
+            return layers.Where(cl => cl.Value.Nodes.Any(r => r.Any(n => n.IsLight()))).ToDictionary(cl => cl.Key, cl => cl.Value);
         }
     }
 }

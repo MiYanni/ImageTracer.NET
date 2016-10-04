@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ColorReference.cs" />
+    <Compile Include="TracedImage.cs" />
     <Compile Include="Vectorization\EdgeNode.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\BitmapExtensions.cs" />
