@@ -63,5 +63,14 @@ namespace ImageTracerNet.Vectorization.Segments
             var coordMethod = roundingValue == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, roundingValue);
             return $"Q {coordMethod(Mid.X)} {coordMethod(Mid.Y)} {coordMethod(End.X)} {coordMethod(End.Y)} ";
         }
+
+        public override string ToControlPointString(double radius)
+        {
+            return
+                $"<circle cx=\"{Mid.X}\" cy=\"{Mid.Y}\" r=\"{radius}\" fill=\"cyan\" stroke-width=\"{radius*0.2}\" stroke=\"black\" />" +
+                $"<circle cx=\"{End.X}\" cy=\"{End.Y}\" r=\"{radius}\" fill=\"white\" stroke-width=\"{radius*0.2}\" stroke=\"black\" />" +
+                $"<line x1=\"{Start.X}\" y1=\"{Start.Y}\" x2=\"{Mid.X}\" y2=\"{Mid.Y}\" stroke-width=\"{radius*0.2}\" stroke=\"cyan\" />" +
+                $"<line x1=\"{Mid.X}\" y1=\"{Mid.Y}\" x2=\"{End.X}\" y2=\"{End.Y}\" stroke-width=\"{radius*0.2}\" stroke=\"cyan\" />";
+        }
     }
 }

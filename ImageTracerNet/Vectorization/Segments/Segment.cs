@@ -51,5 +51,7 @@ namespace ImageTracerNet.Vectorization.Segments
         }
 
         public abstract string ToPathString(int roundingValue);
+
+        public abstract string ToControlPointString(double radius);
     }
 }

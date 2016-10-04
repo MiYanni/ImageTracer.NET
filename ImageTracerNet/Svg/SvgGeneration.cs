@@ -61,8 +61,6 @@ namespace ImageTracerNet.Svg
         // Getting SVG path element string from a traced path
         internal static void AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<Segment> segments, string colorString, SvgRendering options)
         {
-            var linearControlPointRadius = options.LCpr;
-            var quadraticControlPointRadius = options.QCpr;
             var scaledSegments = segments.Select(s => s.Scale(options.Scale)).ToList();
 
             // Path
@@ -77,18 +75,18 @@ namespace ImageTracerNet.Svg
             stringBuilder.Append("Z\" />");
 
             // Rendering control points
-            var filteredSegments = scaledSegments.Where(s => (s is LineSegment && linearControlPointRadius > 0) || (s is SplineSegment && quadraticControlPointRadius > 0));
+            var filteredSegments = scaledSegments.Where(s => (s is LineSegment && options.LCpr > 0) || (s is SplineSegment && options.QCpr > 0));
             foreach (var segment in filteredSegments)
             {
-                var quadraticSegment = segment as SplineSegment;
-                var segmentAsString = quadraticSegment != null
-                    ? $"<circle cx=\"{quadraticSegment.Mid.X}\" cy=\"{quadraticSegment.Mid.Y}\" r=\"{quadraticControlPointRadius}\" fill=\"cyan\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
-                      $"<circle cx=\"{quadraticSegment.End.X}\" cy=\"{quadraticSegment.End.Y}\" r=\"{quadraticControlPointRadius}\" fill=\"white\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
-                      $"<line x1=\"{quadraticSegment.Start.X}\" y1=\"{quadraticSegment.Start.Y}\" x2=\"{quadraticSegment.Mid.X}\" y2=\"{quadraticSegment.Mid.Y}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />" +
-                      $"<line x1=\"{quadraticSegment.Mid.X}\" y1=\"{quadraticSegment.Mid.Y}\" x2=\"{quadraticSegment.End.X}\" y2=\"{quadraticSegment.End.Y}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />"
-                    : $"<circle cx=\"{segment.End.X}\" cy=\"{segment.End.Y}\" r=\"{linearControlPointRadius}\" fill=\"white\" stroke-width=\"{linearControlPointRadius*0.2}\" stroke=\"black\" />";
-
-                stringBuilder.Append(segmentAsString);
+                //var quadraticSegment = segment as SplineSegment;
+                //var segmentAsString = quadraticSegment != null
+                //    ? $"<circle cx=\"{quadraticSegment.Mid.X}\" cy=\"{quadraticSegment.Mid.Y}\" r=\"{quadraticControlPointRadius}\" fill=\"cyan\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
+                //      $"<circle cx=\"{quadraticSegment.End.X}\" cy=\"{quadraticSegment.End.Y}\" r=\"{quadraticControlPointRadius}\" fill=\"white\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
+                //      $"<line x1=\"{quadraticSegment.Start.X}\" y1=\"{quadraticSegment.Start.Y}\" x2=\"{quadraticSegment.Mid.X}\" y2=\"{quadraticSegment.Mid.Y}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />" +
+                //      $"<line x1=\"{quadraticSegment.Mid.X}\" y1=\"{quadraticSegment.Mid.Y}\" x2=\"{quadraticSegment.End.X}\" y2=\"{quadraticSegment.End.Y}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />"
+                //    : $"<circle cx=\"{segment.End.X}\" cy=\"{segment.End.Y}\" r=\"{linearControlPointRadius}\" fill=\"white\" stroke-width=\"{linearControlPointRadius*0.2}\" stroke=\"black\" />";
+                var radius = segment is SplineSegment ? options.QCpr : options.LCpr;
+                stringBuilder.Append(segment.ToControlPointString(radius));
             }
         }
 
