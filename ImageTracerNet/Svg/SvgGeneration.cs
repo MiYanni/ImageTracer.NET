@@ -63,15 +63,17 @@ namespace ImageTracerNet.Svg
         {
             var linearControlPointRadius = options.LCpr;
             var quadraticControlPointRadius = options.QCpr;
-            //var coordMethod = options.RoundCoords == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, options.RoundCoords);
             var scaledSegments = segments.Select(s => s.Scale(options.Scale)).ToList();
 
             // Path
             stringBuilder.Append($"<path {description}{colorString}d=\"M {scaledSegments[0].Start.X} {scaledSegments[0].Start.Y} ");
-            foreach (var segment in scaledSegments)
-            {
-                stringBuilder.Append(segment.ToPathString(options.RoundCoords));
-            }
+            //foreach (var segment in scaledSegments)
+            //{
+            //    stringBuilder.Append(segment.ToPathString(options.RoundCoords));
+            //}
+            //http://stackoverflow.com/a/217814/294804
+            scaledSegments.Aggregate(stringBuilder,
+                (current, next) => current.Append(next.ToPathString(options.RoundCoords)));
             stringBuilder.Append("Z\" />");
 
             // Rendering control points
