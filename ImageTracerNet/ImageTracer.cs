@@ -48,24 +48,17 @@ namespace ImageTracerNet
 
             // 1. Color quantization
             var colors = image.ChangeFormat(PixelFormat.Format32bppArgb).ToColorReferences();
-            var paddedPaletteImage = new PaddedPaletteImage(colors, image.Height, image.Width, Palette);
+            var colorGroups = ColorGrouping.Convert(colors, image.Width, image.Height, Palette);
             // 2. Layer separation and edge detection
-            var rawLayers = Layering.Convert(paddedPaletteImage);
+            var rawLayers = Layering.Convert(colorGroups, image.Width, image.Height, Palette);
             // 3. Batch pathscan
-            //var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, options.PathOmit).ToList() });
             var pathPointLayers = rawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath>
             {
                 Paths = Pathing.Scan(cl.Value, tracing.PathOmit).ToList()
             });
             // 4. Batch interpollation
-            //var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
             var interpolationPointLayers = pathPointLayers.ToDictionary(cp => cp.Key, cp => Interpolation.Convert(cp.Value));
             // 5. Batch tracing
-            //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
-            //paddedPaletteImage.Layers = interpolationPointLayers.Select(layer => 
-            //    new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
-            //        new SegmentPath { Segments = 
-            //            Pathing.Trace(path, tracing).ToList() }).ToList() }).ToList();
             var sequenceLayers = interpolationPointLayers.ToDictionary(ci => ci.Key, ci => new Layer<SequencePath>
             {
                 Paths = ci.Value.Paths.Select(path => new SequencePath

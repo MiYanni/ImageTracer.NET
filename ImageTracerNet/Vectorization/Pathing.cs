@@ -211,11 +211,11 @@ namespace ImageTracerNet.Vectorization
         //
         // path type is discarded, no check for path.size < 3 , which should not happen
 
-        public static IEnumerable<Segment> Trace(InterpolationPointPath path, Tracing tracingOptions)
-        {
-            var sequences = Sequencing.Create(path.Points.Select(p => p.Direction).ToList());
-            // Fit the sequences into segments, and return them.
-            return sequences.Select(s => Segmentation.Fit(path.Points, tracingOptions, s)).SelectMany(s => s);
-        }
+        //public static IEnumerable<Segment> Trace(InterpolationPointPath path, Tracing tracingOptions)
+        //{
+        //    var sequences = Sequencing.Create(path.Points.Select(p => p.Direction).ToList());
+        //    // Fit the sequences into segments, and return them.
+        //    return sequences.Select(s => Segmentation.Fit(path.Points, tracingOptions, s)).SelectMany(s => s);
+        //}
     }
 }

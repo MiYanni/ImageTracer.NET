@@ -30,13 +30,13 @@ namespace ImageTracerNet.Vectorization
 
         // 48  ░░  ░░  ░░  ░░  ░▓  ░▓  ░▓  ░▓  ▓░  ▓░  ▓░  ▓░  ▓▓  ▓▓  ▓▓  ▓▓
         //     0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
-        public static Dictionary<ColorReference, RawLayer> Convert(PaddedPaletteImage ii)
+        public static Dictionary<ColorReference, RawLayer> Convert(IEnumerable<ColorGroup> groups, int width, int height, IEnumerable<ColorReference> palette)
         {
             // Creating layers for each indexed color in arr
             // Adding 1 to height and width because EdgeNodes represent in-between pixels. So, half of a pixel is added to all sides of the image (in a logical sense).
-            var layers = ii.Palette.ToDictionary(p => p, p => new RawLayer { Nodes = new EdgeNode[ii.ImageHeight + 1][].InitInner(ii.ImageWidth + 1) });
+            var layers = palette.ToDictionary(p => p, p => new RawLayer { Nodes = new EdgeNode[height + 1][].InitInner(width + 1) });
             // Looping through all pixels and calculating edge node type
-            foreach (var cg in ii.ColorGroups)
+            foreach (var cg in groups)
             {
                 // Are neighbor pixel colors the same? Set this pixel's type and look back on previous pixels.
                 layers[cg.Mid].Nodes[cg.Y][cg.X] = BottomRight(cg);

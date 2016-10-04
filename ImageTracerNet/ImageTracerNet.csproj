@@ -55,7 +55,7 @@
     <Compile Include="Svg\SvgGeneration.cs" />
     <Compile Include="Vectorization\Heading.cs" />
     <Compile Include="ImageTracer.cs" />
-    <Compile Include="PaddedPaletteImage.cs" />
+    <Compile Include="ColorGrouping.cs" />
     <Compile Include="Vectorization\Interpolation.cs" />
     <Compile Include="Vectorization\Layering.cs" />
     <Compile Include="Vectorization\Points\InterpolationPoint.cs" />

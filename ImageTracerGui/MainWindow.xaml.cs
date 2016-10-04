@@ -153,7 +153,8 @@ namespace ImageTracerGui
         //}
 
         private Bitmap _paletteImage;
-        private PaddedPaletteImage _image;
+        //private ColorGrouping _image;
+        private IEnumerable<ColorGroup> _colorGroups;
         public void ImageToSvg2()
         {
             // 1. Color quantization
@@ -163,13 +164,14 @@ namespace ImageTracerGui
             //ImageDisplay.Source = BitmapToImageSource(image);
 
             var colors = _loadedImage.ToColorReferences();
-            var paddedPaletteImage = new PaddedPaletteImage(colors, _loadedImage.Height, _loadedImage.Width, ImageTracer.Palette);
+            //var paddedPaletteImage = new ColorGrouping(colors, _loadedImage.Height, _loadedImage.Width, ImageTracer.Palette);
+            _colorGroups = ColorGrouping.Convert(colors, _loadedImage.Width, _loadedImage.Height, ImageTracer.Palette);
 
-            var paletteImageBitmap = new Bitmap(paddedPaletteImage.ImageWidth, paddedPaletteImage.ImageHeight);
-            paddedPaletteImage.ColorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
+            var paletteImageBitmap = new Bitmap(_loadedImage.Width, _loadedImage.Height);
+            _colorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
             
             _paletteImage = paletteImageBitmap;
-            _image = paddedPaletteImage;
+            //_image = paddedPaletteImage;
             //return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
         }
 
@@ -282,7 +284,7 @@ namespace ImageTracerGui
         {
             if (!_part3Complete)
             {
-                _rawLayers = Layering.Convert(_image);
+                _rawLayers = Layering.Convert(_colorGroups, _loadedImage.Width, _loadedImage.Height, ImageTracer.Palette);
                 _part3Complete = true;
                 _filteredRawLayers =
                     _rawLayers.Where(cl => cl.Value.Nodes.Any(r => r.Any(n => n.IsLight())))
@@ -752,8 +754,9 @@ namespace ImageTracerGui
             if (!_part8Complete)
             {
                 var layersList = _segmentLayers.Select(p => p.Value).ToList();
-                _image.Layers = layersList;
-                _svgImage = ToSvgString(_image, _segmentLayers, _options.SvgRendering);
+                //_image.Layers = layersList;
+                //_svgImage = ToSvgString(_image, _segmentLayers, _options.SvgRendering);
+                _svgImage = new TracedImage(_segmentLayers, _loadedImage.Width, _loadedImage.Height).ToSvgString(_options.SvgRendering);
                 File.WriteAllText(_outFilename, _svgImage);
 
                 //http://stackoverflow.com/questions/1879395/how-to-generate-a-stream-from-a-string
@@ -800,75 +803,75 @@ namespace ImageTracerGui
 
         // Converting tracedata to an SVG string, paths are drawn according to a Z-index
         // the optional lcpr and qcpr are linear and quadratic control point radiuses
-        private static string ToSvgString(PaddedPaletteImage ii, Dictionary<ColorReference, Layer<SegmentPath>> layers, SvgRendering options)
-        {
-            // SVG start
-            var width = (int)(ii.ImageWidth * options.Scale);
-            var height = (int)(ii.ImageHeight * options.Scale);
+        //private static string ToSvgString(ColorGrouping ii, Dictionary<ColorReference, Layer<SegmentPath>> layers, SvgRendering options)
+        //{
+        //    // SVG start
+        //    var width = (int)(ii.ImageWidth * options.Scale);
+        //    var height = (int)(ii.ImageHeight * options.Scale);
 
-            var viewBoxOrViewPort = options.Viewbox ?
-                $"viewBox=\"0 0 {width} {height}\"" :
-                $"width=\"{width}\" height=\"{height}\"";
-            var svgStringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options.Desc)
-            {
-                svgStringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
-            }
-            svgStringBuilder.Append(">");
+        //    var viewBoxOrViewPort = options.Viewbox ?
+        //        $"viewBox=\"0 0 {width} {height}\"" :
+        //        $"width=\"{width}\" height=\"{height}\"";
+        //    var svgStringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
+        //    if (options.Desc)
+        //    {
+        //        svgStringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
+        //    }
+        //    svgStringBuilder.Append(">");
 
-            // creating Z-index
-            // Only selecting the first segment of each path.
+        //    // creating Z-index
+        //    // Only selecting the first segment of each path.
 
-            //var label = layers[layerIndex][pathIndex].Start.Y * width + layers[layerIndex][pathIndex].Start.X;
-            //var zIndex = SvgGeneration.CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => p.Segments.First()).ToList()).ToList(), width);
-            //var zIndex = new SortedDictionary<double, Tuple<ColorReference, List<Segment>>>(layers.ToDictionary(cs =>
-            //{
-            //    var firstSegmentStart = cs.Value.Paths.First().Segments.First().Start;
-            //    return firstSegmentStart.Y * width + firstSegmentStart.X;
-            //}, cs => Tuple.Create(cs.Key, cs.Value.Paths.SelectMany(p => p.Segments).ToList())
-            //    ));
-            var zIndex = CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => Tuple.Create(cs.Key, p)).ToList()).ToList(), width);
+        //    //var label = layers[layerIndex][pathIndex].Start.Y * width + layers[layerIndex][pathIndex].Start.X;
+        //    //var zIndex = SvgGeneration.CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => p.Segments.First()).ToList()).ToList(), width);
+        //    //var zIndex = new SortedDictionary<double, Tuple<ColorReference, List<Segment>>>(layers.ToDictionary(cs =>
+        //    //{
+        //    //    var firstSegmentStart = cs.Value.Paths.First().Segments.First().Start;
+        //    //    return firstSegmentStart.Y * width + firstSegmentStart.X;
+        //    //}, cs => Tuple.Create(cs.Key, cs.Value.Paths.SelectMany(p => p.Segments).ToList())
+        //    //    ));
+        //    var zIndex = CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => Tuple.Create(cs.Key, p)).ToList()).ToList(), width);
 
 
-            // Sorting Z-index is not required, TreeMap is sorted automatically
+        //    // Sorting Z-index is not required, TreeMap is sorted automatically
 
-            // Drawing
-            // Z-index loop
-            foreach (var zPosition in zIndex)
-            {
-                var zValue = zPosition.Value;
-                var description = String.Empty;
-                //if (options.Desc)
-                //{
-                //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
-                //}
+        //    // Drawing
+        //    // Z-index loop
+        //    foreach (var zPosition in zIndex)
+        //    {
+        //        var zValue = zPosition.Value;
+        //        var description = String.Empty;
+        //        //if (options.Desc)
+        //        //{
+        //        //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
+        //        //}
 
-                SvgGeneration.AppendPathString(svgStringBuilder, description, zValue.Path.Segments,
-                    zValue.Color.ToSvgColorString(), options);
-            }
+        //        SvgGeneration.AppendPathString(svgStringBuilder, description, zValue.Path.Segments,
+        //            zValue.Color.ToSvgColorString(), options);
+        //    }
 
-            // SVG End
-            svgStringBuilder.Append("</svg>");
+        //    // SVG End
+        //    svgStringBuilder.Append("</svg>");
 
-            return svgStringBuilder.ToString();
-        }
+        //    return svgStringBuilder.ToString();
+        //}
 
-        internal static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Tuple<ColorReference, SegmentPath>>> layers, int width)
-        {
-            var zIndex = new SortedDictionary<double, ZPosition>();
-            // Layer loop
-            for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
-            {
-                // Path loop
-                for (var pathIndex = 0; pathIndex < layers[layerIndex].Count; pathIndex++)
-                {
-                    var tuple = layers[layerIndex][pathIndex];
-                    // Label (Z-index key) is the startpoint of the path, linearized
-                    var label = tuple.Item2.Segments.First().Start.Y * width + tuple.Item2.Segments.First().Start.X;
-                    zIndex[label] = new ZPosition { Color = tuple.Item1, Path = tuple.Item2 };
-                }
-            }
-            return zIndex;
-        }
+        //internal static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Tuple<ColorReference, SegmentPath>>> layers, int width)
+        //{
+        //    var zIndex = new SortedDictionary<double, ZPosition>();
+        //    // Layer loop
+        //    for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
+        //    {
+        //        // Path loop
+        //        for (var pathIndex = 0; pathIndex < layers[layerIndex].Count; pathIndex++)
+        //        {
+        //            var tuple = layers[layerIndex][pathIndex];
+        //            // Label (Z-index key) is the startpoint of the path, linearized
+        //            var label = tuple.Item2.Segments.First().Start.Y * width + tuple.Item2.Segments.First().Start.X;
+        //            zIndex[label] = new ZPosition { Color = tuple.Item1, Path = tuple.Item2 };
+        //        }
+        //    }
+        //    return zIndex;
+        //}
     }
 }
