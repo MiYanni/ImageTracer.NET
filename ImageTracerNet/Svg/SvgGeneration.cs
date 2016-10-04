@@ -21,12 +21,12 @@ namespace ImageTracerNet.Svg
             var viewBoxOrViewPort = options.Viewbox ?
                 $"viewBox=\"0 0 {width} {height}\"" :
                 $"width=\"{width}\" height=\"{height}\"";
-            var svgStringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
+            var stringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
             if (options.Desc)
             {
-                svgStringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
+                stringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
             }
-            svgStringBuilder.Append(">");
+            stringBuilder.Append(">");
 
             // creating Z-index
             // Only selecting the first segment of each path.
@@ -49,13 +49,13 @@ namespace ImageTracerNet.Svg
                 //{
                 //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
                 //}
-                AppendPathString(svgStringBuilder, description, zPosition.Path.Segments, zPosition.Color.ToSvgColorString(), options);
+                AppendPathString(stringBuilder, description, zPosition.Path.Segments, zPosition.Color.ToSvgColorString(), options);
             }
 
             // SVG End
-            svgStringBuilder.Append("</svg>");
+            stringBuilder.Append("</svg>");
 
-            return svgStringBuilder.ToString();
+            return stringBuilder.ToString();
         }
 
         // Getting SVG path element string from a traced path
@@ -65,28 +65,15 @@ namespace ImageTracerNet.Svg
 
             // Path
             stringBuilder.Append($"<path {description}{colorString}d=\"M {scaledSegments[0].Start.X} {scaledSegments[0].Start.Y} ");
-            //foreach (var segment in scaledSegments)
-            //{
-            //    stringBuilder.Append(segment.ToPathString(options.RoundCoords));
-            //}
             //http://stackoverflow.com/a/217814/294804
-            scaledSegments.Aggregate(stringBuilder,
-                (current, next) => current.Append(next.ToPathString(options.RoundCoords)));
+            scaledSegments.Aggregate(stringBuilder, (current, next) => current.Append(next.ToPathString()));
             stringBuilder.Append("Z\" />");
 
             // Rendering control points
             var filteredSegments = scaledSegments.Where(s => (s is LineSegment && options.LCpr > 0) || (s is SplineSegment && options.QCpr > 0));
             foreach (var segment in filteredSegments)
             {
-                //var quadraticSegment = segment as SplineSegment;
-                //var segmentAsString = quadraticSegment != null
-                //    ? $"<circle cx=\"{quadraticSegment.Mid.X}\" cy=\"{quadraticSegment.Mid.Y}\" r=\"{quadraticControlPointRadius}\" fill=\"cyan\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
-                //      $"<circle cx=\"{quadraticSegment.End.X}\" cy=\"{quadraticSegment.End.Y}\" r=\"{quadraticControlPointRadius}\" fill=\"white\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"black\" />" +
-                //      $"<line x1=\"{quadraticSegment.Start.X}\" y1=\"{quadraticSegment.Start.Y}\" x2=\"{quadraticSegment.Mid.X}\" y2=\"{quadraticSegment.Mid.Y}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />" +
-                //      $"<line x1=\"{quadraticSegment.Mid.X}\" y1=\"{quadraticSegment.Mid.Y}\" x2=\"{quadraticSegment.End.X}\" y2=\"{quadraticSegment.End.Y}\" stroke-width=\"{quadraticControlPointRadius*0.2}\" stroke=\"cyan\" />"
-                //    : $"<circle cx=\"{segment.End.X}\" cy=\"{segment.End.Y}\" r=\"{linearControlPointRadius}\" fill=\"white\" stroke-width=\"{linearControlPointRadius*0.2}\" stroke=\"black\" />";
-                var radius = segment is SplineSegment ? options.QCpr : options.LCpr;
-                stringBuilder.Append(segment.ToControlPointString(radius));
+                stringBuilder.Append(segment.ToControlPointString());
             }
         }
 

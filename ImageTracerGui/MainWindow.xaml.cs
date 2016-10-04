@@ -625,7 +625,7 @@ namespace ImageTracerGui
                 {
                     Paths = ci.Value.Paths.Select(path => new SegmentPath
                     {
-                        Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, _options.Tracing, s)).SelectMany(s => s).ToList()
+                        Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, s, _options.Tracing, _options.SvgRendering)).SelectMany(s => s).ToList()
                     }).ToList()
                 });
                 var segments = _segmentLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Segments.Select(s => new { Color = cl.Key, Type = s is LineSegment ? "Line" : (s is SplineSegment ? "Spline" : "Unknown") }))).ToList();

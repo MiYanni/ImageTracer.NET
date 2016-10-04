@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Points;
 using SplinePointCalculation = System.Func<double, double, double, double, double>;
 using CoordMethod = System.Func<double, double>;
@@ -36,7 +37,7 @@ namespace ImageTracerNet.Vectorization.Segments
 
         // 5.4. Fit a quadratic spline through this point, measure errors on every point in the sequence
         // helpers and projecting to get control point
-        public static Segment Fit(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, ref int errorIndex)
+        public static Segment Fit(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, ref int errorIndex, SvgRendering rendering)
         {
             var startPoint = path[sequence.Start];
             var endPoint = path[sequence.End];
@@ -49,7 +50,7 @@ namespace ImageTracerNet.Vectorization.Segments
             var isSpline = Fit(i => path[i], i => CreateSplinePoint(pseudoIndexCalc(i), startPoint, midPoint, endPoint), threshold,
                 sequence.Start + 1, i => i != sequence.End, i => (i + 1) % path.Count, ref errorIndex);
 
-            return isSpline ? new SplineSegment { Start = startPoint, Mid = midPoint, End = endPoint } : null;
+            return isSpline ? new SplineSegment { Start = startPoint, Mid = midPoint, End = endPoint, Radius = rendering.QCpr, RoundDecimalPlaces = rendering.RoundCoords } : null;
         }
 
         public override Segment Scale(double scale)
@@ -58,19 +59,18 @@ namespace ImageTracerNet.Vectorization.Segments
             return base.Scale(scale);
         }
 
-        public override string ToPathString(int roundingValue)
+        public override string ToPathString()
         {
-            var coordMethod = roundingValue == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, roundingValue);
-            return $"Q {coordMethod(Mid.X)} {coordMethod(Mid.Y)} {coordMethod(End.X)} {coordMethod(End.Y)} ";
+            return $"Q {RoundCoordinates(Mid.X)} {RoundCoordinates(Mid.Y)} {RoundCoordinates(End.X)} {RoundCoordinates(End.Y)} ";
         }
 
-        public override string ToControlPointString(double radius)
+        public override string ToControlPointString()
         {
             return
-                $"<circle cx=\"{Mid.X}\" cy=\"{Mid.Y}\" r=\"{radius}\" fill=\"cyan\" stroke-width=\"{radius*0.2}\" stroke=\"black\" />" +
-                $"<circle cx=\"{End.X}\" cy=\"{End.Y}\" r=\"{radius}\" fill=\"white\" stroke-width=\"{radius*0.2}\" stroke=\"black\" />" +
-                $"<line x1=\"{Start.X}\" y1=\"{Start.Y}\" x2=\"{Mid.X}\" y2=\"{Mid.Y}\" stroke-width=\"{radius*0.2}\" stroke=\"cyan\" />" +
-                $"<line x1=\"{Mid.X}\" y1=\"{Mid.Y}\" x2=\"{End.X}\" y2=\"{End.Y}\" stroke-width=\"{radius*0.2}\" stroke=\"cyan\" />";
+                $"<circle cx=\"{Mid.X}\" cy=\"{Mid.Y}\" r=\"{Radius}\" fill=\"cyan\" stroke-width=\"{Radius * 0.2}\" stroke=\"black\" />" +
+                $"<circle cx=\"{End.X}\" cy=\"{End.Y}\" r=\"{Radius}\" fill=\"white\" stroke-width=\"{Radius * 0.2}\" stroke=\"black\" />" +
+                $"<line x1=\"{Start.X}\" y1=\"{Start.Y}\" x2=\"{Mid.X}\" y2=\"{Mid.Y}\" stroke-width=\"{Radius * 0.2}\" stroke=\"cyan\" />" +
+                $"<line x1=\"{Mid.X}\" y1=\"{Mid.Y}\" x2=\"{End.X}\" y2=\"{End.Y}\" stroke-width=\"{Radius * 0.2}\" stroke=\"cyan\" />";
         }
     }
 }

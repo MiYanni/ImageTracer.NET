@@ -9,6 +9,8 @@ namespace ImageTracerNet.Vectorization.Segments
     {
         public Point<double> Start { get; set; }
         public Point<double> End { get; set; }
+        public double Radius { get; set; }
+        public int RoundDecimalPlaces { get; set; }
 
         protected static bool Fit(Func<int, Point<double>> interpPointMethod, Func<int, Point<double>> calcPointMethod, double threshold, int initialPathIndex, 
             Func<int, bool> pathCondition, Func<int, int> pathStep, ref int errorIndex)
@@ -34,6 +36,11 @@ namespace ImageTracerNet.Vectorization.Segments
             return true;
         }
 
+        protected double RoundCoordinates(double coordinate)
+        {
+            return RoundDecimalPlaces == -1 ? coordinate : Math.Round(coordinate, RoundDecimalPlaces);
+        }
+
         protected Point<double> ScalePoint(Point<double> point, double scale)
         {
             return new Point<double>
@@ -50,8 +57,8 @@ namespace ImageTracerNet.Vectorization.Segments
             return this;
         }
 
-        public abstract string ToPathString(int roundingValue);
+        public abstract string ToPathString();
 
-        public abstract string ToControlPointString(double radius);
+        public abstract string ToControlPointString();
     }
 }

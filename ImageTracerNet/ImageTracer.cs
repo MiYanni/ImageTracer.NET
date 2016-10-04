@@ -31,13 +31,13 @@ namespace ImageTracerNet
 
         public static string ImageToSvg(Bitmap image, Options options)
         {
-            return PaddedPaletteImageToTraceData(image, options.Tracing).ToSvgString(options.SvgRendering);
+            return PaddedPaletteImageToTraceData(image, options.Tracing, options.SvgRendering).ToSvgString(options.SvgRendering);
         }
 
         ////////////////////////////////////////////////////////////
 
         // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
-        private static TracedImage PaddedPaletteImageToTraceData(Bitmap image, Tracing tracing)
+        private static TracedImage PaddedPaletteImageToTraceData(Bitmap image, Tracing tracing, SvgRendering rendering)
         {
             // Selective Gaussian blur preprocessing
             //if (options.Blur.BlurRadius > 0)
@@ -72,7 +72,7 @@ namespace ImageTracerNet
             {
                 Paths = ci.Value.Paths.Select(path => new SegmentPath
                 {
-                    Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, tracing, s)).SelectMany(s => s).ToList()
+                    Segments = path.Sequences.Select(s => Segmentation.Fit(path.Path.Points, s, tracing, rendering)).SelectMany(s => s).ToList()
                 }).ToList()
             });
 

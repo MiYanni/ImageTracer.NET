@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Points;
 using LinePointCalculation = System.Func<double, double, double, double>;
 using CoordMethod = System.Func<double, double>;
@@ -25,7 +26,7 @@ namespace ImageTracerNet.Vectorization.Segments
         }
 
         // 5.2. Fit a straight line on the sequence
-        public static Segment Fit(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, out int errorIndex)
+        public static Segment Fit(IReadOnlyList<InterpolationPoint> path, double threshold, SequenceIndices sequence, int sequenceLength, out int errorIndex, SvgRendering rendering)
         {
             var startPoint = path[sequence.Start];
             var endPoint = path[sequence.End];
@@ -44,18 +45,17 @@ namespace ImageTracerNet.Vectorization.Segments
             var isLine = Fit(i => path[i], i => CreateLinePoint(pseudoIndexCalc(i), startPoint, partialPoint), threshold,
                 (sequence.Start + 1) % pathLength, i => i != sequence.End, i => (i + 1) % pathLength, ref errorIndex);
 
-            return isLine ? new LineSegment { Start = startPoint, End = endPoint } : null;
+            return isLine ? new LineSegment { Start = startPoint, End = endPoint, Radius = rendering.LCpr, RoundDecimalPlaces = rendering.RoundCoords } : null;
         }
 
-        public override string ToPathString(int roundingValue)
+        public override string ToPathString()
         {
-            var coordMethod = roundingValue == -1 ? (CoordMethod)(p => p) : p => Math.Round(p, roundingValue);
-            return $"L {coordMethod(End.X)} {coordMethod(End.Y)} ";
+            return $"L {RoundCoordinates(End.X)} {RoundCoordinates(End.Y)} ";
         }
 
-        public override string ToControlPointString(double radius)
+        public override string ToControlPointString()
         {
-            return $"<circle cx=\"{End.X}\" cy=\"{End.Y}\" r=\"{radius}\" fill=\"white\" stroke-width=\"{radius * 0.2}\" stroke=\"black\" />";
+            return $"<circle cx=\"{End.X}\" cy=\"{End.Y}\" r=\"{Radius}\" fill=\"white\" stroke-width=\"{Radius * 0.2}\" stroke=\"black\" />";
         }
     }
 }
