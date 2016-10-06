@@ -44,135 +44,6 @@ namespace ImageTracerGui
             WindowState = WindowState.Maximized;
             ZoomPanControl.ContentScaleChanged += (o, args) => CanvasScroller.Visibility = Visibility.Visible;
             ZoomPanControl.AnimationDuration = 0.01;
-            //var line = new Line
-            //{
-            //    X1 = 3,
-            //    Y1 = 3,
-            //    X2 = 100,
-            //    Y2 = 100,
-            //    Stroke = Brushes.Black,
-            //    Fill = Brushes.Black
-            //};
-            //LineGrid.Children.Add(line);
-            //SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
-            //SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
-            ////var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
-            ////var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
-            //var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
-            //Height = image.Height / 10;
-            //Width = image.Width / 10;
-            //image.Save(@"chronotrigger2.png");
-            //var imageSource = BitmapToImageSource(image);
-            //ImageDisplay.Source = imageSource;
-            ////Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
-            ////http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
-            ////ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
-            //WindowState = WindowState.Maximized;
-        }
-
-        private string _outFilename;
-        private void SaveTracedImage(string[] args)
-        {
-            //try
-            //{
-            if (args.Length < 1)
-            {
-                Console.WriteLine("ERROR: there's no input filename. Basic usage: \r\n\r\njava -jar ImageTracer.jar <filename>" +
-                        "\r\n\r\nor\r\n\r\njava -jar ImageTracer.jar help");
-            }
-            else if (arraycontains(args, "help") > -1)
-            {
-                Console.WriteLine("Example usage:\r\n\r\njava -jar ImageTracer.jar <filename> outfilename test.svg " +
-                        "ltres 1 qtres 1 pathomit 8 colorsampling 1 numberofcolors 16 mincolorratio 0.02 colorquantcycles 3 " +
-                        "scale 1 simplifytolerance 0 roundcoords 1 lcpr 0 qcpr 0 desc 1 viewbox 0 blurradius 0 blurdelta 20 \r\n" +
-                        "\r\nOnly <filename> is mandatory, if some of the other optional parameters are missing, they will be set to these defaults. " +
-                        "\r\nWarning: if outfilename is not specified, then <filename>.svg will be overwritten." +
-                        "\r\nSee https://github.com/jankovicsandras/imagetracerjava for details. \r\nThis is version " + ImageTracer.VersionNumber);
-            }
-            else
-            {
-
-                // Parameter parsing
-                String outfilename = args[0] + ".svg";
-                Options options = new Options();
-                String[] parameternames = { "ltres", "qtres", "pathomit", "colorsampling", "numberofcolors", "mincolorratio", "colorquantcycles", "scale", "simplifytolerance", "roundcoords", "lcpr", "qcpr", "desc", "viewbox", "blurradius", "blurdelta", "outfilename" };
-                int j = -1; float f = -1;
-                foreach (var parametername in parameternames)
-                {
-                    j = arraycontains(args, parametername);
-                    if (j > -1)
-                    {
-                        if (parametername == "outfilename")
-                        {
-                            if (j < (args.Length - 1)) { outfilename = args[j + 1]; }
-                        }
-                        else
-                        {
-                            f = parsenext(args, j);
-                            if (f > -1)
-                            {
-                                //options[parametername] = f;
-                                options.SetOptionByName(parametername, f);
-                            }
-                        }
-                    }
-                }// End of parameternames loop
-
-                // Loading image, tracing, rendering SVG, saving SVG file
-                //File.WriteAllText(outfilename, ImageToSvg(args[0], options));
-                ImageToSvg(args[0], options);
-                _outFilename = outfilename;
-            }// End of parameter parsing and processing
-
-            //}
-            //catch (Exception e) { Console.WriteLine(e.StackTrace); }
-        }
-
-        private Bitmap _loadedImage;
-        private Options _options;
-
-        public void ImageToSvg(string filename, Options options)
-        {
-            //return ImageToSvg(new Bitmap(filename), options);
-
-            // 1. Color quantization
-            var rbgImage = new Bitmap(filename).ChangeFormat(PixelFormat.Format32bppArgb);
-            _loadedImage = rbgImage;
-            _options = options;
-        }
-        //public void ImageToSvg(Bitmap image, Options options) 
-        //{
-        //    //var colors = rbgImage.ToColorReferences();
-        //    //var paddedPaletteImage = new PaddedPaletteImage(colors, rbgImage.Height, rbgImage.Width, ImageTracer.Palette);
-
-        //    //var paletteImageBitmap = new Bitmap(paddedPaletteImage.ImageWidth, paddedPaletteImage.ImageHeight);
-        //    //paddedPaletteImage.ColorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
-        //    //ImageDisplay.Source = BitmapToImageSource(paletteImageBitmap);
-
-        //    //return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
-        //}
-
-        private Bitmap _paletteImage;
-        //private ColorGrouping _image;
-        private IEnumerable<ColorGroup> _colorGroups;
-        public void ImageToSvg2()
-        {
-            // 1. Color quantization
-            //var rbgImage = image.ChangeFormat(PixelFormat.Format32bppArgb);
-
-            //ImageDisplay.Source = null;
-            //ImageDisplay.Source = BitmapToImageSource(image);
-
-            var colors = _loadedImage.ToColorReferences();
-            //var paddedPaletteImage = new ColorGrouping(colors, _loadedImage.Height, _loadedImage.Width, ImageTracer.Palette);
-            _colorGroups = ColorGrouping.Convert(colors, _loadedImage.Width, _loadedImage.Height, ImageTracer.Palette);
-
-            var paletteImageBitmap = new Bitmap(_loadedImage.Width, _loadedImage.Height);
-            _colorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
-            
-            _paletteImage = paletteImageBitmap;
-            //_image = paddedPaletteImage;
-            //return PaddedPaletteImageToTraceData(paddedPaletteImage, options.Tracing).ToSvgString(options.SvgRendering);
         }
 
         ////////////////////////////////////////////////////////////
@@ -196,24 +67,30 @@ namespace ImageTracerGui
         //    return _image;
         //}
 
-        private static int arraycontains(String[] arr, String str)
-        {
-            for (int j = 0; j < arr.Length; j++) { if (arr[j].ToLower().Equals(str)) { return j; } }
-            return -1;
-        }
+        //private static int arraycontains(String[] arr, String str)
+        //{
+        //    for (int j = 0; j < arr.Length; j++)
+        //    {
+        //        if (arr[j].ToLower().Equals(str))
+        //        {
+        //            return j;
+        //        }
+        //    }
+        //    return -1;
+        //}
 
-        private static float parsenext(String[] arr, int i)
-        {
-            if (i < (arr.Length - 1))
-            {
-                try
-                {
-                    return (float)Convert.ToDouble(arr[i + 1]);
-                }
-                catch (Exception) { }
-            }
-            return -1;
-        }
+        //private static float parsenext(String[] arr, int i)
+        //{
+        //    if (i < (arr.Length - 1))
+        //    {
+        //        try
+        //        {
+        //            return (float)Convert.ToDouble(arr[i + 1]);
+        //        }
+        //        catch (Exception) { }
+        //    }
+        //    return -1;
+        //}
 
         //http://stackoverflow.com/questions/22499407/how-to-display-a-bitmap-in-a-wpf-image
         private static BitmapImage BitmapToImageSource(Bitmap bitmap)
@@ -252,25 +129,83 @@ namespace ImageTracerGui
         //    //WindowState = WindowState.Maximized;
         //}
 
+        private static readonly string[] ParameterNames =
+        {
+            "ltres", "qtres", "pathomit", "colorsampling", "numberofcolors",
+            "mincolorratio", "colorquantcycles", "scale", "simplifytolerance",
+            "roundcoords", "lcpr", "qcpr", "desc", "viewbox", "blurradius",
+            "blurdelta", "outfilename"
+        };
 
+        private Bitmap _loadedImage;
+        private Options _options;
+        private string _outputFilename;
         private bool _part1Complete;
         private void Part1Button_Click(object sender, RoutedEventArgs e)
         {
             if (!_part1Complete)
             {
-                SaveTracedImage(new[] { @"..\..\Images\1.png", "outfilename", @"1.svg", "ltres", "0.1", "qtres", "1", "scale", "44", "numberofcolors", "256", "pathomit", "0" });
+                var args = new List<string>
+                {
+                    @"..\..\Images\9.png",
+                    "outfilename", @"9.svg",
+                    "ltres", "0.1",
+                    "qtres", "1",
+                    "scale", "44",
+                    "numberofcolors", "256",
+                    "pathomit", "0"
+                };
+                // Parameter parsing
+                var outputFilename = args[0] + ".svg";
+                var options = new Options();
+                foreach (var name in ParameterNames)
+                {
+                    if (args.Contains(name.ToLower()))
+                    {
+                        var j = args.FindIndex(a => a == name.ToLower());
+                        if (name == "outfilename")
+                        {
+                            if (j < args.Count - 1)
+                            {
+                                outputFilename = args[j + 1];
+                            }
+                        }
+                        else
+                        {
+                            var f = (float)Convert.ToDouble(args[j + 1]);
+                            if (f > -1)
+                            {
+                                options.SetOptionByName(name, f);
+                            }
+                        }
+                    }
+                }
+
+                // Loading image, tracing, rendering SVG, saving SVG file
+                var rbgImage = new Bitmap(args[0]).ChangeFormat(PixelFormat.Format32bppArgb);
+                _loadedImage = rbgImage;
+                _options = options;
+                _outputFilename = outputFilename;
                 _part1Complete = true;
             }
             CanvasScroller.Visibility = Visibility.Hidden;
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
         }
 
+        private Bitmap _paletteImage;
+        private IEnumerable<ColorGroup> _colorGroups;
         private bool _part2Complete;
         private void Part2Button_Click(object sender, RoutedEventArgs e)
         {
             if (!_part2Complete)
             {
-                ImageToSvg2();
+                var colors = _loadedImage.ToColorReferences();
+                _colorGroups = ColorGrouping.Convert(colors, _loadedImage.Width, _loadedImage.Height, ImageTracer.Palette);
+
+                var paletteImageBitmap = new Bitmap(_loadedImage.Width, _loadedImage.Height);
+                _colorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
+
+                _paletteImage = paletteImageBitmap;
                 _part2Complete = true;
             }
             CanvasScroller.Visibility = Visibility.Hidden;
@@ -650,11 +585,7 @@ namespace ImageTracerGui
                 CanvasScroller.Visibility = Visibility.Hidden;
                 ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
             }
-            
 
-            
-
-            
             //Part7Button.IsEnabled = false;
         }
 
@@ -753,11 +684,11 @@ namespace ImageTracerGui
         {
             if (!_part8Complete)
             {
-                var layersList = _segmentLayers.Select(p => p.Value).ToList();
+                //var layersList = _segmentLayers.Select(p => p.Value).ToList();
                 //_image.Layers = layersList;
                 //_svgImage = ToSvgString(_image, _segmentLayers, _options.SvgRendering);
                 _svgImage = new TracedImage(_segmentLayers, _loadedImage.Width, _loadedImage.Height).ToSvgString(_options.SvgRendering);
-                File.WriteAllText(_outFilename, _svgImage);
+                File.WriteAllText(_outputFilename, _svgImage);
 
                 //http://stackoverflow.com/questions/1879395/how-to-generate-a-stream-from-a-string
                 using (MemoryStream stream = new MemoryStream())
@@ -800,78 +731,5 @@ namespace ImageTracerGui
 
             ImageDisplay.Source = BitmapToImageSource(CreateTransparentBitmap(_loadedImage.Width + 1, _loadedImage.Height + 1));
         }
-
-        // Converting tracedata to an SVG string, paths are drawn according to a Z-index
-        // the optional lcpr and qcpr are linear and quadratic control point radiuses
-        //private static string ToSvgString(ColorGrouping ii, Dictionary<ColorReference, Layer<SegmentPath>> layers, SvgRendering options)
-        //{
-        //    // SVG start
-        //    var width = (int)(ii.ImageWidth * options.Scale);
-        //    var height = (int)(ii.ImageHeight * options.Scale);
-
-        //    var viewBoxOrViewPort = options.Viewbox ?
-        //        $"viewBox=\"0 0 {width} {height}\"" :
-        //        $"width=\"{width}\" height=\"{height}\"";
-        //    var svgStringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-        //    if (options.Desc)
-        //    {
-        //        svgStringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
-        //    }
-        //    svgStringBuilder.Append(">");
-
-        //    // creating Z-index
-        //    // Only selecting the first segment of each path.
-
-        //    //var label = layers[layerIndex][pathIndex].Start.Y * width + layers[layerIndex][pathIndex].Start.X;
-        //    //var zIndex = SvgGeneration.CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => p.Segments.First()).ToList()).ToList(), width);
-        //    //var zIndex = new SortedDictionary<double, Tuple<ColorReference, List<Segment>>>(layers.ToDictionary(cs =>
-        //    //{
-        //    //    var firstSegmentStart = cs.Value.Paths.First().Segments.First().Start;
-        //    //    return firstSegmentStart.Y * width + firstSegmentStart.X;
-        //    //}, cs => Tuple.Create(cs.Key, cs.Value.Paths.SelectMany(p => p.Segments).ToList())
-        //    //    ));
-        //    var zIndex = CreateZIndex(layers.Select(cs => cs.Value.Paths.Select(p => Tuple.Create(cs.Key, p)).ToList()).ToList(), width);
-
-
-        //    // Sorting Z-index is not required, TreeMap is sorted automatically
-
-        //    // Drawing
-        //    // Z-index loop
-        //    foreach (var zPosition in zIndex)
-        //    {
-        //        var zValue = zPosition.Value;
-        //        var description = String.Empty;
-        //        //if (options.Desc)
-        //        //{
-        //        //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
-        //        //}
-
-        //        SvgGeneration.AppendPathString(svgStringBuilder, description, zValue.Path.Segments,
-        //            zValue.Color.ToSvgColorString(), options);
-        //    }
-
-        //    // SVG End
-        //    svgStringBuilder.Append("</svg>");
-
-        //    return svgStringBuilder.ToString();
-        //}
-
-        //internal static SortedDictionary<double, ZPosition> CreateZIndex(IReadOnlyList<IReadOnlyList<Tuple<ColorReference, SegmentPath>>> layers, int width)
-        //{
-        //    var zIndex = new SortedDictionary<double, ZPosition>();
-        //    // Layer loop
-        //    for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
-        //    {
-        //        // Path loop
-        //        for (var pathIndex = 0; pathIndex < layers[layerIndex].Count; pathIndex++)
-        //        {
-        //            var tuple = layers[layerIndex][pathIndex];
-        //            // Label (Z-index key) is the startpoint of the path, linearized
-        //            var label = tuple.Item2.Segments.First().Start.Y * width + tuple.Item2.Segments.First().Start.X;
-        //            zIndex[label] = new ZPosition { Color = tuple.Item1, Path = tuple.Item2 };
-        //        }
-        //    }
-        //    return zIndex;
-        //}
     }
 }
