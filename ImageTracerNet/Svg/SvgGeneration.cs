@@ -15,12 +15,12 @@ namespace ImageTracerNet.Svg
         public static string ToSvgString(this TracedImage image, SvgRendering options)
         {
             // SVG start
-            var width = (int)(image.Width * options.Scale);
-            var height = (int)(image.Height * options.Scale);
+            var scaledWidth = (int)(image.Width * options.Scale);
+            var scaledHeight = (int)(image.Height * options.Scale);
 
             var viewBoxOrViewPort = options.Viewbox ?
-                $"viewBox=\"0 0 {width} {height}\"" :
-                $"width=\"{width}\" height=\"{height}\"";
+                $"viewBox=\"0 0 {scaledWidth} {scaledHeight}\"" :
+                $"width=\"{scaledWidth}\" height=\"{scaledHeight}\"";
             var stringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
             if (options.Desc)
             {
@@ -34,7 +34,7 @@ namespace ImageTracerNet.Svg
                 .SelectMany(cs => cs.Value.Paths.Select(p =>
                 {
                     var firstSegmentStart = p.Segments.First().Start;
-                    var label = firstSegmentStart.Y * width + firstSegmentStart.X;
+                    var label = firstSegmentStart.Y * scaledWidth + firstSegmentStart.X;
                     return new ZPosition { Label = label, Color = cs.Key, Path = p };
                 })).OrderBy(z => z.Label);
             // Sorting Z-index is not required, TreeMap is sorted automatically
@@ -43,13 +43,13 @@ namespace ImageTracerNet.Svg
             // Z-index loop
             foreach (var zPosition in zSortedLayers)
             {
-                //var zValue = zPosition.Value;
                 var description = String.Empty;
                 //if (options.Desc)
                 //{
                 //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
                 //}
-                AppendPathString(stringBuilder, description, zPosition.Path.Segments, zPosition.Color.ToSvgColorString(), options);
+                var scaledSegments = zPosition.Path.Segments.Select(s => s.Scale(options.Scale)).ToList();
+                AppendPathString(stringBuilder, description, scaledSegments, zPosition.Color.ToSvgColorString(), options);
             }
 
             // SVG End
@@ -59,22 +59,15 @@ namespace ImageTracerNet.Svg
         }
 
         // Getting SVG path element string from a traced path
-        internal static void AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<Segment> segments, string colorString, SvgRendering options)
+        internal static StringBuilder AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<Segment> segments, string colorString, SvgRendering options)
         {
-            var scaledSegments = segments.Select(s => s.Scale(options.Scale)).ToList();
-
             // Path
-            stringBuilder.Append($"<path {description}{colorString}d=\"M {scaledSegments[0].Start.X} {scaledSegments[0].Start.Y} ");
+            stringBuilder.Append($"<path {description}{colorString}d=\"M {segments[0].Start.X} {segments[0].Start.Y} ");
             //http://stackoverflow.com/a/217814/294804
-            scaledSegments.Aggregate(stringBuilder, (current, next) => current.Append(next.ToPathString()));
-            stringBuilder.Append("Z\" />");
+            segments.Aggregate(stringBuilder, (sb, segment) => sb.Append(segment.ToPathString())).Append("Z\" />");
 
             // Rendering control points
-            var filteredSegments = scaledSegments.Where(s => s.Radius > 0);
-            foreach (var segment in filteredSegments)
-            {
-                stringBuilder.Append(segment.ToControlPointString());
-            }
+            return segments.Where(s => s.Radius > 0).Aggregate(stringBuilder, (sb, segment) => sb.Append(segment.ToControlPointString()));
         }
 
         internal static string ToSvgColorString(this ColorReference c)
