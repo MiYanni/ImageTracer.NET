@@ -135,5 +135,22 @@ namespace ImageTracerNet.Extensions
 
             return newImage;
         }
+
+        public static Bitmap ToBitmap(this byte[] bitmapData, int width, int height, PixelFormat format)
+        {
+            var newImage = new Bitmap(width, height, format);
+            var rectangle = new Rectangle(0, 0, newImage.Width, newImage.Height);
+            var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.ReadWrite, format);
+            // Get the address of the first line.
+            var newBitmapPointer = newBitmapData.Scan0;
+            //http://stackoverflow.com/a/1917036/294804
+            var intCount = newBitmapData.Stride * newImage.Height;
+            // Copy the RGB values back to the bitmap
+            Marshal.Copy(bitmapData, 0, newBitmapPointer, intCount);
+            // Unlock the bits.
+            newImage.UnlockBits(newBitmapData);
+
+            return newImage;
+        }
     }
 }

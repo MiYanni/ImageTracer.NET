@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -48,50 +49,6 @@ namespace ImageTracerGui
 
         ////////////////////////////////////////////////////////////
 
-        // Tracing ImageData, then returning PaddedPaletteImage with tracedata in layers
-        //private PaddedPaletteImage PaddedPaletteImageToTraceData()
-        //{
-        //    // 2. Layer separation and edge detection
-        //    var rawLayers = Layering.Convert(_image);
-        //    // 3. Batch pathscan
-        //    var pathPointLayers = rawLayers.Select(layer => new Layer<PathPointPath> { Paths = Pathing.Scan(layer.Value, _options.Tracing.PathOmit).ToList() });
-        //    // 4. Batch interpollation
-        //    var interpolationPointLayers = pathPointLayers.Select(Interpolation.Convert);
-        //    // 5. Batch tracing
-        //    //image.Layers = interpolationPointLayers.Select(l => l.Select(p => Pathing.Trace(p.ToList(), options).ToList()).ToList()).ToList();
-        //    _image.Layers = interpolationPointLayers.Select(layer => 
-        //        new Layer<SegmentPath> { Paths = layer.Paths.Select(path => 
-        //            new SegmentPath { Segments = 
-        //                Pathing.Trace(path, _options.Tracing).ToList() }).ToList() }).ToList();
-
-        //    return _image;
-        //}
-
-        //private static int arraycontains(String[] arr, String str)
-        //{
-        //    for (int j = 0; j < arr.Length; j++)
-        //    {
-        //        if (arr[j].ToLower().Equals(str))
-        //        {
-        //            return j;
-        //        }
-        //    }
-        //    return -1;
-        //}
-
-        //private static float parsenext(String[] arr, int i)
-        //{
-        //    if (i < (arr.Length - 1))
-        //    {
-        //        try
-        //        {
-        //            return (float)Convert.ToDouble(arr[i + 1]);
-        //        }
-        //        catch (Exception) { }
-        //    }
-        //    return -1;
-        //}
-
         //http://stackoverflow.com/questions/22499407/how-to-display-a-bitmap-in-a-wpf-image
         private static BitmapImage BitmapToImageSource(Bitmap bitmap)
         {
@@ -110,24 +67,6 @@ namespace ImageTracerGui
                 return bitmapimage;
             }
         }
-
-        //private void GoButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    SaveTracedImage(new[] { @"..\..\Images\Chrono Trigger2.png", "outfilename", @"chronotrigger2.svg", "ltres", "0.1", "qtres", "1", "scale", "30", "numberofcolors", "256", "pathomit", "0" });
-        //    SvgParser.MaximumSize = new System.Drawing.Size(10000, 10000);
-        //    //var image = SvgDocument.OpenAsBitmap(@"chronotrigger2.svg");
-        //    //var document = SvgParser.GetSvgDocument(@"chronotrigger2.svg");
-        //    var image = SvgParser.GetBitmapFromSVG(@"chronotrigger2.svg");
-        //    Height = image.Height / 10;
-        //    Width = image.Width / 10;
-        //    image.Save(@"chronotrigger2.png");
-        //    var imageSource = BitmapToImageSource(image);
-        //    ImageDisplay.Source = imageSource;
-        //    //Browser.Source = new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png"));
-        //    //http://stackoverflow.com/questions/11880946/how-to-load-image-to-wpf-in-runtime
-        //    //ImageDisplay.Source = new BitmapImage(new Uri(System.IO.Path.Combine(Environment.CurrentDirectory, @"chronotrigger2.png")));
-        //    //WindowState = WindowState.Maximized;
-        //}
 
         private static readonly string[] ParameterNames =
         {
@@ -202,10 +141,10 @@ namespace ImageTracerGui
                 var colors = _loadedImage.ToColorReferences();
                 _colorGroups = ColorGrouping.Convert(colors, _loadedImage.Width, _loadedImage.Height, ImageTracer.Palette);
 
-                var paletteImageBitmap = new Bitmap(_loadedImage.Width, _loadedImage.Height);
-                _colorGroups.Where(cg => cg.Mid != ColorReference.Empty).ToList().ForEach(cg => paletteImageBitmap.SetPixel(cg.X - 1, cg.Y - 1, cg.Mid.Color));
+                var colorBytes = _colorGroups.Where(cg => cg.Mid != ColorReference.Empty).Select(cg => 
+                    new[] { cg.Mid.Color.B, cg.Mid.Color.G, cg.Mid.Color.R, cg.Mid.Color.A}).SelectMany(b => b).ToArray();
 
-                _paletteImage = paletteImageBitmap;
+                _paletteImage = colorBytes.ToBitmap(_loadedImage.Width, _loadedImage.Height, PixelFormat.Format32bppArgb);
                 _part2Complete = true;
             }
             CanvasScroller.Visibility = Visibility.Hidden;
