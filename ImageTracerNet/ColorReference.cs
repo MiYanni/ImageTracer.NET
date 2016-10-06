@@ -48,5 +48,10 @@ namespace ImageTracerNet
             }
             return paletteColor;
         }
+
+        public string ToSvgString()
+        {
+            return $"fill=\"rgb({R},{G},{B})\" stroke=\"rgb({R},{G},{B})\" stroke-width=\"1\" opacity=\"{A / 255.0}\" ";
+        }
     }
 }

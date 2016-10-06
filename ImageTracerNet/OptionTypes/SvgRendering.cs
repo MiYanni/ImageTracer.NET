@@ -12,7 +12,6 @@ namespace ImageTracerNet.OptionTypes
         public double LCpr { get; set; } = 0f;
         // QuadraticControlPointRadius
         public double QCpr { get; set; } = 0f;
-        public bool Desc { get; set; } = false;
         public bool Viewbox { get; set; } = false;
     }
 }
