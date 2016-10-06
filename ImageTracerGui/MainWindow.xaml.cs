@@ -328,18 +328,6 @@ namespace ImageTracerGui
             };
             var scaledPoints = points.Select(p => scale(p)).ToList();
 
-            //var initial = scaledPoints.First();
-            //Point<double> previous = null;
-            //foreach (var point in scaledPoints)
-            //{
-            //    if (previous != null)
-            //    {
-            //        yield return CreateLine(previous, point, brush, isAnimated);
-            //    }
-            //    yield return CreateLineDot(point, brush);
-            //    previous = point;
-            //}
-            //yield return CreateLine(previous, initial, brush, isAnimated);
             //http://stackoverflow.com/questions/1624341/getting-pair-set-using-linq
             var groupedPoints = scaledPoints.Select((p, i) => new { First = p, Second = scaledPoints[i == scaledPoints.Count - 1 ? 0 : i + 1] });
             foreach (var point in groupedPoints)
@@ -465,29 +453,39 @@ namespace ImageTracerGui
                 Y = p.Y * multiplier + offset.Height
             };
             var scaledPoints = points.Select(p => scale(p)).ToList();
-            var initial = scaledPoints.First();
-            var previous = scaledPoints.First();
-            var pointCount = 0;
-            var brush = regularBrush;
-            foreach (var point in scaledPoints)
+            //var initial = scaledPoints.First();
+            //var previous = scaledPoints.First();
+            //var pointCount = 0;
+            //var brush = regularBrush;
+            //foreach (var point in scaledPoints)
+            //{
+
+            //    if (previous != null)
+            //    {
+            //        brush = pointCount > selectedSequence.Start && (selectedSequence.End == 0 || pointCount <= selectedSequence.End)
+            //            ? sequenceBrush
+            //            : regularBrush;
+            //        lines.Add(CreateLine(previous, point, brush, false));
+            //    }
+            //    brush = (pointCount >= selectedSequence.Start && (selectedSequence.End == 0  || pointCount <= selectedSequence.End)) || (selectedSequence.End == pointCount)
+            //        ? sequenceBrush
+            //        : regularBrush;
+            //    lines.Add(CreateLineDot(point, brush));
+            //    previous = point;
+            //    pointCount++;
+            //}
+            //brush = selectedSequence.End == 0 ? sequenceBrush : regularBrush;
+            //lines.Add(CreateLine(previous, initial, brush, false));
+
+            //http://stackoverflow.com/questions/1624341/getting-pair-set-using-linq
+            var groupedPoints = scaledPoints.Select((p, i) => new { First = p, Second = scaledPoints[i == scaledPoints.Count - 1 ? 0 : i + 1], Index = i });
+            foreach (var point in groupedPoints)
             {
-                
-                if (previous != null)
-                {
-                    brush = pointCount > selectedSequence.Start && (selectedSequence.End == 0 || pointCount <= selectedSequence.End)
-                        ? sequenceBrush
-                        : regularBrush;
-                    lines.Add(CreateLine(previous, point, brush, false));
-                }
-                brush = (pointCount >= selectedSequence.Start && (selectedSequence.End == 0  || pointCount <= selectedSequence.End)) || (selectedSequence.End == pointCount)
-                    ? sequenceBrush
-                    : regularBrush;
-                lines.Add(CreateLineDot(point, brush));
-                previous = point;
-                pointCount++;
+                var brush = (point.Index >= selectedSequence.Start && (selectedSequence.End == 0 || point.Index <= selectedSequence.End)) || (selectedSequence.End == point.Index) ? sequenceBrush : regularBrush;
+                lines.Add(CreateLineDot(point.First, brush));
+                brush = point.Index >= selectedSequence.Start && (selectedSequence.End == 0 || point.Index < selectedSequence.End) ? sequenceBrush : regularBrush;
+                lines.Add(CreateLine(point.First, point.Second, brush, false));
             }
-            brush = selectedSequence.End == 0 ? sequenceBrush : regularBrush;
-            lines.Add(CreateLine(previous, initial, brush, false));
 
             var sequenceLength = selectedSequence.End - selectedSequence.Start;
             sequenceLength += sequenceLength < 0 ? selectedPath.Points.Count : 0;
