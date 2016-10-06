@@ -86,8 +86,8 @@ namespace ImageTracerGui
             {
                 var args = new List<string>
                 {
-                    @"..\..\Images\9.png",
-                    "outfilename", @"9.svg",
+                    @"..\..\Images\1.png",
+                    "outfilename", @"1.svg",
                     "ltres", "0.1",
                     "qtres", "1",
                     "scale", "44",
@@ -327,18 +327,26 @@ namespace ImageTracerGui
                 Y = p.Y * multiplier + offset.Height
             };
             var scaledPoints = points.Select(p => scale(p)).ToList();
-            var initial = scaledPoints.First();
-            var previous = scaledPoints.First();
-            foreach (var point in scaledPoints)
+
+            //var initial = scaledPoints.First();
+            //Point<double> previous = null;
+            //foreach (var point in scaledPoints)
+            //{
+            //    if (previous != null)
+            //    {
+            //        yield return CreateLine(previous, point, brush, isAnimated);
+            //    }
+            //    yield return CreateLineDot(point, brush);
+            //    previous = point;
+            //}
+            //yield return CreateLine(previous, initial, brush, isAnimated);
+            //http://stackoverflow.com/questions/1624341/getting-pair-set-using-linq
+            var groupedPoints = scaledPoints.Select((p, i) => new { First = p, Second = scaledPoints[i == scaledPoints.Count - 1 ? 0 : i + 1] });
+            foreach (var point in groupedPoints)
             {
-                if (previous != null)
-                {
-                    yield return CreateLine(previous, point, brush, isAnimated);
-                }
-                yield return CreateLineDot(point, brush);
-                previous = point;
+                yield return CreateLineDot(point.First, brush);
+                yield return CreateLine(point.First, point.Second, brush, isAnimated);
             }
-            yield return CreateLine(previous, initial, brush, isAnimated);
         }
 
         private void Part4ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
