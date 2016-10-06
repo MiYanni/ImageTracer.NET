@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ImageTracerNet.OptionTypes;
 using ImageTracerNet.Vectorization.Segments;
-using CoordMethod = System.Func<double, double>;
 
 namespace ImageTracerNet.Svg
 {
@@ -21,48 +19,35 @@ namespace ImageTracerNet.Svg
             var viewBoxOrViewPort = options.Viewbox ?
                 $"viewBox=\"0 0 {scaledWidth} {scaledHeight}\"" :
                 $"width=\"{scaledWidth}\" height=\"{scaledHeight}\"";
-            var stringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" ");
-            if (options.Desc)
-            {
-                stringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
-            }
-            stringBuilder.Append(">");
+            var stringBuilder = new StringBuilder($"<svg {viewBoxOrViewPort} version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" >");
+            //if (options.Desc)
+            //{
+            //    stringBuilder.Append($"desc=\"Created with ImageTracer.NET version {ImageTracer.VersionNumber}\" ");
+            //}
+            //stringBuilder.Append(">");
 
             // creating Z-index
             // Only selecting the first segment of each path.
-            var zSortedLayers = image.Layers
+            // Sorting Z-index is not required, TreeMap is sorted automatically
+            return image.Layers
                 .SelectMany(cs => cs.Value.Paths.Select(p =>
                 {
                     var firstSegmentStart = p.Segments.First().Start;
                     var label = firstSegmentStart.Y * scaledWidth + firstSegmentStart.X;
                     return new ZPosition { Label = label, Color = cs.Key, Path = p };
-                })).OrderBy(z => z.Label);
-            // Sorting Z-index is not required, TreeMap is sorted automatically
-
-            // Drawing
-            // Z-index loop
-            foreach (var zPosition in zSortedLayers)
-            {
-                var description = String.Empty;
-                //if (options.Desc)
-                //{
-                //    description = $"desc=\"l {zValue.Layer} p {zValue.Path}\" ";
-                //}
-                var scaledSegments = zPosition.Path.Segments.Select(s => s.Scale(options.Scale)).ToList();
-                AppendPathString(stringBuilder, description, scaledSegments, zPosition.Color.ToSvgColorString(), options);
-            }
-
-            // SVG End
-            stringBuilder.Append("</svg>");
-
-            return stringBuilder.ToString();
+                })).OrderBy(z => z.Label)
+                .Aggregate(stringBuilder, (sb, z) =>
+                {
+                    var scaledSegments = z.Path.Segments.Select(s => s.Scale(options.Scale)).ToList();
+                    return AppendSegments(sb, scaledSegments, z.Color, options);
+                }).Append("</svg>").ToString();
         }
 
         // Getting SVG path element string from a traced path
-        internal static StringBuilder AppendPathString(StringBuilder stringBuilder, string description, IReadOnlyList<Segment> segments, string colorString, SvgRendering options)
+        internal static StringBuilder AppendSegments(StringBuilder stringBuilder, IReadOnlyList<Segment> segments, ColorReference color, SvgRendering options)
         {
             // Path
-            stringBuilder.Append($"<path {description}{colorString}d=\"M {segments[0].Start.X} {segments[0].Start.Y} ");
+            stringBuilder.Append($"<path {color.ToSvgColorString()}d=\"M {segments.First().Start.X} {segments.First().Start.Y} ");
             //http://stackoverflow.com/a/217814/294804
             segments.Aggregate(stringBuilder, (sb, segment) => sb.Append(segment.ToPathString())).Append("Z\" />");
 
