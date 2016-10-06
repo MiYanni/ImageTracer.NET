@@ -86,8 +86,8 @@ namespace ImageTracerGui
             {
                 var args = new List<string>
                 {
-                    @"..\..\Images\1.png",
-                    "outfilename", @"1.svg",
+                    @"..\..\Images\9.png",
+                    "outfilename", @"9.svg",
                     "ltres", "0.1",
                     "qtres", "1",
                     "scale", "44",
@@ -389,10 +389,18 @@ namespace ImageTracerGui
                     {
                         var color = path.Color.Color;
                         var brush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
-                        var points = path.Points.Select(p => new Point<double> {X = p.X, Y = p.Y}).ToList();
+                        var points = path.Points.Select(p => new Point<double> { X = p.X, Y = p.Y }).ToList();
                         var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
                         lines.AddRange(pathLines);
                     }
+                    //Parallel.ForEach(paths, path =>
+                    //{
+                    //    var color = path.Color.Color;
+                    //    var brush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
+                    //    var points = path.Points.Select(p => new Point<double> {X = p.X, Y = p.Y}).ToList();
+                    //    var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
+                    //    lines.AddRange(pathLines);
+                    //});
                     _interpLines = lines;
                 }
                 //_interpLines = new List<UIElement>();
@@ -453,29 +461,6 @@ namespace ImageTracerGui
                 Y = p.Y * multiplier + offset.Height
             };
             var scaledPoints = points.Select(p => scale(p)).ToList();
-            //var initial = scaledPoints.First();
-            //var previous = scaledPoints.First();
-            //var pointCount = 0;
-            //var brush = regularBrush;
-            //foreach (var point in scaledPoints)
-            //{
-
-            //    if (previous != null)
-            //    {
-            //        brush = pointCount > selectedSequence.Start && (selectedSequence.End == 0 || pointCount <= selectedSequence.End)
-            //            ? sequenceBrush
-            //            : regularBrush;
-            //        lines.Add(CreateLine(previous, point, brush, false));
-            //    }
-            //    brush = (pointCount >= selectedSequence.Start && (selectedSequence.End == 0  || pointCount <= selectedSequence.End)) || (selectedSequence.End == pointCount)
-            //        ? sequenceBrush
-            //        : regularBrush;
-            //    lines.Add(CreateLineDot(point, brush));
-            //    previous = point;
-            //    pointCount++;
-            //}
-            //brush = selectedSequence.End == 0 ? sequenceBrush : regularBrush;
-            //lines.Add(CreateLine(previous, initial, brush, false));
 
             //http://stackoverflow.com/questions/1624341/getting-pair-set-using-linq
             var groupedPoints = scaledPoints.Select((p, i) => new { First = p, Second = scaledPoints[i == scaledPoints.Count - 1 ? 0 : i + 1], Index = i });
@@ -561,22 +546,17 @@ namespace ImageTracerGui
                 Y = p.Y * multiplier + offset.Height
             };
             var scaledPoints = points.Select(p => scale(p)).ToList();
-            var initial = scaledPoints.First();
-            var previous = scaledPoints.First();
             var brush = regularBrush;
 
             if (segment is LineSegment)
             {
-                foreach (var point in scaledPoints)
+                //http://stackoverflow.com/questions/1624341/getting-pair-set-using-linq
+                var groupedPoints = scaledPoints.Select((p, i) => new { First = p, Second = scaledPoints[i == scaledPoints.Count - 1 ? 0 : i + 1] });
+                foreach (var point in groupedPoints)
                 {
-                    if (previous != null)
-                    {
-                        lines.Add(CreateLine(previous, point, brush, false));
-                    }
-                    lines.Add(CreateLineDot(point, brush));
-                    previous = point;
+                    lines.Add(CreateLineDot(point.First, brush));
+                    lines.Add(CreateLine(point.First, point.Second, brush, false));
                 }
-                lines.Add(CreateLine(previous, initial, brush, false));
             }
             //http://stackoverflow.com/a/21958079/294804
             //http://stackoverflow.com/a/5336694/294804
