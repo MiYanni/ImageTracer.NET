@@ -131,6 +131,19 @@ namespace ImageTracerGui
             ImageDisplay.Source = BitmapToImageSource(_loadedImage);
         }
 
+        private static Bitmap CreateBitmapFromColorPoints(IEnumerable<ColorPoint> colorPoints, int width, int height)
+        {
+            var bytes = new byte[height][].InitInner(width * 4);
+            Parallel.ForEach(colorPoints, p =>
+            {
+                bytes[p.Y][p.X * 4] = p.Color.B;
+                bytes[p.Y][p.X * 4 + 1] = p.Color.G;
+                bytes[p.Y][p.X * 4 + 2] = p.Color.R;
+                bytes[p.Y][p.X * 4 + 3] = p.Color.A;
+            });
+            return bytes.SelectMany(b => b).ToArray().ToBitmap(width, height, PixelFormat.Format32bppArgb);
+        }
+
         private Bitmap _paletteImage;
         private IEnumerable<ColorGroup> _colorGroups;
         private bool _part2Complete;
@@ -218,8 +231,8 @@ namespace ImageTracerGui
             {
                 _pathPointLayers = _filteredRawLayers.ToDictionary(cl => cl.Key, cl => new Layer<PathPointPath> { Paths = Pathing.Scan(cl.Value, _options.Tracing.PathOmit).ToList() });
                 var paths = _pathPointLayers.SelectMany(cl => cl.Value.Paths.Select(p => new { Color = cl.Key, p.Points })).ToList();
-                var imagePoints =_pathPointLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Points).Select(p => Tuple.Create((Point<int>)p, cl.Key.Color))).ToList();
-                _pathPointImage = DrawPointsImage(imagePoints, _loadedImage.Width + 1, _loadedImage.Height + 1);
+                var imagePoints =_pathPointLayers.SelectMany(cl => cl.Value.Paths.SelectMany(p => p.Points).Select(p => new ColorPoint { X = p.X, Y = p.Y, Color = cl.Key.Color }));
+                _pathPointImage = CreateBitmapFromColorPoints(imagePoints, _loadedImage.Width + 1, _loadedImage.Height + 1);
                 _part4Complete = true;
                 Part4ComboBox.ItemsSource = paths.Select((cp, i) => new ColorSelectionItem(cp.Color, i)).ToList();
                 PathCount.Content = paths.Count;
@@ -238,19 +251,10 @@ namespace ImageTracerGui
             return scaledMidPixelDimension - offset;
         }
 
-        private static Bitmap DrawPointsImage(IEnumerable<Tuple<Point<int>, DColor>> points, int width, int height)
-        {
-            var image = CreateTransparentBitmap(width, height);
-            foreach (var point in points)
-            {
-                image.SetPixel(point.Item1.X, point.Item1.Y, point.Item2);
-            }
-            return image;
-        }
-
         private static Bitmap DrawPointsImage(IEnumerable<Point<int>> points, int width, int height, DColor color)
         {
-            return DrawPointsImage(points.Select(p => Tuple.Create(p, color)), width, height);
+            //return DrawPointsImage(points.Select(p => Tuple.Create(p, color)), width, height);
+            return CreateBitmapFromColorPoints(points.Select(p => new ColorPoint { X = p.X, Y = p.Y, Color = color }), width, height);
         }
 
         private static MSize CalculateScaledOffsets(ref double width, ref double height, double multiplier = 10.0)

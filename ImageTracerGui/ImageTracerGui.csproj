@@ -89,6 +89,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bezier.cs" />
+    <Compile Include="ColorPoint.cs" />
     <Compile Include="ColorSelectionItem.cs" />
     <Compile Include="SvgParser.cs" />
     <Compile Include="UIElementCollectionExtensions.cs" />
