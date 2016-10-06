@@ -393,14 +393,7 @@ namespace ImageTracerGui
                         var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
                         lines.AddRange(pathLines);
                     }
-                    //Parallel.ForEach(paths, path =>
-                    //{
-                    //    var color = path.Color.Color;
-                    //    var brush = new SolidColorBrush(MColor.FromArgb(color.A, color.R, color.G, color.B));
-                    //    var points = path.Points.Select(p => new Point<double> {X = p.X, Y = p.Y}).ToList();
-                    //    var pathLines = CreateOverlayLines(points, offset, brush, 10.0, false);
-                    //    lines.AddRange(pathLines);
-                    //});
+
                     _interpLines = lines;
                 }
                 //_interpLines = new List<UIElement>();
